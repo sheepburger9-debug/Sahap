@@ -480,13 +480,19 @@ async function viewHome() {
     </a>`;
   }).join('');
 
-  const blocksHtml = blocks.map((bl) => {
-    const list = bl.ids.map((id) => byId.get(id)).filter(Boolean);
+    const blocksHtml = blocks.map((bl) => {
+    const list = bl.ids
+      .map((id) => byId.get(id))
+      .filter(Boolean);
+
     if (!list.length) return '';
+
     return `<section class="block">
       <h2 class="sec">${esc(bl.title)}</h2>
       ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
-      <div class="rail">${list.map(miniHtml).join('')}</div>
+      <div class="rail">
+        ${list.map((r) => miniHtml(r, bl.badge)).join('')}
+      </div>
     </section>`;
   }).join('');
 
