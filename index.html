@@ -75,6 +75,53 @@ label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 6px}
 .ad-body{padding:12px 14px;display:flex;flex-direction:column;gap:2px}
 .ad-tag{font-size:11px;color:var(--ink-2)}
 .ad-title{font-family:"Reem Kufi",sans-serif;font-size:17px;font-weight:700}
+/* ===== أنواع اللافتات الخمسة ===== */
+.ad,.ad *{max-width:100%;overflow-wrap:anywhere}
+.ad:focus-visible{outline:3px solid var(--saffron);outline-offset:3px}
+
+/* hero: بانر رئيسي عريض */
+.ad--hero{position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:176px;border:0;background:var(--ink);color:#EEF2EA}
+.ad--hero img{position:absolute;inset:0;width:100%;height:100%;max-height:none;object-fit:cover;opacity:.45}
+.ad--hero .ad-body{position:relative;padding:20px;display:flex;flex-direction:column;gap:4px}
+.ad--hero .ad-title{font-size:24px;line-height:1.2;color:#fff}
+.ad--hero .meta,.ad--hero .ad-tag{color:#D9E1D2}
+
+/* horizontal: صورة جانبية والنص بجانبها */
+.ad--horizontal{display:flex;align-items:stretch;min-height:96px;border:0;background:#FFF3D6;color:var(--ink)}
+.ad--horizontal img{position:static;width:112px;flex:0 0 112px;height:auto;max-height:none;object-fit:cover}
+.ad--horizontal .ad-body{flex:1;min-width:0;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+
+/* square: لافتة مربعة 1:1 */
+.ad--square{position:relative;display:flex;flex-direction:column;justify-content:flex-end;aspect-ratio:1/1;width:100%;max-width:360px;margin-inline:auto;border:0;background:var(--olive);color:#EEF2EA}
+.ad--square img{position:absolute;inset:0;width:100%;height:100%;max-height:none;object-fit:cover;opacity:.55}
+.ad--square .ad-body{position:relative;padding:18px;display:flex;flex-direction:column;gap:4px;background:linear-gradient(transparent,rgba(26,31,27,.85))}
+.ad--square .ad-title{font-size:20px;line-height:1.25;color:#fff}
+.ad--square .meta,.ad--square .ad-tag{color:#D9E1D2}
+
+/* vertical: لافتة طولية للمساحات الضيقة */
+.ad--vertical{position:relative;display:flex;flex-direction:column;justify-content:flex-end;aspect-ratio:2/3;width:100%;max-width:240px;margin-inline:auto;border:0;background:var(--saffron);color:var(--saffron-ink)}
+.ad--vertical img{position:absolute;inset:0;width:100%;height:100%;max-height:none;object-fit:cover;opacity:.5}
+.ad--vertical .ad-body{position:relative;padding:14px;display:flex;flex-direction:column;gap:4px;background:linear-gradient(transparent,rgba(42,28,0,.75))}
+.ad--vertical .ad-title{font-size:18px;line-height:1.25;color:#fff}
+.ad--vertical .meta,.ad--vertical .ad-tag{color:#FFF3D6}
+
+/* featured: لافتة مميزة بإطار واضح وشارة «مطعم مميز» */
+.ad--featured{border:2px solid var(--saffron);background:#FFFBF0;color:var(--ink);box-shadow:0 6px 18px rgba(242,165,17,.22)}
+.ad--featured img{width:100%;height:140px;max-height:none;object-fit:cover}
+.ad--featured .ad-body{padding:14px 16px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.ad--featured .ad-tag{background:var(--saffron);color:var(--saffron-ink);font-weight:700;font-size:12px;padding:3px 10px;border-radius:999px}
+.ad--featured .ad-title{font-size:18px}
+
+/* تجاوب الشاشات الصغيرة والكبيرة */
+@media (max-width:360px){
+  .ad--hero{min-height:150px}
+  .ad--hero .ad-title{font-size:20px}
+  .ad--horizontal img{width:88px;flex-basis:88px}
+  .ad--square .ad-title{font-size:18px}
+}
+@media (min-width:600px){
+  .ad--hero{min-height:200px}
+}
 
 .row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
 .rname{font-size:16px;font-weight:600}
@@ -260,6 +307,17 @@ async function loadBlocks() {
   }));
 }
 async function loadLayout(pageKey) {
+  // الطريقة الأساسية: دالة عامة ترجع أكواد المواضع (جدول ad_placements مش مقروء للزوار)
+  const { data: viaRpc, error: rpcErr } = await sb.rpc('get_public_layout', { p_page_key: pageKey });
+  if (!rpcErr && Array.isArray(viaRpc)) {
+    return viaRpc.map((x) => ({
+      item_type: x.item_type,
+      display_order: x.display_order,
+      block_id: x.block_id,
+      ad_placements: { code: x.placement_code },
+    }));
+  }
+  // احتياط: لو الدالة مش موجودة لسه
   const { data } = await sb.from('homepage_layout_items')
     .select('item_type, display_order, block_id, ad_placements(code)')
     .eq('page_key', pageKey).eq('is_visible', true).order('display_order');
@@ -269,7 +327,12 @@ async function loadLayout(pageKey) {
 async function loadAds() {
   const { data, error } = await sb.rpc('get_eligible_ads');
   if (error || !data) return new Map();
-  return new Map(data.map((a) => [a.placement_code, a]));
+  const map = new Map();
+  for (const a of data) {
+    if (!map.has(a.placement_code)) map.set(a.placement_code, []);
+    map.get(a.placement_code).push(a);
+  }
+  return map;
 }
 async function loadMethods(restaurantId) {
   const { data } = await sb.rpc('get_payment_methods', { p_restaurant_id: restaurantId });
@@ -348,16 +411,59 @@ function blockHtml(bl, byId) {
 
 function adHtml(ad) {
   if (!ad) return '';
+
+  const formats = ['hero', 'horizontal', 'square', 'vertical', 'featured'];
+  const rawFormat = String(ad.creative_format || 'hero').toLowerCase();
+  const format = formats.includes(rawFormat) ? rawFormat : 'hero';
+
   const img = safeUrl(ad.creative_image_url);
-  const inner = `${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : ''}
-    <div class="ad-body"><span class="ad-tag">إعلان</span>
-      <strong class="ad-title">${esc(ad.creative_title || '')}</strong>
-      ${ad.creative_text ? `<p class="meta">${esc(ad.creative_text)}</p>` : ''}
-    </div>`;
-  const url = safeUrl(ad.target_url);
-  return url
-    ? `<a class="ad" href="${esc(url)}" target="_blank" rel="noopener sponsored">${inner}</a>`
-    : `<div class="ad">${inner}</div>`;
+  const restaurantSlug = String(ad.restaurant_slug || '').trim();
+
+  // روابط المطاعم داخل الموقع يجب أن تفتح صفحة المطعم داخليًا.
+  const internalUrl = restaurantSlug
+    ? `#/r/${encodeURIComponent(restaurantSlug)}`
+    : '';
+
+  const externalUrl = safeUrl(ad.target_url);
+  const url = internalUrl || externalUrl;
+
+  const title = ad.creative_title || ad.restaurant_name || 'اكتشف المطعم';
+
+  const tag = format === 'featured'
+    ? '<span class="ad-tag">مطعم مميز</span>'
+    : '<span class="ad-tag">إعلان</span>';
+
+  const inner = `
+    ${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : ''}
+    <div class="ad-body">
+      ${tag}
+      <strong class="ad-title">${esc(title)}</strong>
+      ${ad.creative_text
+        ? `<p class="meta">${esc(ad.creative_text)}</p>`
+        : ''}
+      ${restaurantSlug
+        ? '<span class="meta">افتح صفحة المطعم</span>'
+        : ''}
+    </div>
+  `;
+
+  if (!url) {
+    return `<div class="ad ad--${format}">${inner}</div>`;
+  }
+
+  if (internalUrl) {
+    return `<a class="ad ad--${format}" href="${esc(url)}"
+      aria-label="${esc(title)}">${inner}</a>`;
+  }
+
+  return `<a class="ad ad--${format}" href="${esc(url)}"
+    target="_blank" rel="noopener sponsored"
+    aria-label="${esc(title)}">${inner}</a>`;
+}
+
+// كل الإعلانات المؤهلة لنفس الموضع تظهر (وضع الاختبار)
+function adsHtml(list) {
+  return (list || []).map(adHtml).join('');
 }
 
 // ترتيب الصفحة من homepage_layout_items؛ لو مفيش ترتيب للصفحة نعرض البلوكات حسب ترتيبها
@@ -369,7 +475,7 @@ function layoutHtml(layout, blocks, byId, ads) {
       const bl = blockById.get(it.block_id);
       return bl ? blockHtml(bl, byId) : '';
     }
-    if (it.item_type === 'ad_banner') return adHtml(ads.get(it.ad_placements?.code));
+    if (it.item_type === 'ad_banner') return adsHtml(ads.get(it.ad_placements?.code));
     return '';
   }).join('');
 }
@@ -440,7 +546,7 @@ async function viewHome() {
   app.innerHTML = `
     ${topbar()}
     ${bannerHtml ? `<section class="banners" aria-label="عروض">${bannerHtml}</section>` : ''}
-    ${adHtml(ads.get('home_banner'))}
+    ${adsHtml(ads.get('home_banner'))}
     <nav class="chips" aria-label="التصنيفات">
       ${cats.map((c) => `<a class="chip" href="#/restaurants?c=${esc(c.slug)}">${esc(c.name)}</a>`).join('')}
     </nav>
