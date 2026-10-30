@@ -647,11 +647,26 @@ async function viewHome() {
   observeAds(app);
 }
 
-/* ============ قائمة المطاعم ============ */
+/* ============ قائمة المطاعم والتصنيفات ============ */
+// المطاعم تُربط بالتصنيف عبر restaurants.category_id ← restaurant_categories.id (الـ join في loadRestaurants)
+// الإعلانات: «الكل» ← restaurants_top / restaurants_between_*
+//            تصنيف محدد ← category_top / category_between_*
+const RESTAURANT_SLOTS = [['restaurants_between_1', 4], ['restaurants_between_2', 8], ['restaurants_between_3', 12]];
+const CATEGORY_SLOTS = [['category_between_1', 3], ['category_between_2', 7]];
+
+// يرجّع الإعلانات المؤهلة للموضع، ويستبعد أي حملة ظهرت قبل كده في نفس الصفحة
+function pickAds(ads, code, used) {
+  return (ads.get(code) || []).filter((a) => {
+    const key = a.campaign_id || a;
+    if (used.has(key)) return false;
+    used.add(key);
+    return true;
+  });
+}
+
 async function viewRestaurants(query) {
   const my = ++rid;
   viewSeq++;
-  let active = query.get('c') || '';
   app.innerHTML = `${topbar('المطاعم')}
     <div id="top-ads"></div>
     <input class="search" id="s" type="search" placeholder="ابحث باسم المطعم" aria-label="ابحث عن مطعم">
@@ -664,48 +679,70 @@ async function viewRestaurants(query) {
   ]);
   if (my !== rid) return;
 
-  const byId = new Map(rests.map((r) => [r.id, r]));
-  // مواضع المطاعم بتتعرض في أماكنها الخاصة، فبنستثنيها من الترتيب العام
-  const LIST_SLOTS = [ ['restaurants_between_1', 4], ['restaurants_between_2', 8], ['restaurants_between_3', 12] ];
-  const skip = new Set(['restaurants_top', ...LIST_SLOTS.map((x) => x[0])]);
-  $('#top-ads').innerHTML = adsHtml(ads.get('restaurants_top'));
-  $('#top').innerHTML = layoutHtml(layout, blocks, byId, ads, skip);
+  // التصنيف من الرابط لازم يكون نشط وموجود؛ غير كده نرجع لـ«الكل» (من غير قائمة فاضية غلط)
+  const catSlugs = new Set(cats.map((c) => c.slug));
+  let active = catSlugs.has(query.get('c') || '') ? query.get('c') : '';
+  if ((query.get('c') || '') !== active) {
+    history.replaceState(null, '', '#/restaurants');
+  }
 
-  const listHtml = (list) => {
-    let out = '';
-    list.forEach((r, i) => {
-      out += restRowHtml(r);
-      const n = i + 1;
-      for (const [code, after] of LIST_SLOTS) {
-        if (n === after) out += adsHtml(ads.get(code));
-      }
-    });
-    return out;
-  };
+  // ترتيب الصفحة بدون إعلانات المطاعم (في تصنيف محدد نعرض إعلانات التصنيف بدلها)
+  const layoutNoAds = layout.filter((it) => it.item_type !== 'ad_banner');
+  const pageAdsLayout = layout;
+
+  const matches = (r, term) =>
+    (!active || r.restaurant_categories?.slug === active) &&
+    (!term || (r.name || '').toLowerCase().includes(term));
 
   const drawChips = () => {
     $('#cats').innerHTML = `<button class="chip" data-c="" aria-pressed="${active === ''}">الكل</button>` +
       cats.map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="${active === c.slug}">${esc(c.name)}</button>`).join('');
   };
-  const draw = () => {
+
+  const render = () => {
     const term = $('#s').value.trim().toLowerCase();
-    const list = rests.filter((r) =>
-      (!active || (r.restaurant_categories && r.restaurant_categories.slug === active)) &&
-      (!term || (r.name || '').toLowerCase().includes(term)));
-    $('#list').innerHTML = listHtml(list) || emptyHtml('مفيش مطعم يطابق بحثك');
+    const isCat = active !== '';
+    const list = rests.filter((r) => matches(r, term));
+    const byId = new Map(list.map((r) => [r.id, r]));   // البلوكات بتتفلتر بنفس الشروط
+    const used = new Set();                              // كل حملة تظهر مرة واحدة في الصفحة
+    const slots = isCat ? CATEGORY_SLOTS : RESTAURANT_SLOTS;
+    const topCode = isCat ? 'category_top' : 'restaurants_top';
+
+    $('#top-ads').innerHTML = adsHtml(pickAds(ads, topCode, used));
+    const skip = new Set([topCode, ...slots.map((x) => x[0])]);
+    $('#top').innerHTML = layoutHtml(isCat ? layoutNoAds : pageAdsLayout, blocks, byId, ads, skip);
+
+    const listHtml = () => {
+      let out = '';
+      list.forEach((r, i) => {
+        out += restRowHtml(r);
+        for (const [code, after] of slots) {
+          if (i + 1 === after) out += adsHtml(pickAds(ads, code, used));
+        }
+      });
+      return out;
+    };
+
+    const emptyTxt = term ? 'مفيش مطعم يطابق بحثك'
+      : isCat ? 'مفيش مطاعم في التصنيف ده دلوقتي'
+      : 'مفيش مطاعم متاحة دلوقتي';
+    $('#list').innerHTML = list.length ? listHtml() : emptyHtml(emptyTxt);
+    observeAds($('#top-ads'));
     observeAds($('#list'));
   };
 
   drawChips();
-  draw();
+  render();
   observeAds(app);
-  $('#s').addEventListener('input', draw);
+  $('#s').addEventListener('input', render);
   $('#cats').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-c]');
     if (!b) return;
     active = b.dataset.c;
+    // نحدّث الرابط بدون إعادة تحميل، فالتصنيف يفضل محفوظ عند الريفرش أو عند فتح الرابط
+    history.replaceState(null, '', active ? `#/restaurants?c=${encodeURIComponent(active)}` : '#/restaurants');
     drawChips();
-    draw();
+    render();
   });
 }
 
