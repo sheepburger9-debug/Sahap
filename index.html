@@ -76,7 +76,11 @@ img.thumb{display:block}
 .restaurant-block__grid{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:4px 0 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
 .restaurant-block__grid::-webkit-scrollbar{display:none}
 .restaurant-block__col{display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:12px;flex:0 0 min(75vw, 75%);min-width:0;scroll-snap-align:start;max-width:75%}
-.restaurant-block__col .row{min-height:0}
+.restaurant-block__col .row{min-height:0;padding:10px 0;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 6px 12px rgba(20,24,21,.04);padding-inline:10px;align-items:center}
+.restaurant-block__col .row .thumb{width:56px;height:56px;min-width:56px}
+.restaurant-block__col .row .grow{display:flex;flex-direction:column;justify-content:center;gap:2px}
+.restaurant-block__col .row .meta{font-size:12px;line-height:1.4}
+.restaurant-block__col .row .rname{font-size:15px;line-height:1.4}
 .restaurant-card{position:relative;display:flex;flex-direction:row;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden;min-height:150px;box-shadow:0 10px 18px rgba(14,20,15,.08)}
 .restaurant-card__media{position:relative;width:120px;min-width:120px;background:var(--soft-olive);overflow:hidden}
 .restaurant-card__media img{display:block;width:100%;height:100%;object-fit:cover}
@@ -112,7 +116,7 @@ img.thumb{display:block}
 .stars{color:var(--saffron);letter-spacing:1px}
 .cartbar{position:fixed;bottom:86px;inset-inline:12px;max-width:496px;margin:0 auto;background:linear-gradient(135deg,#1A1F1B,#2d352f);color:#fff;border-radius:18px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:12;box-shadow:0 12px 25px rgba(14,20,15,.18)}
 .cartbar span{font-weight:600}
-.tabbar{position:fixed;bottom:10px;inset-inline:12px;max-width:520px;margin:0 auto;background:rgba(28,34,29,.92);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:8px 10px;display:grid;grid-template-columns:repeat(4, minmax(0,1fr));gap:8px;z-index:30}
+.tabbar{position:fixed;bottom:10px;inset-inline:12px;max-width:520px;margin:0 auto;background:rgba(28,34,29,.92);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:8px 10px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;z-index:30}
 .tabbar a{display:flex;align-items:center;justify-content:center;height:56px;border-radius:16px;color:#C7D1C7;text-decoration:none;transition:transform .2s ease, background .2s ease, color .2s ease}
 .tabbar a svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tabbar a[aria-current="page"]{background:linear-gradient(180deg,#F7C54B,#F2A511);color:var(--saffron-ink);box-shadow:0 10px 18px rgba(242,165,17,.32);transform:translateY(-2px)}
@@ -141,10 +145,13 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .toast{position:fixed;top:12px;inset-inline:12px;max-width:496px;margin:0 auto;background:var(--ink);color:#fff;padding:12px 16px;border-radius:12px;z-index:40;font-size:14px}
 @media (min-width: 768px){
   .wrap{padding-inline:20px}
+  .restaurant-block__grid{padding-bottom:10px}
+  .restaurant-block__col{flex-basis:min(32vw, 380px);max-width:min(32vw, 380px)}
 }
 @media (max-width: 767px){
   .restaurant-card{min-height:130px}
   .restaurant-card__media{width:112px;min-width:112px}
+  .restaurant-block__col{flex-basis:min(82vw, 420px);max-width:82vw}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
@@ -177,7 +184,7 @@ const money = (n) => `${Number(n || 0).toLocaleString('ar-EG', { maximumFraction
 const stars = (n) => { const v = Math.round(Number(n || 0)); return '★'.repeat(v) + '☆'.repeat(5 - v); };
 const app = $('#app');
 const cartbar = $('#cartbar');
-const STATUS = { pending: 'مستنين تأكيد المطعم', confirmed: 'اتأكد وبيتجهز', preparing: 'بيتحضر', delivering: 'في الطريق ليك', completed: 'اتسلم', cancelled: 'ألغى' };
+const STATUS = { pending: 'مستنين تأكيد المطعم', confirmed: 'اتأكد وبيتجهز', preparing: 'بيتحضر', delivering: 'في الطريق ليك', completed: 'اتسلم', cancelled: 'تم الإلغاء' };
 const PHONE_RE = /^(\+?20)?01[0125][0-9]{8}$/;
 const FAVORITE_KEY = 'sahab_favorites';
 let session = null;
@@ -429,7 +436,7 @@ function restaurantCardHtml(restaurant, block = null, categoryMap = null) {
           ${img ? `<img src="${esc(img)}" alt="${esc(restaurant.name)}" loading="lazy">` : `<div class="restaurant-card__media-fallback" aria-hidden="true">${esc((restaurant.name || '?').trim()[0] || '؟')}</div>`}
         </a>
         <button class="restaurant-card__favorite ${isFav ? 'is-active' : ''}" data-fav-id="${esc(String(restaurant.id))}" aria-label="${isFav ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'}" aria-pressed="${isFav ? 'true' : 'false'}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.35-9.5-8.3C.7 9.26 2.04 4.5 6.5 4.5c2.06 0 3.2 1.1 3.8 2.16.6-1.06 1.74-2.16 3.8-2.16 4.46 0 5.8 4.76 4 7.7-2 3.95-9.5 8.14-9.5 8.14Z"></path></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.35-9.5-8.3C.7 9.26 2.04 4.5 6.5 4.5c2.06 0 3.2 1.1 3.8 2.16.6-1.06 1.74-2.16 3.8-2.16 4.46 0 5.8 4.76 4 7.7-2 3.95-9.5 8.34-9.5 8.34Z"></path></svg>
         </button>
       </div>
       <div class="restaurant-card__body">
@@ -475,23 +482,28 @@ function normalizeHomeLayoutRow(row) {
   };
 }
 
-function renderRestaurantBlock(block, restaurantsById, categoryMap) {
-  const style = normalizeCardStyle(block.card_style);
-  const entries = Array.isArray(block.overrides) ? block.overrides : [];
-  const explicitIds = entries.map((entry) => entry.restaurant_id).filter(Boolean);
+function resolveBlockRestaurants(block, restaurantsById) {
+  const entries = Array.isArray(block?.overrides) ? block.overrides : [];
   const unique = [];
   const seen = new Set();
-  for (const id of explicitIds) {
-    const res = restaurantsById.get(String(id)) || restaurantsById.get(Number(id));
-    if (!res || seen.has(String(res.id))) continue;
-    seen.add(String(res.id));
-    unique.push(res);
+  for (const entry of entries) {
+    if (!entry || !entry.restaurant_id) continue;
+    const restaurant = restaurantsById.get(String(entry.restaurant_id)) || restaurantsById.get(Number(entry.restaurant_id));
+    if (!restaurant || seen.has(String(restaurant.id))) continue;
+    seen.add(String(restaurant.id));
+    unique.push(restaurant);
   }
-  if (!unique.length) return '';
+  return unique;
+}
+
+function renderRestaurantBlock(block, restaurantsById, categoryMap) {
+  const style = normalizeCardStyle(block.card_style);
+  const restaurants = resolveBlockRestaurants(block, restaurantsById);
+  if (!restaurants.length) return '';
   const cardsPerColumn = Math.max(1, Number(style.items_per_column || 3));
   const columns = [];
-  for (let i = 0; i < unique.length; i += cardsPerColumn) {
-    columns.push(unique.slice(i, i + cardsPerColumn));
+  for (let i = 0; i < restaurants.length; i += cardsPerColumn) {
+    columns.push(restaurants.slice(i, i + cardsPerColumn));
   }
   const grid = columns.map((column) => `<div class="restaurant-block__col">${column.map((restaurant) => restRowHtml(restaurant)).join('')}</div>`).join('');
   const subtitle = block.subtitle ? `<p class="meta sub">${esc(block.subtitle)}</p>` : '';
@@ -591,7 +603,7 @@ async function viewRestaurants(query) {
   if (my !== rid) return;
   const categoryMap = new Map((cats || []).map((c) => [c.id, c.name]));
   const drawChips = () => {
-    $('#cats').innerHTML = `<button class="chip" data-c="" aria-pressed="${active === ''}">الكل</button>` + (cats || []).map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="${active === c.slug || active === String(c.id)}">${esc(c.name)}</button>`).join('');
+    $('#cats').innerHTML = `<button class="chip" data-c="" aria-pressed="${active === ''}">الكل</button>` + (cats || []).map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="${active === c.slug || String(c.id) === active}">${esc(c.name)}</button>`).join('');
   };
   const draw = () => {
     const term = $('#s').value.trim().toLowerCase();
@@ -632,12 +644,29 @@ const PENDING_CHECKOUT_KEY = 'sahab_pending_checkout';
 function guestCartLoad(restaurantId) { try { const all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); return all[restaurantId] || []; } catch { return []; } }
 function guestCartSave(restaurantId, items) { try { const all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); if (items.length) all[restaurantId] = items; else delete all[restaurantId]; sessionStorage.setItem(GUEST_CART_KEY, JSON.stringify(all)); } catch {} }
 function loadCartForRestaurant(restaurantId) { if (session) return getCart(restaurantId, false); const items = guestCartLoad(restaurantId); return Promise.resolve(items.length ? { id: null, coupon_code: null, items } : { id: null, coupon_code: null, items: [] }); }
-async function syncGuestCart() { let all; try { all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); } catch { all = {}; } const rids = Object.keys(all).filter((rid) => all[rid]?.length); if (!rids.length) return; await Promise.all(rids.map(async (ridKey) => { const store = all[ridKey]; const res = await sb.from('carts').select('id').eq('customer_id', session.user.id).eq('restaurant_id', Number(ridKey)).eq('status', 'active').maybeSingle(); if (!res.data) return; const q = await sb.from('cart_items').select('id, product_id, quantity').eq('cart_id', res.data.id); const existing = new Map((q.data || []).map((it) => [it.product_id, it])); for (const it of store) { if (existing.has(it.product_id)) { await sb.from('cart_items').update({ quantity: it.quantity }).eq('id', existing.get(it.product_id).id); } else { await sb.from('cart_items').insert({ cart_id: res.data.id, product_id: it.product_id, quantity: it.quantity }); } } })); }
+async function syncGuestCart() {
+  let all; try { all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); } catch { all = {}; }
+  const rids = Object.keys(all).filter((rid) => all[rid]?.length);
+  for (const rid of rids) {
+    const cart = await getCart(Number(rid), true);
+    if (!cart) continue;
+    for (const item of all[rid]) {
+      const existing = cart.items.find((i) => i.product_id === item.product_id);
+      if (existing) {
+        await sb.from('cart_items').update({ quantity: item.quantity }).eq('id', existing.id);
+      } else {
+        await sb.from('cart_items').insert({ cart_id: cart.id, product_id: item.product_id, quantity: item.quantity });
+      }
+    }
+    delete all[rid];
+  }
+  sessionStorage.setItem(GUEST_CART_KEY, JSON.stringify(all));
+}
 
 async function viewRestaurant([, slug]) {
   const my = ++rid;
   app.innerHTML = backbar('') + '<p class="meta">جاري التحميل…</p>';
-  const { data: r } = await sb.from('restaurants').select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name, slug)').eq('slug', slug).maybeSingle();
+  const { data: r } = await sb.from('restaurants').select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name), restaurant_badge_assignments(is_active, badges(name, display_text, background_color, text_color))').eq('slug', slug).eq('is_published', true).maybeSingle();
   if (my !== rid) return;
   if (!r) { app.innerHTML = backbar('') + emptyHtml('المطعم ده مش متاح دلوقتي'); return; }
   const [menuCats, products, offers, reviews, methods, cart] = await Promise.all([
@@ -649,7 +678,7 @@ async function viewRestaurant([, slug]) {
     loadCartForRestaurant(r.id),
   ]);
   if (my !== rid) return;
-  R = { rest: r, menuCats: menuCats.data || [], products: products.data || [], prodMap: new Map((products.data || []).map((p) => [p.id, p])), offers: offers.data || [], reviews: reviews.data || [], methods, cart: cart || null };
+  R = { rest: r, menuCats: menuCats.data || [], products: products.data || [], prodMap: new Map((products.data || []).map((p) => [p.id, p])), offers: offers.data || [], reviews: reviews.data || [], methods, cart: cart || { id: null, coupon_code: null, items: [] } };
   const badges = badgesOf(r).map(badgeHtml).join(' ');
   const payNames = [methods.cash && 'كاش', methods.paymob && 'فيزا / محفظة'].filter(Boolean).join(' · ');
   app.innerHTML = `
@@ -670,7 +699,7 @@ async function viewRestaurant([, slug]) {
       ${R.menuCats.map((c) => `<button class="chip" data-act="scroll" data-target="sec-${esc(c.id)}">${esc(c.name)}</button>`).join('')}
     </nav>
     <div id="menu"></div>
-    ${R.reviews.length ? `<h2 class="sec">آراء العملاء</h2>${R.reviews.map((x) => `<div class="review"><span class="stars">${stars(x.rating)}</span>${x.review_text ? `<p>${esc(x.review_text)}</p>` : ''}<p class="meta">${new Date(x.created_at).toLocaleDateString('ar-EG')}</p></div>`).join('')}` : ''}
+    ${R.reviews.length ? `<h2 class="sec">آراء العملاء</h2>${R.reviews.map((x) => `<div class="review"><span class="stars">${stars(x.rating)}</span>${x.review_text ? `<p>${esc(x.review_text)}</p>` : ''}</div>`).join('')}` : ''}
   `;
   drawMenu();
   if (!r.is_open) toast('المطعم مقفول دلوقتي');
@@ -681,7 +710,7 @@ function productHtml(p) {
   const qty = inCart?.quantity || 0;
   const img = [...(p.product_images || [])].sort((a, b) => a.display_order - b.display_order)[0]?.image_url;
   const control = qty ? `<span class="qty"><button data-act="dec" data-id="${esc(p.id)}" aria-label="قلل ${esc(p.name)}">−</button><span aria-live="polite">${qty}</span><button data-act="inc" data-id="${esc(p.id)}" aria-label="زيد ${esc(p.name)}">+</button></span>` : `<button class="addbtn" data-act="inc" data-id="${esc(p.id)}">أضف</button>`;
-  return `<article class="product"><div class="thumb" aria-hidden="true">${img ? `<img src="${esc(img)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px">` : esc((p.name || '?').trim()[0] || '؟')}</div><div class="grow"><strong>${esc(p.name)}</strong>${p.description ? `<p class="meta">${esc(p.description)}</p>` : ''}<div class="pricerow"><span class="price">${money(p.price)}</span>${control}</div></div></article>`;
+  return `<article class="product"><div class="thumb" aria-hidden="true">${img ? `<img src="${esc(img)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px">` : esc((p.name || '?').trim()[0] || '؟')}</div><div class="grow"><div class="between"><strong>${esc(p.name)}</strong><span class="price">${money(p.price)}</span></div>${p.description ? `<p class="meta">${esc(p.description)}</p>` : ''}<div class="pricerow">${control}</div></div></article>`;
 }
 
 function drawMenu() {
@@ -691,7 +720,7 @@ function drawMenu() {
   const groups = R.menuCats.map((c) => ({ id: c.id, name: c.name, items: R.products.filter((p) => p.category_id === c.id) })).filter((g) => g.items.length);
   const loose = R.products.filter((p) => !p.category_id || !known.has(p.category_id));
   if (loose.length) groups.push({ id: 'other', name: 'أطباق أخرى', items: loose });
-  el.innerHTML = groups.length ? groups.map((g) => `<section id="sec-${esc(g.id)}"><h2 class="sec">${esc(g.name)}</h2>${g.items.map(productHtml).join('')}</section>`).join('') : emptyHtml('المطعم لسه ما أضافش أي أطباق');
+  el.innerHTML = groups.length ? groups.map((g) => `<section id="sec-${esc(g.id)}"><h2 class="sec">${esc(g.name)}</h2>${g.items.map(productHtml).join('')}</section>`).join('') : emptyHtml('المطعم ما عندوش أطباق متاحة دلوقتي');
   drawCartBar();
   document.querySelectorAll('[data-act="inc"]').forEach((b) => b.onclick = () => setQty(Number(b.dataset.id), 1));
   document.querySelectorAll('[data-act="dec"]').forEach((b) => b.onclick = () => setQty(Number(b.dataset.id), -1));
@@ -699,7 +728,7 @@ function drawMenu() {
 }
 
 function cartLines() { if (!R?.cart) return []; return R.cart.items.filter((i) => R.prodMap.has(i.product_id)).map((i) => ({ ...i, product: R.prodMap.get(i.product_id) })); }
-function drawCartBar() { const lines = cartLines(); const count = lines.reduce((s, i) => s + i.quantity, 0); if (!count || location.hash.indexOf('#/r/') !== 0) { cartbar.classList.add('hidden'); cartbar.innerHTML = ''; return; } const total = lines.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0); cartbar.innerHTML = `<span>${count} عناصر</span><b>${money(total)}</b><button class="btn primary auto" data-act="checkout">تأكيد الطلب</button>`; cartbar.classList.remove('hidden'); cartbar.querySelector('[data-act="checkout"]').onclick = openCheckout; }
+function drawCartBar() { const lines = cartLines(); const count = lines.reduce((s, i) => s + i.quantity, 0); if (!count || location.hash.indexOf('#/r/') !== 0) { cartbar.classList.add('hidden'); cartbar.innerHTML = ''; return; } const total = lines.reduce((s, i) => s + Number(i.product.price || 0) * i.quantity, 0); cartbar.innerHTML = `<span>${count} عنصر</span><strong>${money(total)}</strong><button class="btn primary auto" type="button" onclick="openCheckout()">تأكيد الطلب</button>`; cartbar.classList.remove('hidden'); }
 
 async function setQty(productId, delta) {
   if (!session) {
@@ -811,7 +840,7 @@ function orderHtml(o) {
     else if (p.provider === 'cash') payText = 'الدفع عند الاستلام';
     else if (p.status === 'pending' && o.status === 'pending') { payText = 'لسه مادفعتش'; payBtn = `<button class="btn primary auto" data-act="pay" data-order="${esc(o.id)}">ادفع الآن</button>`; }
   }
-  return `<article class="order"><div class="between"><strong>${esc(o.restaurants?.name || 'مطعم')}</strong><b>${money(o.total_amount)}</b></div><p class="meta">${items}</p><p class="meta" style="margin-top:6px">${esc(STATUS[o.status] || o.status)}</p>${payText ? `<span class="pill">${esc(payText)}</span>` : ''}${payBtn ? `<div>${payBtn}</div>` : ''}</article>`;
+  return `<article class="order"><div class="between"><strong>${esc(o.restaurants?.name || 'مطعم')}</strong><b>${money(o.total_amount)}</b></div><p class="meta">${items}</p><p class="meta" style="margin-top:8px">${esc(STATUS[o.status] || o.status || 'قيد التنفيذ')}</p>${payText ? `<span class="pill">${esc(payText)}</span>` : ''}${payBtn ? `<div class="between" style="margin-top:10px">${payBtn}</div>` : ''}</article>`;
 }
 
 async function viewOrders() {
@@ -822,9 +851,7 @@ async function viewOrders() {
     if (my !== rid) return;
     if (error) throw error;
     app.innerHTML = topbar('طلباتي') + (orders.length ? orders.map(orderHtml).join('') : emptyHtml('لسه ماطلبتش حاجة. ابدأ من المطاعم.'));
-    document.querySelectorAll('[data-act="pay"]').forEach((btn) => {
-      btn.onclick = () => payOrder(btn.dataset.order, btn);
-    });
+    document.querySelectorAll('[data-act="pay"]').forEach((btn) => { btn.onclick = () => payOrder(btn.dataset.order, btn); });
     const waiting = orders.some((o) => o.status === 'pending' && (o.payments || []).some((p) => p.provider === 'paymob' && p.status === 'pending'));
     if (waiting) pollTimer = setInterval(() => { if (location.hash === '#/orders') viewOrders(); }, 8000);
   } catch (err) {
@@ -867,7 +894,7 @@ async function viewAccount() {
   const my = ++rid;
   await loadProfile();
   if (my !== rid) return;
-  app.innerHTML = `${topbar('حسابي')}<div class="points"><b>${esc(profile?.full_name || 'ضيف')}</b><div class="meta">${esc(profile?.phone || 'لا يوجد رقم')}</div></div><div class="acct"><form id="profileForm"><label>الاسم كامل</label><input id="fullName" value="${esc(profile?.full_name || '')}"><label>رقم الهاتف</label><input id="phone" value="${esc(profile?.phone || '')}"><button class="btn primary" type="submit">حفظ</button></form><button class="btn ghost" id="logoutBtn" type="button">تسجيل الخروج</button></div>`;
+  app.innerHTML = `${topbar('حسابي')}<div class="points"><b>${esc(profile?.full_name || 'ضيف')}</b><div class="meta">${esc(profile?.phone || 'لا يوجد رقم')}</div></div><div class="acct"><form id="profileForm"><label>الاسم</label><input id="fullName" value="${esc(profile?.full_name || '')}"><label>رقم الهاتف</label><input id="phone" value="${esc(profile?.phone || '')}"><button class="btn primary" type="submit">حفظ</button></form><button class="btn ghost" id="logoutBtn" type="button">تسجيل الخروج</button></div>`;
   $('#profileForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
