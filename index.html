@@ -7,7 +7,7 @@
 <meta name="description" content="سحاب: اطلب أكلك من أقرب المطاعم">
 <title>سحاب</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23F2A511'/%3E%3Ctext x='50' y='70' font-size='58' font-family='Arial' font-weight='700' fill='%232A1C00'%3Eس%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23F2A511'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='%231A1F1B'%3Eس%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@600;700&display=swap" rel="stylesheet">
@@ -17,8 +17,7 @@
   --bg:#EEF2EA; --card:#FFFFFF;
   --saffron:#F2A511; --saffron-ink:#2A1C00;
   --tomato:#B8402A; --olive:#3E5B3A;
-  --soft-olive:#E6EDE1;
-  --r:14px;
+  --r:14px; --col-w:75%;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;font-size:15px;line-height:1.6;-webkit-tap-highlight-color:transparent}
@@ -30,74 +29,59 @@ input,textarea{font:inherit;width:100%;padding:12px 14px;border:1px solid var(--
 input:focus,textarea:focus{outline:2px solid var(--saffron);outline-offset:0;border-color:transparent}
 :focus-visible{outline:3px solid var(--saffron);outline-offset:2px}
 label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 6px}
-.wrap{max-width:1180px;margin:0 auto;padding:0 16px 120px}
+.wrap{max-width:520px;margin:0 auto;padding:0 16px 120px}
 .hidden{display:none!important}
 .grow{flex:1;min-width:0}
 .meta{font-size:13px;color:var(--ink-2)}
 .err{color:var(--tomato);font-size:14px;min-height:0;margin-top:10px}
 .sec{font-size:19px;margin:22px 0 10px}
 .sub{margin:-6px 0 10px}
-.empty{text-align:center;padding:48px 16px;color:var(--ink-2)}
-.center{text-align:center}
+
 .topbar{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 10px;min-height:60px}
 .ttl{font-size:26px;font-weight:700}
 .brand{font-family:"Reem Kufi",sans-serif;font-size:28px;font-weight:700;letter-spacing:0}
+
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:#fff;border-radius:999px;padding:13px 20px;font-weight:600;width:100%;text-decoration:none}
 .btn.primary{background:var(--saffron);color:var(--saffron-ink)}
 .btn.ghost{background:transparent;border:1px solid var(--ink);color:var(--ink)}
 .btn.auto{width:auto}
 .btn:disabled{opacity:.5;cursor:default}
 .linkbtn{display:block;margin:16px auto 0;color:var(--olive);font-weight:600;padding:8px}
+
 .chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{white-space:nowrap;padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:14px;text-decoration:none;color:var(--ink)}
 .chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+
 .search{margin:4px 0 6px}
+
 .banners{display:flex;gap:12px;overflow-x:auto;margin:6px -16px 0;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
 .banners::-webkit-scrollbar{display:none}
-.banner{flex:0 0 min(88%, 460px);scroll-snap-align:start;position:relative;overflow:hidden;min-height:176px;border-radius:20px;background:var(--saffron);color:var(--saffron-ink);padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;text-decoration:none}
+.banner{flex:0 0 88%;scroll-snap-align:start;position:relative;overflow:hidden;min-height:176px;border-radius:20px;background:var(--saffron);color:var(--saffron-ink);padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-decoration:none}
 .banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3}
 .banner > *{position:relative}
 .banner .bt{font-family:"Reem Kufi",sans-serif;font-size:24px;font-weight:700;line-height:1.2}
-.block{margin-top:12px}
-.block .rail{display:flex;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scrollbar-width:none}
+
+.block .rail{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
 .block .rail::-webkit-scrollbar{display:none}
 .mini{flex:0 0 150px;text-decoration:none;display:flex;flex-direction:column;gap:4px}
 .cover{height:96px;border-radius:12px;background:#D9E1D2;overflow:hidden;display:grid;place-items:center;font-family:"Reem Kufi",sans-serif;font-size:32px;color:var(--olive)}
 .cover img{width:100%;height:100%;object-fit:cover}
 .mini strong{font-size:15px}
+.col{flex:0 0 var(--col-w);min-width:0;scroll-snap-align:start;display:flex;flex-direction:column}
+.col .row:last-child{border-bottom:0}
+.ad{display:block;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:14px 0}
+.ad img{display:block;width:100%;height:auto;max-height:200px;object-fit:cover}
+.ad-body{padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.ad-tag{font-size:11px;color:var(--ink-2)}
+.ad-title{font-family:"Reem Kufi",sans-serif;font-size:17px;font-weight:700}
+
 .row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
 .rname{font-size:16px;font-weight:600}
 .thumb{width:72px;height:72px;flex:none;border-radius:12px;background:#D9E1D2;object-fit:cover;display:grid;place-items:center;font-size:28px;color:var(--olive);font-family:"Reem Kufi",sans-serif}
 img.thumb{display:block}
 .badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;margin-top:4px}
-.restaurant-block{margin-top:18px}
-.restaurant-block__header{margin:0 0 10px}
-.restaurant-block__grid{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:4px 0 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
-.restaurant-block__grid::-webkit-scrollbar{display:none}
-.restaurant-block__col{display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:12px;flex:0 0 min(75vw, 75%);min-width:0;scroll-snap-align:start;max-width:75%}
-.restaurant-block__col .row{min-height:0;padding:10px 0;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 6px 12px rgba(20,24,21,.04);padding-inline:10px;align-items:center}
-.restaurant-block__col .row .thumb{width:56px;height:56px;min-width:56px}
-.restaurant-block__col .row .grow{display:flex;flex-direction:column;justify-content:center;gap:2px}
-.restaurant-block__col .row .meta{font-size:12px;line-height:1.4}
-.restaurant-block__col .row .rname{font-size:15px;line-height:1.4}
-.restaurant-card{position:relative;display:flex;flex-direction:row;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden;min-height:150px;box-shadow:0 10px 18px rgba(14,20,15,.08)}
-.restaurant-card__media{position:relative;width:120px;min-width:120px;background:var(--soft-olive);overflow:hidden}
-.restaurant-card__media img{display:block;width:100%;height:100%;object-fit:cover}
-.restaurant-card__media-fallback{display:grid;place-items:center;width:100%;height:100%;background:#D9E1D2;color:var(--olive);font-family:"Reem Kufi",sans-serif;font-size:42px}
-.restaurant-card__body{display:flex;flex:1;flex-direction:column;justify-content:space-between;padding:12px 12px 10px;min-width:0}
-.restaurant-card__title{font-size:17px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.restaurant-card__type{font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
-.restaurant-card__meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:12px;color:var(--ink-2)}
-.restaurant-card__status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--olive);margin-top:8px}
-.restaurant-card__status::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block}
-.restaurant-card__badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;margin-top:8px;align-self:flex-start}
-.restaurant-card__favorite{position:absolute;top:10px;right:10px;z-index:2;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.72);backdrop-filter:blur(8px)}
-.restaurant-card__favorite:active{transform:scale(.96)}
-.restaurant-card__favorite svg{width:18px;height:18px;stroke:#1A1F1B;stroke-width:2.4;fill:transparent;transition:fill .2s ease, stroke .2s ease}
-.restaurant-card__favorite.is-active{background:rgba(255,255,255,.85)}
-.restaurant-card__favorite.is-active svg{fill:#F24D4D;stroke:#F24D4D}
-.restaurant-card__link{display:block;text-decoration:none;color:inherit;flex:1;min-width:0}
+
 .hero{height:170px;border-radius:18px;overflow:hidden;background:var(--olive);display:grid;place-items:center;margin-top:4px}
 .hero img{width:100%;height:100%;object-fit:cover}
 .hero-fb{font-family:"Reem Kufi",sans-serif;font-size:72px;color:#EEF2EA}
@@ -105,6 +89,7 @@ img.thumb{display:block}
 .facts{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:14px;color:var(--ink-2)}
 .offerbox{background:#fff;border-radius:var(--r);padding:14px;margin-top:14px;border-inline-start:4px solid var(--saffron)}
 .menucats{position:sticky;top:60px;z-index:4;background:var(--bg);padding-bottom:4px}
+
 .product{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);align-items:flex-start}
 .price{font-weight:700;color:var(--olive)}
 .pricerow{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px}
@@ -112,15 +97,16 @@ img.thumb{display:block}
 .qty{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px}
 .qty button{width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;font-size:18px;line-height:1}
 .qty span{min-width:20px;text-align:center;font-weight:700}
+
 .review{padding:12px 0;border-bottom:1px solid var(--line)}
 .stars{color:var(--saffron);letter-spacing:1px}
-.cartbar{position:fixed;bottom:86px;inset-inline:12px;max-width:496px;margin:0 auto;background:linear-gradient(135deg,#1A1F1B,#2d352f);color:#fff;border-radius:18px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:12;box-shadow:0 12px 25px rgba(14,20,15,.18)}
-.cartbar span{font-weight:600}
-.tabbar{position:fixed;bottom:10px;inset-inline:12px;max-width:520px;margin:0 auto;background:rgba(28,34,29,.92);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:8px 10px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;z-index:30}
-.tabbar a{display:flex;align-items:center;justify-content:center;height:56px;border-radius:16px;color:#C7D1C7;text-decoration:none;transition:transform .2s ease, background .2s ease, color .2s ease}
-.tabbar a svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.tabbar a[aria-current="page"]{background:linear-gradient(180deg,#F7C54B,#F2A511);color:var(--saffron-ink);box-shadow:0 10px 18px rgba(242,165,17,.32);transform:translateY(-2px)}
-.tabbar a:active{transform:scale(.98)}
+
+.cartbar{position:fixed;bottom:76px;inset-inline:12px;max-width:496px;margin:0 auto;background:var(--ink);color:#fff;border-radius:16px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:9;box-shadow:0 10px 30px rgba(20,28,22,.25)}
+
+.tabbar{position:fixed;bottom:0;inset-inline:0;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:6px 4px max(8px,env(safe-area-inset-bottom));z-index:10}
+.tabbar a{text-align:center;color:var(--ink-2);text-decoration:none;font-size:13px;padding:8px 4px;border-radius:10px}
+.tabbar a[aria-current="page"]{color:var(--ink);font-weight:700;background:var(--bg)}
+
 .backdrop{position:fixed;inset:0;background:rgba(14,20,15,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--bg);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:18px 16px max(22px,env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
 .sheet h2{font-size:22px;margin-bottom:4px}
@@ -133,85 +119,89 @@ fieldset{border:0;margin:14px 0 0;padding:0}
 legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .inline{display:flex;gap:8px}
 .inline input{flex:1}
+
 .order{background:#fff;border-radius:var(--r);padding:14px;margin-bottom:12px}
 .between{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
 .pill{display:inline-block;font-size:13px;padding:3px 10px;border-radius:999px;background:var(--bg);margin-top:8px}
 .order .btn{margin-top:10px}
+
 .auth{background:#fff;border-radius:18px;padding:18px;margin-top:8px}
 .points{background:#fff;border-radius:var(--r);padding:16px;margin:10px 0 4px;font-size:16px}
 .points b{font-family:"Reem Kufi",sans-serif;font-size:26px;color:var(--olive)}
 .acct form{background:#fff;border-radius:18px;padding:16px;margin-top:10px}
 .acct .btn{margin-top:16px}
+
 .toast{position:fixed;top:12px;inset-inline:12px;max-width:496px;margin:0 auto;background:var(--ink);color:#fff;padding:12px 16px;border-radius:12px;z-index:40;font-size:14px}
-@media (min-width: 768px){
-  .wrap{padding-inline:20px}
-  .restaurant-block__grid{padding-bottom:10px}
-  .restaurant-block__col{flex-basis:min(32vw, 380px);max-width:min(32vw, 380px)}
-}
-@media (max-width: 767px){
-  .restaurant-card{min-height:130px}
-  .restaurant-card__media{width:112px;min-width:112px}
-  .restaurant-block__col{flex-basis:min(82vw, 420px);max-width:82vw}
-}
+.empty{text-align:center;padding:48px 16px;color:var(--ink-2)}
+.center{text-align:center}
+
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
 <main id="app" class="wrap" aria-live="polite"></main>
+
 <div id="cartbar" class="cartbar hidden" role="region" aria-label="السلة"></div>
+
 <nav class="tabbar" aria-label="التنقل">
-  <a href="#/home" data-tab="home" aria-label="الرئيسية" aria-current="page">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V20h14V9.5"></path><path d="M10 20v-6h4v6"></path></svg>
-  </a>
-  <a href="#/restaurants" data-tab="restaurants" aria-label="المطاعم">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V7.5A1.5 1.5 0 0 1 6.5 6H17.5A1.5 1.5 0 0 1 19 7.5V19"></path><path d="M8 6V3"></path><path d="M16 6V3"></path><path d="M9 10h6"></path></svg>
-  </a>
-  <a href="#/orders" data-tab="orders" aria-label="طلباتي">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10l2 4v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8l2-4Z"></path><path d="M9 10h6"></path><path d="M8 4V2.5"></path><path d="M16 4V2.5"></path></svg>
-  </a>
-  <a href="#/account" data-tab="account" aria-label="حسابي">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"></path><path d="M5 20a7 7 0 0 1 14 0"></path></svg>
-  </a>
+  <a href="#/home" data-tab="home">الرئيسية</a>
+  <a href="#/restaurants" data-tab="restaurants">المطاعم</a>
+  <a href="#/orders" data-tab="orders">طلباتي</a>
+  <a href="#/account" data-tab="account">حسابي</a>
 </nav>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
+/* ============ الإعداد ============ */
+// المفتاح ده publishable (عام وآمن للكود العام). الأسرار موجودة على سوبابيز بس.
 const SB_URL = 'https://hazyajkncrdfewkvnoww.supabase.co';
 const SB_KEY = 'sb_publishable_9Kf6dTQTqI9h7-yGALWMWg_bjPzM6Zu';
 const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+/* ============ أدوات مساعدة ============ */
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => `${Number(n || 0).toLocaleString('ar-EG', { maximumFractionDigits: 2 })} ج.م`;
 const stars = (n) => { const v = Math.round(Number(n || 0)); return '★'.repeat(v) + '☆'.repeat(5 - v); };
 const app = $('#app');
 const cartbar = $('#cartbar');
-const STATUS = { pending: 'مستنين تأكيد المطعم', confirmed: 'اتأكد وبيتجهز', preparing: 'بيتحضر', delivering: 'في الطريق ليك', completed: 'اتسلم', cancelled: 'تم الإلغاء' };
+const STATUS = {
+  pending: 'مستنين تأكيد المطعم', confirmed: 'اتأكد وبيتجهز', preparing: 'بيتحضر',
+  delivering: 'في الطريق ليك', completed: 'اتسلم', cancelled: 'اتلغى',
+};
 const PHONE_RE = /^(\+?20)?01[0125][0-9]{8}$/;
-const FAVORITE_KEY = 'sahab_favorites';
+
 let session = null;
 let profile = null;
-let rid = 0;
+let rid = 0;          // رقم العرض الحالي، عشان نتجاهل ردود قديمة
 let pollTimer = null;
-let R = null;
+let R = null;         // حالة صفحة المطعم الحالية
 
-function safeJsonParse(value, fallback = {}) {
-  if (!value || typeof value !== 'string') return fallback;
-  try { return JSON.parse(value); } catch { return fallback; }
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
 }
-function normalizeCardStyle(cardStyle) {
-  const parsed = typeof cardStyle === 'string' ? safeJsonParse(cardStyle, {}) : (cardStyle || {});
-  return {
-    card_layout: parsed.card_layout || 'horizontal',
-    image_position: parsed.image_position || 'right',
-    columns: Number(parsed.columns || 3),
-    items_per_column: Number(parsed.items_per_column || 3),
-    scroll_direction: parsed.scroll_direction || 'horizontal',
-    auto_scroll: parsed.auto_scroll === true
-  };
+
+function openSheet(html, onMount) {
+  closeSheet();
+  const bd = document.createElement('div');
+  bd.className = 'backdrop';
+  bd.id = 'sheet';
+  bd.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;
+  bd.addEventListener('click', (e) => { if (e.target === bd) closeSheet(); });
+  document.body.appendChild(bd);
+  onMount?.(bd.querySelector('.sheet'));
 }
-function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3200); }
-function openSheet(html, onMount) { closeSheet(); const bd = document.createElement('div'); bd.className = 'backdrop'; bd.id = 'sheet'; bd.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`; document.body.appendChild(bd); onMount?.(bd.querySelector('.sheet')); }
 function closeSheet() { $('#sheet')?.remove(); }
-async function invokeError(error, fallback) { if (!error) return fallback; try { const j = await error.context.json(); return j.error || fallback; } catch { return fallback; } }
+
+async function invokeError(error, fallback) {
+  if (!error) return fallback;
+  try { const j = await error.context.json(); return j.error || fallback; } catch { return fallback; }
+}
+
 function translateAuthError(msg = '') {
   if (/Invalid login/i.test(msg)) return 'الإيميل أو كلمة السر غلط';
   if (/already registered/i.test(msg)) return 'الإيميل ده مسجل قبل كده، ادخل من الأول';
@@ -219,363 +209,180 @@ function translateAuthError(msg = '') {
   if (/valid email/i.test(msg)) return 'اكتب إيميل صحيح';
   return msg || 'حصلت مشكلة، حاول تاني';
 }
-function readDeep(data, paths) {
-  for (const path of paths) {
-    const keys = path.split('.');
-    let current = data;
-    let found = true;
-    for (const key of keys) {
-      const next = current && typeof current === 'object' ? current[key] : undefined;
-      if (next === undefined || next === null) { found = false; break; }
-      current = next;
-    }
-    if (found && current !== undefined && current !== null && current !== '') return current;
-  }
-  return undefined;
-}
 
+/* ============ الجلسة ============ */
 async function loadProfile() {
   if (!session) { profile = null; return; }
-  try {
-    const { data } = await sb.from('profiles').select('id, full_name, phone, role').eq('id', session.user.id).maybeSingle();
-    profile = data || null;
-  } catch (err) {
-    console.error('loadProfile error', err); profile = null;
-  }
+  const { data } = await sb.from('profiles').select('id, full_name, phone, role').eq('id', session.user.id).maybeSingle();
+  profile = data;
 }
-function goLogin() { toast('سجّل دخولك الأول'); location.hash = '#/login'; }
-async function logout() { try { await sb.auth.signOut(); } catch {} location.hash = '#/home'; toast('خرجت من حسابك'); }
 
+function goLogin() {
+  toast('سجّل دخولك الأول');
+  location.hash = '#/login';
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  location.hash = '#/home';
+  toast('خرجت من حسابك');
+}
+
+/* ============ تحميل البيانات ============ */
 async function loadRestaurants() {
-  try {
-    const { data, error } = await sb.from('restaurants')
-      .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, is_published, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, badges(name, display_text, background_color, text_color))')
-      .eq('is_published', true)
-      .order('rating', { ascending: false });
-    if (error) throw error;
-    return Array.isArray(data) ? data : [];
-  } catch (err) {
-    console.error('loadRestaurants error', err);
-    return [];
-  }
+  const { data, error } = await sb.from('restaurants')
+    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, background_color, text_color))')
+    .order('rating', { ascending: false });
+  if (error) { toast('تعذّر تحميل المطاعم'); return []; }
+  return data || [];
 }
 async function loadCategories() {
-  try {
-    const { data, error } = await sb.from('restaurant_categories').select('id, name, slug').eq('is_active', true).order('display_order');
-    if (error) throw error;
-    return Array.isArray(data) ? data : [];
-  } catch (err) {
-    console.error('loadCategories error', err);
-    return [];
-  }
-}
-async function loadHomepageLayout(pageKey = 'home', categoryId = null) {
-  try {
-    const { data, error } = await sb.rpc('get_public_homepage_layout', { p_page_key: pageKey, p_category_id: categoryId });
-    if (error) throw error;
-    return Array.isArray(data) ? data : [];
-  } catch (err) {
-    console.error('get_public_homepage_layout error', err);
-    return [];
-  }
-}
-async function loadAdInventory() {
-  try {
-    const { data, error } = await sb.rpc('get_public_ad_inventory');
-    if (error) throw error;
-    return Array.isArray(data) ? data : [];
-  } catch (err) {
-    console.error('get_public_ad_inventory error', err);
-    return [];
-  }
-}
-function normalizeCampaigns(value) {
-  if (!value) return [];
-  if (Array.isArray(value)) return value.filter(Boolean);
-  if (Array.isArray(value.campaigns)) return value.campaigns.filter(Boolean);
-  if (Array.isArray(value.items)) return value.items.filter(Boolean);
-  if (Array.isArray(value.data)) return value.data.filter(Boolean);
-  if (value.campaign && Array.isArray(value.campaign)) return value.campaign.filter(Boolean);
-  return [];
-}
-function getAdPlacementMap(adInventory) {
-  const map = new Map();
-  (adInventory || []).forEach((entry) => {
-    const placementCode = readDeep(entry, ['placement_code', 'placement', 'code', 'placement_key', 'location_code']) || readDeep(entry, ['id']);
-    if (!placementCode) return;
-    map.set(String(placementCode), entry);
-  });
-  return map;
-}
-function getEligibleCampaign(adEntry) {
-  if (!adEntry) return null;
-  const campaigns = normalizeCampaigns(adEntry);
-  const now = new Date();
-  const eligible = campaigns.find((campaign) => {
-    if (!campaign || typeof campaign !== 'object') return false;
-    const status = String(readDeep(campaign, ['status', 'state', 'campaign_status']) || '').toLowerCase();
-    if (['inactive', 'disabled', 'draft', 'archived', 'pending_review'].includes(status)) return false;
-    if (campaign.is_active === false) return false;
-    const start = readDeep(campaign, ['start_at', 'starts_at', 'started_at', 'starts']);
-    const end = readDeep(campaign, ['end_at', 'ends_at', 'ended_at', 'ends']);
-    if (start && new Date(start) > now) return false;
-    if (end && new Date(end) < now) return false;
-    const title = readDeep(campaign, ['title', 'name', 'ad_title', 'offer_title']);
-    const image = readDeep(campaign, ['image_url', 'banner_image_url', 'image', 'media_url']);
-    return Boolean(title || image || campaign.description || campaign.text || campaign.summary);
-  });
-  return eligible || null;
-}
-function renderBanner(ad) {
-  if (!ad) return '';
-  const entry = typeof ad === 'object' && ad.campaigns ? ad : { ...ad, campaigns: normalizeCampaigns(ad) };
-  const campaign = getEligibleCampaign(entry) || normalizeCampaigns(entry)[0] || null;
-  if (!campaign) return '';
-  const title = readDeep(campaign, ['title', 'name', 'ad_title', 'offer_title']) || readDeep(entry, ['title', 'name', 'ad_title', 'offer_title']) || 'عرض خاص';
-  const description = readDeep(campaign, ['description', 'summary', 'text', 'ad_description']) || readDeep(entry, ['description', 'summary', 'text', 'ad_description']) || '';
-  const image = readDeep(campaign, ['image_url', 'banner_image_url', 'image', 'media_url']) || readDeep(entry, ['image_url', 'banner_image_url', 'image', 'media_url']) || '';
-  const restaurantSlug = readDeep(campaign, ['restaurant.slug', 'restaurants.slug', 'restaurant_slug', 'slug']) || readDeep(entry, ['restaurant.slug', 'restaurants.slug', 'restaurant_slug', 'slug']) || '';
-  const restaurantName = readDeep(campaign, ['restaurant.name', 'restaurants.name', 'restaurant_name', 'merchant_name']) || readDeep(entry, ['restaurant.name', 'restaurants.name', 'restaurant_name', 'merchant_name']) || 'عرض خاص';
-  const href = restaurantSlug ? `#/r/${encodeURIComponent(restaurantSlug)}` : '#';
-  return `<a class="banner" href="${esc(href)}" aria-label="${esc(String(title))}">
-    ${image ? `<img src="${esc(image)}" alt="" loading="lazy">` : ''}
-    <span class="meta" style="color:inherit">${esc(String(restaurantName))}</span>
-    <span class="bt">${esc(String(title))}</span>
-    ${description ? `<span>${esc(String(description))}</span>` : ''}
-  </a>`;
+  const { data } = await sb.from('restaurant_categories').select('id, name, slug').eq('is_active', true).order('display_order');
+  return data || [];
 }
 async function loadBanners() {
-  try {
-    const { data, error } = await sb.from('homepage_offer_banner_items')
-      .select('id, offer_id, restaurant_id, display_order, starts_at, ends_at, is_active, restaurant_offers(id, title, description, image_url, restaurant_id, status, starts_at, ends_at)')
-      .eq('is_active', true)
-      .order('display_order');
-    if (error) throw error;
-    const now = new Date();
-    return (Array.isArray(data) ? data : [])
-      .filter((row) => row && row.restaurant_offers)
-      .filter((row) => {
-        const offer = row.restaurant_offers;
-        const bannerStarts = row.starts_at ? new Date(row.starts_at) : null;
-        const bannerEnds = row.ends_at ? new Date(row.ends_at) : null;
-        const offerStarts = offer.starts_at ? new Date(offer.starts_at) : null;
-        const offerEnds = offer.ends_at ? new Date(offer.ends_at) : null;
-        if (row.is_active !== true) return false;
-        if (offer.status && offer.status !== 'approved') return false;
-        if (bannerStarts && bannerStarts > now) return false;
-        if (bannerEnds && bannerEnds < now) return false;
-        if (offerStarts && offerStarts > now) return false;
-        if (offerEnds && offerEnds < now) return false;
-        return true;
-      })
-      .map((row) => ({
-        id: row.id,
-        title: row.restaurant_offers.title,
-        description: row.restaurant_offers.description,
-        image_url: row.restaurant_offers.image_url,
-        restaurant_id: row.restaurant_offers.restaurant_id || row.restaurant_id,
-        display_order: row.display_order,
-        starts_at: row.starts_at,
-        ends_at: row.ends_at,
-        is_active: row.is_active,
-        offer_id: row.offer_id,
-      }))
-      .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
-  } catch (err) {
-    console.error('loadBanners error', err);
-    return [];
-  }
+  const { data } = await sb.from('homepage_offer_banner_items')
+    .select('id, display_order, restaurant_offers(id, title, description, image_url, restaurant_id)')
+    .eq('is_active', true).order('display_order');
+  return (data || []).map((x) => x.restaurant_offers).filter(Boolean);
 }
 async function loadBlocks() {
-  try {
-    const { data, error } = await sb.from('restaurant_blocks')
-      .select('id, title, subtitle, badge_id, card_style, display_order, is_visible')
-      .eq('is_visible', true)
-      .order('display_order');
-    if (error) throw error;
-    const blocks = Array.isArray(data) ? data : [];
-    const overrideIds = blocks.map((b) => b.id);
-    let overrideMap = new Map();
-    if (overrideIds.length) {
-      const { data: overrides, error: overrideError } = await sb.from('block_restaurant_overrides')
-        .select('block_id, restaurant_id, is_eligible, display_order, badge_id, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at')
-        .in('block_id', overrideIds)
-        .eq('is_eligible', true)
-        .order('display_order');
-      if (!overrideError && Array.isArray(overrides)) {
-        overrides.forEach((item) => {
-          if (!overrideMap.has(item.block_id)) overrideMap.set(item.block_id, []);
-          overrideMap.get(item.block_id).push(item);
-        });
-      }
-    }
-    return blocks.map((block) => {
-      const style = normalizeCardStyle(block.card_style);
-      const entries = overrideMap.get(block.id) || [];
-      return {
-        ...block,
-        card_style: style,
-        overrides: entries,
-        items: entries,
-      };
-    });
-  } catch (err) {
-    console.error('loadBlocks error', err);
-    return [];
-  }
+  const { data, error } = await sb.from('restaurant_blocks')
+    .select('id, title, subtitle, display_order, badge:badges(name, display_text, background_color, text_color), block_restaurant_overrides(restaurant_id, display_order, is_eligible, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at, badge:badges(name, display_text, background_color, text_color))')
+    .eq('is_visible', true).order('display_order');
+  if (error) return [];
+  return (data || []).map((b) => ({
+    ...b,
+    // المطاعم داخل البلوك = الاستثناءات المؤهلة، بالترتيب المحدد في الإدارة
+    members: (b.block_restaurant_overrides || [])
+      .filter((o) => o.is_eligible !== false)
+      .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0)),
+  }));
 }
-async function loadMethods(restaurantId) { try { const { data } = await sb.rpc('get_payment_methods', { p_restaurant_id: restaurantId }); return data || { cash: false, paymob: false }; } catch { return { cash: false, paymob: false }; } }
+async function loadLayout(pageKey) {
+  const { data } = await sb.from('homepage_layout_items')
+    .select('item_type, display_order, block_id, ad_placements(code)')
+    .eq('page_key', pageKey).eq('is_visible', true).order('display_order');
+  return data || [];
+}
+// الإعلانات المؤهلة فقط، من دالة على السيرفر تُرجع حقول العرض بس (بدون ميزانية أو أسعار)
+async function loadAds() {
+  const { data, error } = await sb.rpc('get_eligible_ads');
+  if (error || !data) return new Map();
+  return new Map(data.map((a) => [a.placement_code, a]));
+}
+async function loadMethods(restaurantId) {
+  const { data } = await sb.rpc('get_payment_methods', { p_restaurant_id: restaurantId });
+  return data || { cash: false, paymob: false };
+}
 
-function getFavoriteSet() { try { return new Set(JSON.parse(localStorage.getItem(FAVORITE_KEY) || '[]')); } catch { return new Set(); } }
-function isRestaurantFavorite(id) { return getFavoriteSet().has(String(id)); }
-function toggleFavorite(event, restaurantId) {
-  event.preventDefault(); event.stopPropagation();
-  const key = String(restaurantId);
-  const set = getFavoriteSet();
-  if (set.has(key)) set.delete(key); else set.add(key);
-  localStorage.setItem(FAVORITE_KEY, JSON.stringify([...set]));
-  document.querySelectorAll('[data-fav-id="' + key + '"]').forEach((btn) => {
-    const active = set.has(key);
-    btn.classList.toggle('is-active', active);
-    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-    btn.setAttribute('aria-label', active ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة');
-  });
+function inWindow(from, to) {
+  const now = Date.now();
+  return (!from || Date.parse(from) <= now) && (!to || Date.parse(to) >= now);
 }
-function badgesOf(r) { return Array.isArray(r?.restaurant_badge_assignments) ? r.restaurant_badge_assignments.filter((a) => a.is_active && a.badges).map((a) => a.badges) : []; }
-function badgeHtml(b) { return `<span class="badge" style="background:${esc(b.background_color || '#fff')};color:${esc(b.text_color || '#1A1F1B')}">${esc(b.display_text || b.name)}</span>`; }
-function deliveryText(r) { const fee = Number(r?.delivery_fee || 0) ? money(r.delivery_fee) : 'توصيل مجاني'; return r?.delivery_min_minutes ? `${r.delivery_min_minutes} دقيقة · ${fee}` : fee; }
-function thumb(url, name) { return url ? `<img class="thumb" src="${esc(url)}" alt="" loading="lazy">` : `<span class="thumb" aria-hidden="true">${esc((name || '?').trim()[0] || '؟')}</span>`; }
-function cover(r) { return r?.cover_image_url ? `<img src="${esc(r.cover_image_url)}" alt="" loading="lazy">` : esc((r?.name || '?').trim()[0] || '؟'); }
-function restRowHtml(r) { const badge = badgesOf(r)[0]; return `<a class="row" href="#/r/${esc(r.slug)}">
-    ${thumb(r.logo_url || r.cover_image_url, r.name)}
+function pickBadge(b, textOverride, style) {
+  const s = style || {};
+  return {
+    name: b.name,
+    display_text: textOverride || b.display_text,
+    background_color: s.background_color || b.background_color,
+    text_color: s.text_color || b.text_color,
+  };
+}
+function badgesOf(r) {
+  return (r.restaurant_badge_assignments || [])
+    .filter((a) => a.is_active && a.badges && inWindow(a.starts_at, a.ends_at))
+    .map((a) => pickBadge(a.badges, a.display_text_override, a.style_override));
+}
+// الشارة المخصصة داخل البلوك لها الأولوية، والشارة الافتراضية لا تحل محلها
+function blockBadge(bl, m) {
+  if (m?.badge && inWindow(m.badge_starts_at, m.badge_ends_at)) {
+    return pickBadge(m.badge, m.badge_text_override, m.badge_style_override);
+  }
+  if (bl.badge) return pickBadge(bl.badge);
+  return null;
+}
+function badgeHtml(b) {
+  return `<span class="badge" style="background:${esc(b.background_color || '#fff')};color:${esc(b.text_color || '#1A1F1B')}">${esc(b.display_text || b.name)}</span>`;
+}
+function deliveryText(r) {
+  const fee = Number(r.delivery_fee || 0) ? money(r.delivery_fee) : 'توصيل مجاني';
+  return r.delivery_min_minutes ? `${r.delivery_min_minutes} دقيقة · ${fee}` : fee;
+}
+function thumb(url, name) {
+  return url
+    ? `<img class="thumb" src="${esc(url)}" alt="" loading="lazy">`
+    : `<span class="thumb" aria-hidden="true">${esc((name || '?').trim()[0] || '؟')}</span>`;
+}
+function cover(r) {
+  return r.cover_image_url
+    ? `<img src="${esc(r.cover_image_url)}" alt="" loading="lazy">`
+    : esc((r.name || '?').trim()[0] || '؟');
+}
+
+function restRowHtml(r, customBadge) {
+  const badge = customBadge || badgesOf(r)[0];
+  return `<a class="row" href="#/r/${esc(r.slug)}">
+    ${thumb(r.logo_url, r.name)}
     <span class="grow">
       <strong class="rname">${esc(r.name)}</strong>
       <span class="meta" style="display:block">${esc(r.restaurant_categories?.name || '')} · ${stars(r.rating)} ${Number(r.rating || 0).toFixed(1)}</span>
       <span class="meta" style="display:block">${deliveryText(r)}</span>
       ${badge ? badgeHtml(badge) : ''}
-    </span></a>`; }
-function emptyHtml(txt) { return `<p class="empty">${esc(txt)}</p>`; }
-function topbar(title) { return `<header class="topbar"><h1 class="ttl">${title ? esc(title) : '<span class="brand">سحاب</span>'}</h1></header>`; }
-function backbar(title) { return `<header class="topbar"><a class="chip" href="#/restaurants">رجوع للمطاعم</a><h1 class="ttl" style="font-size:18px">${esc(title || '')}</h1></header>`; }
-
-function resolveRestaurantBadge(block, restaurant) {
-  const blockEntries = Array.isArray(block?.overrides) ? block.overrides.filter((entry) => String(entry.restaurant_id) === String(restaurant.id)) : [];
-  const activeEntry = blockEntries.find((entry) => {
-    const now = new Date();
-    const starts = entry.badge_starts_at ? new Date(entry.badge_starts_at) : null;
-    const ends = entry.badge_ends_at ? new Date(entry.badge_ends_at) : null;
-    if (starts && starts > now) return false;
-    if (ends && ends < now) return false;
-    return true;
-  });
-  if (activeEntry) {
-    const text = activeEntry.badge_text_override || activeEntry.badges?.name || 'عرض';
-    const style = safeJsonParse(activeEntry.badge_style_override, {});
-    return { id: activeEntry.badge_id, name: text, display_text: text, background_color: style.background_color || '#F2A511', text_color: style.text_color || '#2A1C00' };
-  }
-  const restaurantBadges = badgesOf(restaurant);
-  if (restaurantBadges[0]) return restaurantBadges[0];
-  return null;
+    </span></a>`;
 }
+const PER_COL = 3; // عدد المطاعم رأسياً في كل عمود (الاتفاق الحالي)
+const safeUrl = (u) => (/^https?:\/\//i.test(u || '') ? u : '');
 
-function restaurantCardHtml(restaurant, block = null, categoryMap = null) {
-  const badge = resolveRestaurantBadge(block, restaurant);
-  const isFav = isRestaurantFavorite(restaurant.id);
-  const categoryName = categoryMap?.get(restaurant.category_id) || restaurant.restaurant_categories?.name || 'مطاعم';
-  const img = restaurant.logo_url || restaurant.cover_image_url;
-  const statusText = restaurant.is_open === false ? 'مغلق الآن' : 'مفتوح الآن';
-  return `
-    <article class="restaurant-card">
-      <div class="restaurant-card__media">
-        <a class="restaurant-card__link" href="#/r/${esc(restaurant.slug)}">
-          ${img ? `<img src="${esc(img)}" alt="${esc(restaurant.name)}" loading="lazy">` : `<div class="restaurant-card__media-fallback" aria-hidden="true">${esc((restaurant.name || '?').trim()[0] || '؟')}</div>`}
-        </a>
-        <button class="restaurant-card__favorite ${isFav ? 'is-active' : ''}" data-fav-id="${esc(String(restaurant.id))}" aria-label="${isFav ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'}" aria-pressed="${isFav ? 'true' : 'false'}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.35-9.5-8.3C.7 9.26 2.04 4.5 6.5 4.5c2.06 0 3.2 1.1 3.8 2.16.6-1.06 1.74-2.16 3.8-2.16 4.46 0 5.8 4.76 4 7.7-2 3.95-9.5 8.34-9.5 8.34Z"></path></svg>
-        </button>
-      </div>
-      <div class="restaurant-card__body">
-        <a href="#/r/${esc(restaurant.slug)}" class="restaurant-card__link" style="display:flex;flex-direction:column;min-width:0;">
-          <div class="restaurant-card__title">${esc(restaurant.name)}</div>
-          <div class="restaurant-card__type">${esc(categoryName)}</div>
-          <div class="restaurant-card__meta"><span>★ ${Number(restaurant.rating || 0).toFixed(1)}</span><span>${esc(deliveryText(restaurant))}</span></div>
-          <div class="restaurant-card__status">${esc(statusText)}</div>
-        </a>
-        ${badge ? `<span class="restaurant-card__badge" style="background:${esc(badge.background_color || '#fff')};color:${esc(badge.text_color || '#1A1F1B')}">${esc(badge.display_text || badge.name)}</span>` : ''}
-      </div>
-    </article>
-  `;
-}
-
-function normalizeHomeLayoutRow(row) {
-  if (!row) return null;
-  const type = String(readDeep(row, ['type', 'entity_type', 'item_type', 'component_type']) || '').trim().toLowerCase();
-  if (!type) return null;
-  return {
-    id: readDeep(row, ['id', 'item_id', 'layout_id']),
-    type,
-    display_order: Number(readDeep(row, ['display_order', 'sort_order', 'order']) ?? 0),
-    placement_code: readDeep(row, ['placement_code', 'placement', 'code']) || null,
-    restaurant_block_id: readDeep(row, ['restaurant_block_id', 'block_id', 'restaurant_block.id', 'block.id']) || null,
-    restaurant_id: readDeep(row, ['restaurant_id', 'restaurant.id', 'restaurants.id']) || null,
-    restaurant_slug: readDeep(row, ['restaurant_slug', 'restaurant.slug', 'restaurants.slug']) || null,
-  };
-}
-
-function renderRestaurantBlock(block, restaurantsById, categoryMap) {
-  const style = normalizeCardStyle(block.card_style);
-  const entries = Array.isArray(block?.overrides) ? block.overrides : [];
-  const seen = new Set();
-  const restaurants = [];
-  for (const entry of entries) {
-    if (!entry || !entry.restaurant_id) continue;
-    const restaurant = restaurantsById.get(String(entry.restaurant_id)) || restaurantsById.get(Number(entry.restaurant_id));
-    if (!restaurant || seen.has(String(restaurant.id))) continue;
-    seen.add(String(restaurant.id));
-    restaurants.push(restaurant);
-  }
-  if (!restaurants.length) return '';
-  const cardsPerColumn = Math.max(1, Number(style.items_per_column || 3));
-  const columns = [];
-  for (let i = 0; i < restaurants.length; i += cardsPerColumn) {
-    columns.push(restaurants.slice(i, i + cardsPerColumn));
-  }
-  const grid = columns.map((column) => `<div class="restaurant-block__col">${column.map((restaurant) => restRowHtml(restaurant)).join('')}</div>`).join('');
-  const subtitle = block.subtitle ? `<p class="meta sub">${esc(block.subtitle)}</p>` : '';
-  return `<section class="restaurant-block">
-    <h2 class="sec restaurant-block__header">${esc(block.title || 'مطاعم')}</h2>
-    ${subtitle}
-    <div class="restaurant-block__grid">${grid}</div>
+function blockHtml(bl, byId) {
+  const items = bl.members.map((m) => ({ r: byId.get(m.restaurant_id), m })).filter((x) => x.r);
+  if (!items.length) return '';
+  const cols = [];
+  for (let i = 0; i < items.length; i += PER_COL) cols.push(items.slice(i, i + PER_COL));
+  return `<section class="block">
+    <h2 class="sec">${esc(bl.title)}</h2>
+    ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
+    <div class="rail">${cols.map((c) => `<div class="col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>
   </section>`;
 }
 
-function renderHomepageLayout(layoutRows, restaurantsById, blockMap, adMap) {
-  if (!Array.isArray(layoutRows) || !layoutRows.length) return '';
-  const sorted = layoutRows
-    .map(normalizeHomeLayoutRow)
-    .filter(Boolean)
-    .sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
-
-  const markup = sorted.map((entry) => {
-    if (entry.type === 'restaurant_block' || entry.type === 'block') {
-      const blockId = entry.restaurant_block_id || entry.id;
-      const block = blockMap.get(String(blockId));
-      if (!block) return '';
-      return renderRestaurantBlock(block, restaurantsById, null);
-    }
-    if (entry.type === 'ad_banner' || entry.type === 'banner' || entry.type === 'ad') {
-      const placementCode = entry.placement_code || entry.id || null;
-      if (!placementCode) return '';
-      const ad = adMap.get(String(placementCode));
-      return renderBanner(ad);
-    }
-    return '';
-  }).join('');
-  return markup;
+function adHtml(ad) {
+  if (!ad) return '';
+  const img = safeUrl(ad.creative_image_url);
+  const inner = `${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : ''}
+    <div class="ad-body"><span class="ad-tag">إعلان</span>
+      <strong class="ad-title">${esc(ad.creative_title || '')}</strong>
+      ${ad.creative_text ? `<p class="meta">${esc(ad.creative_text)}</p>` : ''}
+    </div>`;
+  const url = safeUrl(ad.target_url);
+  return url
+    ? `<a class="ad" href="${esc(url)}" target="_blank" rel="noopener sponsored">${inner}</a>`
+    : `<div class="ad">${inner}</div>`;
 }
 
-function bindFavoriteButtons() { document.querySelectorAll('.restaurant-card__favorite').forEach((button) => { button.onclick = (event) => toggleFavorite(event, button.dataset.favId); }); }
+// ترتيب الصفحة من homepage_layout_items؛ لو مفيش ترتيب للصفحة نعرض البلوكات حسب ترتيبها
+function layoutHtml(layout, blocks, byId, ads) {
+  const blockById = new Map(blocks.map((b) => [b.id, b]));
+  const items = layout.length ? layout : blocks.map((b) => ({ item_type: 'restaurant_block', block_id: b.id }));
+  return items.map((it) => {
+    if (it.item_type === 'restaurant_block') {
+      const bl = blockById.get(it.block_id);
+      return bl ? blockHtml(bl, byId) : '';
+    }
+    if (it.item_type === 'ad_banner') return adHtml(ads.get(it.ad_placements?.code));
+    return '';
+  }).join('');
+}
 
+function emptyHtml(txt) { return `<p class="empty">${esc(txt)}</p>`; }
+function topbar(title) {
+  return `<header class="topbar"><h1 class="ttl">${title ? esc(title) : '<span class="brand">سحاب</span>'}</h1></header>`;
+}
+function backbar(title) {
+  return `<header class="topbar"><a class="chip" href="#/restaurants">رجوع للمطاعم</a><h1 class="ttl" style="font-size:18px">${esc(title || '')}</h1></header>`;
+}
+
+/* ============ الراوتر ============ */
 const ROUTES = [
   [/^$/, viewHome, false, 'home'],
   [/^home$/, viewHome, false, 'home'],
@@ -594,6 +401,7 @@ function route() {
   const path = raw.split('?')[0];
   const query = new URLSearchParams(raw.split('?')[1] || '');
   document.querySelectorAll('.tabbar a').forEach((a) => a.removeAttribute('aria-current'));
+
   for (const [re, fn, needsAuth, tab] of ROUTES) {
     const m = path.match(re);
     if (!m) continue;
@@ -608,62 +416,70 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 
+/* ============ الرئيسية ============ */
 async function viewHome() {
   const my = ++rid;
   app.innerHTML = topbar() + '<p class="meta">جاري التحميل…</p>';
-  const [layout, rests, cats, blocks, adInventory] = await Promise.all([
-    loadHomepageLayout('home', null),
-    loadRestaurants(),
-    loadCategories(),
-    loadBlocks(),
-    loadAdInventory(),
+  const [rests, cats, offers, blocks, layout, ads] = await Promise.all([
+    loadRestaurants(), loadCategories(), loadBanners(), loadBlocks(), loadLayout('home'), loadAds(),
   ]);
   if (my !== rid) return;
-  const categoryMap = new Map((cats || []).map((c) => [c.id, c.name]));
-  const restaurantsById = new Map((rests || []).map((r) => [String(r.id), r]));
-  const blockMap = new Map((blocks || []).map((block) => [String(block.id), block]));
-  const adMap = getAdPlacementMap(adInventory);
-  const layoutHtml = renderHomepageLayout(layout, restaurantsById, blockMap, adMap);
-  const categoriesHtml = `<nav class="chips" aria-label="التصنيفات">${(cats || []).map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="false">${esc(c.name)}</button>`).join('')}</nav>`;
-  const allRestaurantsHtml = `<section class="restaurant-block"><h2 class="sec restaurant-block__header">كل المطاعم</h2>${(rests || []).map((restaurant) => restRowHtml(restaurant)).join('') || emptyHtml('لا توجد مطاعم متاحة')}</section>`;
-  app.innerHTML = `${topbar()}${categoriesHtml}${layoutHtml}${allRestaurantsHtml}`;
-  bindFavoriteButtons();
+
+  const byId = new Map(rests.map((r) => [r.id, r]));
+  const bannerHtml = offers.map((o) => {
+    const r = byId.get(o.restaurant_id);
+    if (!r) return '';
+    return `<a class="banner" href="#/r/${esc(r.slug)}">
+      ${o.image_url ? `<img src="${esc(o.image_url)}" alt="" loading="lazy">` : ''}
+      <span class="meta" style="color:inherit">${esc(r.name)}</span>
+      <span class="bt">${esc(o.title)}</span>
+      ${o.description ? `<span>${esc(o.description)}</span>` : ''}
+    </a>`;
+  }).join('');
+
+  app.innerHTML = `
+    ${topbar()}
+    ${bannerHtml ? `<section class="banners" aria-label="عروض">${bannerHtml}</section>` : ''}
+    ${adHtml(ads.get('home_banner'))}
+    <nav class="chips" aria-label="التصنيفات">
+      ${cats.map((c) => `<a class="chip" href="#/restaurants?c=${esc(c.slug)}">${esc(c.name)}</a>`).join('')}
+    </nav>
+    ${layoutHtml(layout, blocks, byId, ads)}
+    <h2 class="sec">كل المطاعم</h2>
+    ${rests.map((r) => restRowHtml(r)).join('') || emptyHtml('مفيش مطاعم متاحة دلوقتي')}
+  `;
 }
 
+/* ============ قائمة المطاعم ============ */
 async function viewRestaurants(query) {
   const my = ++rid;
   let active = query.get('c') || '';
   app.innerHTML = `${topbar('المطاعم')}
     <input class="search" id="s" type="search" placeholder="ابحث باسم المطعم" aria-label="ابحث عن مطعم">
     <nav class="chips" id="cats" aria-label="تصفية حسب التصنيف"></nav>
-    <div id="layout"></div>
+    <div id="top"></div>
     <div id="list"><p class="meta">جاري التحميل…</p></div>`;
-  const [layout, rests, cats, blocks, adInventory] = await Promise.all([
-    loadHomepageLayout('restaurants', null),
-    loadRestaurants(),
-    loadCategories(),
-    loadBlocks(),
-    loadAdInventory(),
+
+  const [rests, cats, blocks, layout, ads] = await Promise.all([
+    loadRestaurants(), loadCategories(), loadBlocks(), loadLayout('restaurants'), loadAds(),
   ]);
   if (my !== rid) return;
-  const categoryMap = new Map((cats || []).map((c) => [c.id, c.name]));
-  const restaurantsById = new Map((rests || []).map((r) => [String(r.id), r]));
-  const blockMap = new Map((blocks || []).map((block) => [String(block.id), block]));
-  const adMap = getAdPlacementMap(adInventory);
-  const layoutHtml = renderHomepageLayout(layout, restaurantsById, blockMap, adMap);
-  $('#layout').innerHTML = layoutHtml || '';
+
+  const byId = new Map(rests.map((r) => [r.id, r]));
+  $('#top').innerHTML = layoutHtml(layout, blocks, byId, ads);
+
   const drawChips = () => {
-    $('#cats').innerHTML = `<button class="chip" data-c="" aria-pressed="${active === ''}">الكل</button>` + (cats || []).map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="${active === c.slug || String(c.id) === active}">${esc(c.name)}</button>`).join('');
+    $('#cats').innerHTML = `<button class="chip" data-c="" aria-pressed="${active === ''}">الكل</button>` +
+      cats.map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="${active === c.slug}">${esc(c.name)}</button>`).join('');
   };
   const draw = () => {
     const term = $('#s').value.trim().toLowerCase();
-    const list = (rests || []).filter((r) => {
-      const categorySlug = (r.restaurant_categories?.slug || categoryMap.get(r.category_id) || '').toLowerCase();
-      const matchesCategory = !active || categorySlug === active || String(r.category_id) === active;
-      return matchesCategory && (!term || (r.name || '').toLowerCase().includes(term));
-    });
+    const list = rests.filter((r) =>
+      (!active || r.restaurant_categories?.slug === active) &&
+      (!term || (r.name || '').toLowerCase().includes(term)));
     $('#list').innerHTML = list.map((r) => restRowHtml(r)).join('') || emptyHtml('مفيش مطعم يطابق بحثك');
   };
+
   drawChips();
   draw();
   $('#s').addEventListener('input', draw);
@@ -676,10 +492,11 @@ async function viewRestaurants(query) {
   });
 }
 
+/* ============ صفحة المطعم والسلة ============ */
 async function getCart(restaurantId, create) {
-  if (!session) return null;
   const uid = session.user.id;
-  let { data: cart } = await sb.from('carts').select('id, coupon_code').eq('customer_id', uid).eq('restaurant_id', restaurantId).eq('status', 'active').maybeSingle();
+  let { data: cart } = await sb.from('carts').select('id, coupon_code')
+    .eq('customer_id', uid).eq('restaurant_id', restaurantId).eq('status', 'active').maybeSingle();
   if (!cart && create) {
     const ins = await sb.from('carts').insert({ customer_id: uid, restaurant_id: restaurantId }).select('id, coupon_code').single();
     if (ins.error) throw ins.error;
@@ -689,48 +506,41 @@ async function getCart(restaurantId, create) {
   const { data: items } = await sb.from('cart_items').select('id, product_id, quantity').eq('cart_id', cart.id);
   return { id: cart.id, coupon_code: cart.coupon_code, items: items || [] };
 }
-const GUEST_CART_KEY = 'sahab_guest_cart';
-const PENDING_CHECKOUT_KEY = 'sahab_pending_checkout';
-function guestCartLoad(restaurantId) { try { const all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); return all[restaurantId] || []; } catch { return []; } }
-function guestCartSave(restaurantId, items) { try { const all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); if (items.length) all[restaurantId] = items; else delete all[restaurantId]; sessionStorage.setItem(GUEST_CART_KEY, JSON.stringify(all)); } catch {} }
-function loadCartForRestaurant(restaurantId) { if (session) return getCart(restaurantId, false); const items = guestCartLoad(restaurantId); return Promise.resolve(items.length ? { id: null, coupon_code: null, items } : { id: null, coupon_code: null, items: [] }); }
-async function syncGuestCart() {
-  let all; try { all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); } catch { all = {}; }
-  const rids = Object.keys(all).filter((rid) => all[rid]?.length);
-  for (const rid of rids) {
-    const cart = await getCart(Number(rid), true);
-    if (!cart) continue;
-    for (const item of all[rid]) {
-      const existing = cart.items.find((i) => i.product_id === item.product_id);
-      if (existing) {
-        await sb.from('cart_items').update({ quantity: item.quantity }).eq('id', existing.id);
-      } else {
-        await sb.from('cart_items').insert({ cart_id: cart.id, product_id: item.product_id, quantity: item.quantity });
-      }
-    }
-    delete all[rid];
-  }
-  sessionStorage.setItem(GUEST_CART_KEY, JSON.stringify(all));
-}
 
 async function viewRestaurant([, slug]) {
   const my = ++rid;
   app.innerHTML = backbar('') + '<p class="meta">جاري التحميل…</p>';
-  const { data: r } = await sb.from('restaurants').select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name), restaurant_badge_assignments(is_active, badges(name, display_text, background_color, text_color))').eq('slug', slug).eq('is_published', true).maybeSingle();
+
+  const { data: r } = await sb.from('restaurants')
+    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, restaurant_categories(name), restaurant_badge_assignments(is_active, badges(name, display_text, background_color, text_color))')
+    .eq('slug', slug).maybeSingle();
   if (my !== rid) return;
   if (!r) { app.innerHTML = backbar('') + emptyHtml('المطعم ده مش متاح دلوقتي'); return; }
+
   const [menuCats, products, offers, reviews, methods, cart] = await Promise.all([
     sb.from('menu_categories').select('id, name, display_order').eq('restaurant_id', r.id).eq('is_active', true).order('display_order'),
     sb.from('products').select('id, name, description, price, emoji, category_id, display_order, product_images(image_url, display_order)').eq('restaurant_id', r.id).eq('is_available', true).order('display_order'),
     sb.from('restaurant_offers').select('id, title, description').eq('restaurant_id', r.id),
     sb.from('restaurant_reviews').select('rating, review_text, created_at').eq('restaurant_id', r.id).order('created_at', { ascending: false }).limit(5),
     loadMethods(r.id),
-    loadCartForRestaurant(r.id),
+    session ? getCart(r.id, false) : Promise.resolve(null),
   ]);
   if (my !== rid) return;
-  R = { rest: r, menuCats: menuCats.data || [], products: products.data || [], prodMap: new Map((products.data || []).map((p) => [p.id, p])), offers: offers.data || [], reviews: reviews.data || [], methods, cart: cart || { id: null, coupon_code: null, items: [] } };
+
+  R = {
+    rest: r,
+    menuCats: menuCats.data || [],
+    products: products.data || [],
+    prodMap: new Map((products.data || []).map((p) => [p.id, p])),
+    offers: offers.data || [],
+    reviews: reviews.data || [],
+    methods,
+    cart,
+  };
+
   const badges = badgesOf(r).map(badgeHtml).join(' ');
   const payNames = [methods.cash && 'كاش', methods.paymob && 'فيزا / محفظة'].filter(Boolean).join(' · ');
+
   app.innerHTML = `
     ${backbar(r.name)}
     <div class="hero">${r.cover_image_url ? `<img src="${esc(r.cover_image_url)}" alt="">` : `<span class="hero-fb" aria-hidden="true">${esc(r.name.trim()[0])}</span>`}</div>
@@ -749,7 +559,10 @@ async function viewRestaurant([, slug]) {
       ${R.menuCats.map((c) => `<button class="chip" data-act="scroll" data-target="sec-${esc(c.id)}">${esc(c.name)}</button>`).join('')}
     </nav>
     <div id="menu"></div>
-    ${R.reviews.length ? `<h2 class="sec">آراء العملاء</h2>${R.reviews.map((x) => `<div class="review"><span class="stars">${stars(x.rating)}</span>${x.review_text ? `<p>${esc(x.review_text)}</p>` : ''}</div>`).join('')}` : ''}
+    ${R.reviews.length ? `<h2 class="sec">آراء العملاء</h2>${R.reviews.map((x) => `
+      <div class="review"><span class="stars">${stars(x.rating)}</span>
+      ${x.review_text ? `<p>${esc(x.review_text)}</p>` : ''}
+      <p class="meta">${new Date(x.created_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })}</p></div>`).join('')}` : ''}
   `;
   drawMenu();
   if (!r.is_open) toast('المطعم مقفول دلوقتي');
@@ -759,40 +572,55 @@ function productHtml(p) {
   const inCart = R.cart?.items.find((i) => i.product_id === p.id);
   const qty = inCart?.quantity || 0;
   const img = [...(p.product_images || [])].sort((a, b) => a.display_order - b.display_order)[0]?.image_url;
-  const control = qty ? `<span class="qty"><button data-act="dec" data-id="${esc(p.id)}" aria-label="قلل ${esc(p.name)}">−</button><span aria-live="polite">${qty}</span><button data-act="inc" data-id="${esc(p.id)}" aria-label="زيد ${esc(p.name)}">+</button></span>` : `<button class="addbtn" data-act="inc" data-id="${esc(p.id)}">أضف</button>`;
-  return `<article class="product"><div class="thumb" aria-hidden="true">${img ? `<img src="${esc(img)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px">` : esc((p.name || '?').trim()[0] || '؟')}</div><div class="grow"><div class="between"><strong>${esc(p.name)}</strong><span class="price">${money(p.price)}</span></div>${p.description ? `<p class="meta">${esc(p.description)}</p>` : ''}<div class="pricerow">${control}</div></div></article>`;
+  const control = qty
+    ? `<span class="qty"><button data-act="dec" data-id="${esc(p.id)}" aria-label="قلل ${esc(p.name)}">−</button><span aria-live="polite">${qty}</span><button data-act="inc" data-id="${esc(p.id)}" aria-label="زوّد ${esc(p.name)}">+</button></span>`
+    : `<button class="addbtn" data-act="inc" data-id="${esc(p.id)}">أضف</button>`;
+  return `<article class="product">
+    ${img ? `<img class="thumb" src="${esc(img)}" alt="" loading="lazy">` : `<span class="thumb" aria-hidden="true">${esc(p.emoji || '•')}</span>`}
+    <div class="grow">
+      <strong>${esc(p.name)}</strong>
+      ${p.description ? `<p class="meta">${esc(p.description)}</p>` : ''}
+      <div class="pricerow"><span class="price">${money(p.price)}</span>${control}</div>
+    </div>
+  </article>`;
 }
 
 function drawMenu() {
   const el = $('#menu');
   if (!el || !R) return;
   const known = new Set(R.menuCats.map((c) => c.id));
-  const groups = R.menuCats.map((c) => ({ id: c.id, name: c.name, items: R.products.filter((p) => p.category_id === c.id) })).filter((g) => g.items.length);
+  const groups = R.menuCats
+    .map((c) => ({ id: c.id, name: c.name, items: R.products.filter((p) => p.category_id === c.id) }))
+    .filter((g) => g.items.length);
   const loose = R.products.filter((p) => !p.category_id || !known.has(p.category_id));
   if (loose.length) groups.push({ id: 'other', name: 'أطباق أخرى', items: loose });
-  el.innerHTML = groups.length ? groups.map((g) => `<section id="sec-${esc(g.id)}"><h2 class="sec">${esc(g.name)}</h2>${g.items.map(productHtml).join('')}</section>`).join('') : emptyHtml('المطعم ما عندوش أطباق متاحة دلوقتي');
+
+  el.innerHTML = groups.length
+    ? groups.map((g) => `<section id="sec-${esc(g.id)}"><h2 class="sec">${esc(g.name)}</h2>${g.items.map(productHtml).join('')}</section>`).join('')
+    : emptyHtml('المنيو فاضي دلوقتي');
   drawCartBar();
-  document.querySelectorAll('[data-act="inc"]').forEach((b) => b.onclick = () => setQty(Number(b.dataset.id), 1));
-  document.querySelectorAll('[data-act="dec"]').forEach((b) => b.onclick = () => setQty(Number(b.dataset.id), -1));
-  document.querySelectorAll('[data-target]').forEach((b) => b.onclick = () => { const target = document.getElementById(b.dataset.target); if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
 }
 
-function cartLines() { if (!R?.cart) return []; return R.cart.items.filter((i) => R.prodMap.has(i.product_id)).map((i) => ({ ...i, product: R.prodMap.get(i.product_id) })); }
-function drawCartBar() { const lines = cartLines(); const count = lines.reduce((s, i) => s + i.quantity, 0); if (!count || location.hash.indexOf('#/r/') !== 0) { cartbar.classList.add('hidden'); cartbar.innerHTML = ''; return; } const total = lines.reduce((s, i) => s + Number(i.product.price || 0) * i.quantity, 0); cartbar.innerHTML = `<span>${count} عنصر</span><strong>${money(total)}</strong><button class="btn primary auto" type="button" onclick="openCheckout()">تأكيد الطلب</button>`; cartbar.classList.remove('hidden'); }
+function cartLines() {
+  if (!R?.cart) return [];
+  return R.cart.items
+    .filter((i) => R.prodMap.has(i.product_id))
+    .map((i) => ({ ...i, product: R.prodMap.get(i.product_id) }));
+}
+
+function drawCartBar() {
+  const lines = cartLines();
+  const count = lines.reduce((s, i) => s + i.quantity, 0);
+  if (!count || location.hash.indexOf('#/r/') !== 0) { cartbar.classList.add('hidden'); cartbar.innerHTML = ''; return; }
+  const sub = lines.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
+  cartbar.classList.remove('hidden');
+  cartbar.innerHTML = `<span>${count} عنصر · ${money(sub)}</span>
+    <button class="btn primary auto" id="openCheckout">راجع الطلب</button>`;
+  $('#openCheckout').onclick = openCheckout;
+}
 
 async function setQty(productId, delta) {
-  if (!session) {
-    const items = guestCartLoad(R.rest.id);
-    const existing = items.find((i) => i.product_id === productId);
-    const next = (existing?.quantity || 0) + delta;
-    if (existing && next <= 0) items.splice(items.indexOf(existing), 1);
-    else if (existing) existing.quantity = Math.min(next, 99);
-    else if (next > 0) items.push({ id: 'g_' + productId, product_id: productId, quantity: 1 });
-    guestCartSave(R.rest.id, items);
-    R.cart = items.length ? { id: null, coupon_code: null, items } : null;
-    drawMenu();
-    return;
-  }
+  if (!session) return goLogin();
   try {
     const cart = await getCart(R.rest.id, true);
     const existing = cart.items.find((i) => i.product_id === productId);
@@ -802,11 +630,13 @@ async function setQty(productId, delta) {
     else if (next > 0) await sb.from('cart_items').insert({ cart_id: cart.id, product_id: productId, quantity: 1 });
     R.cart = await getCart(R.rest.id, false);
     drawMenu();
-  } catch (e) { toast(e.message || 'تعذّر تحديث السلة'); }
+  } catch (e) {
+    toast(e.message || 'تعذّر تحديث السلة');
+  }
 }
 
 function openCheckout() {
-  if (!session) { sessionStorage.setItem(PENDING_CHECKOUT_KEY, R.rest.slug); return goLogin(); }
+  if (!session) return goLogin();
   const lines = cartLines();
   if (!lines.length) return;
   const sub = lines.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
@@ -814,6 +644,7 @@ function openCheckout() {
   const m = R.methods;
   const hasAny = m.cash || m.paymob;
   const firstMethod = m.cash ? 'cash' : 'paymob';
+
   openSheet(`
     <h2>تأكيد الطلب</h2>
     <p class="meta">من ${esc(R.rest.name)}</p>
@@ -853,15 +684,25 @@ function openCheckout() {
       const addr = sheetEl.querySelector('#ca').value.trim();
       const coupon = sheetEl.querySelector('#cc').value.trim();
       const method = sheetEl.querySelector('input[name="pm"]:checked')?.value;
+
       if (!name) { err.textContent = 'اكتب اسمك'; return; }
       if (!PHONE_RE.test(phone)) { err.textContent = 'اكتب رقم موبايل مصري صحيح'; return; }
       if (addr.length < 5) { err.textContent = 'اكتب عنوان التوصيل بالتفصيل'; return; }
       if (!method) { err.textContent = 'اختار طريقة الدفع'; return; }
-      btn.disabled = true; btn.textContent = 'بنأكد طلبك…';
+
+      btn.disabled = true;
+      btn.textContent = 'بنأكد طلبك…';
       try {
         await sb.from('carts').update({ coupon_code: coupon || null }).eq('id', R.cart.id);
-        const { data: orderId, error } = await sb.rpc('place_order', { p_cart_id: R.cart.id, p_shipping_address: addr, p_customer_phone: phone, p_customer_name: name, p_payment_method: method });
+        const { data: orderId, error } = await sb.rpc('place_order', {
+          p_cart_id: R.cart.id,
+          p_shipping_address: addr,
+          p_customer_phone: phone,
+          p_customer_name: name,
+          p_payment_method: method,
+        });
         if (error) throw error;
+
         if (method === 'paymob') {
           const { data, error: fnErr } = await sb.functions.invoke('paymob-initiate', { body: { order_id: orderId } });
           if (fnErr || !data?.iframe_url) throw new Error(await invokeError(fnErr, 'تعذّر بدء الدفع'));
@@ -881,90 +722,195 @@ function openCheckout() {
   });
 }
 
+/* ============ طلباتي ============ */
 function orderHtml(o) {
   const p = (o.payments || [])[0];
   const items = (o.order_items || []).map((i) => `${i.quantity}× ${esc(i.product_name_snapshot)}`).join('، ');
-  let payText = '', payBtn = '';
+  let payText = '';
+  let payBtn = '';
   if (p) {
     if (p.status === 'paid') payText = 'مدفوع';
     else if (p.provider === 'cash') payText = 'الدفع عند الاستلام';
-    else if (p.status === 'pending' && o.status === 'pending') { payText = 'لسه مادفعتش'; payBtn = `<button class="btn primary auto" data-act="pay" data-order="${esc(o.id)}">ادفع الآن</button>`; }
+    else if (p.status === 'pending' && o.status === 'pending') {
+      payText = 'لسه مادفعتش';
+      payBtn = `<button class="btn primary auto" data-act="pay" data-order="${esc(o.id)}">ادفع الآن</button>`;
+    }
   }
-  return `<article class="order"><div class="between"><strong>${esc(o.restaurants?.name || 'مطعم')}</strong><b>${money(o.total_amount)}</b></div><p class="meta">${items}</p><p class="meta" style="margin-top:8px">${esc(STATUS[o.status] || o.status || 'قيد التنفيذ')}</p>${payText ? `<span class="pill">${esc(payText)}</span>` : ''}${payBtn ? `<div class="between" style="margin-top:10px">${payBtn}</div>` : ''}</article>`;
+  return `<article class="order">
+    <div class="between"><strong>${esc(o.restaurants?.name || 'مطعم')}</strong><b>${money(o.total_amount)}</b></div>
+    <p class="meta">${items}</p>
+    <p class="meta" style="margin-top:4px">${new Date(o.created_at).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+    <span class="pill">${esc(STATUS[o.status] || o.status)}</span>
+    ${payText ? `<p class="meta" style="margin-top:6px">${esc(payText)}</p>` : ''}
+    ${payBtn}
+  </article>`;
 }
 
 async function viewOrders() {
   const my = ++rid;
   app.innerHTML = topbar('طلباتي') + '<p class="meta">جاري التحميل…</p>';
-  try {
-    const { data: orders, error } = await sb.from('orders').select('id, status, total_amount, created_at, restaurants(name), payments(id, provider, status), order_items(product_name_snapshot, quantity)').order('created_at', { ascending: false });
-    if (my !== rid) return;
-    if (error) throw error;
-    app.innerHTML = topbar('طلباتي') + (orders.length ? orders.map(orderHtml).join('') : emptyHtml('لسه ماطلبتش حاجة. ابدأ من المطاعم.'));
-    document.querySelectorAll('[data-act="pay"]').forEach((btn) => { btn.onclick = () => payOrder(btn.dataset.order, btn); });
-    const waiting = orders.some((o) => o.status === 'pending' && (o.payments || []).some((p) => p.provider === 'paymob' && p.status === 'pending'));
-    if (waiting) pollTimer = setInterval(() => { if (location.hash === '#/orders') viewOrders(); }, 8000);
-  } catch (err) {
-    console.error('viewOrders error', err);
-    if (my !== rid) return;
-    app.innerHTML = topbar('طلباتي') + emptyHtml('تعذّر تحميل طلباتك');
+  const { data: orders, error } = await sb.from('orders')
+    .select('id, status, total_amount, created_at, restaurants(name), payments(id, provider, status), order_items(product_name_snapshot, quantity)')
+    .order('created_at', { ascending: false }).limit(30);
+  if (my !== rid) return;
+  if (error) { app.innerHTML = topbar('طلباتي') + emptyHtml('تعذّر تحميل طلباتك'); return; }
+
+  app.innerHTML = topbar('طلباتي') + (orders.length
+    ? orders.map(orderHtml).join('')
+    : emptyHtml('لسه ماطلبتش حاجة. ابدأ من المطاعم.'));
+
+  const waiting = orders.some((o) => o.status === 'pending' && (o.payments || []).some((p) => p.provider === 'paymob' && p.status === 'pending'));
+  if (waiting) {
+    pollTimer = setInterval(() => { if (location.hash === '#/orders') viewOrders(); }, 8000);
   }
 }
+
 async function payOrder(orderId, btn) {
   btn.disabled = true;
   const old = btn.textContent;
   btn.textContent = 'جاري التحويل…';
   const { data, error } = await sb.functions.invoke('paymob-initiate', { body: { order_id: orderId } });
-  if (error || !data?.iframe_url) { toast(await invokeError(error, 'تعذّر بدء الدفع')); btn.disabled = false; btn.textContent = old; return; }
+  if (error || !data?.iframe_url) {
+    toast(await invokeError(error, 'تعذّر بدء الدفع'));
+    btn.disabled = false;
+    btn.textContent = old;
+    return;
+  }
   location.href = data.iframe_url;
 }
 
-function viewLogin() {
-  app.innerHTML = `${topbar('تسجيل الدخول')}<div class="auth"><form id="loginForm"><label>الإيميل</label><input type="email" id="email" required><label>كلمة السر</label><input type="password" id="pass" required><p class="err" id="loginErr" role="alert"></p><button class="btn primary" type="submit">دخول</button></form></div>`;
-  $('#loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = $('#email').value.trim();
-    const pass = $('#pass').value;
-    $('#loginErr').textContent = '';
-    try {
-      const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-      if (error) throw error;
-      session = data;
-      await loadProfile();
-      location.hash = sessionStorage.getItem(PENDING_CHECKOUT_KEY) ? '#/r/' + sessionStorage.getItem(PENDING_CHECKOUT_KEY) : '#/home';
-      sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
-      toast('تم تسجيل الدخول');
-    } catch (err) {
-      $('#loginErr').textContent = translateAuthError(err.message || 'تعذّر تسجيل الدخول');
-    }
-  });
-}
-
+/* ============ حسابي ============ */
 async function viewAccount() {
   const my = ++rid;
   await loadProfile();
+  const { data: pts } = await sb.from('customer_points_ledger').select('points');
+  const total = (pts || []).reduce((s, x) => s + Number(x.points || 0), 0);
   if (my !== rid) return;
-  app.innerHTML = `${topbar('حسابي')}<div class="points"><b>${esc(profile?.full_name || 'ضيف')}</b><div class="meta">${esc(profile?.phone || 'لا يوجد رقم')}</div></div><div class="acct"><form id="profileForm"><label>الاسم</label><input id="fullName" value="${esc(profile?.full_name || '')}"><label>رقم الهاتف</label><input id="phone" value="${esc(profile?.phone || '')}"><button class="btn primary" type="submit">حفظ</button></form><button class="btn ghost" id="logoutBtn" type="button">تسجيل الخروج</button></div>`;
-  $('#profileForm').addEventListener('submit', async (e) => {
+
+  app.innerHTML = topbar('حسابي') + `
+    <div class="acct">
+      <p class="meta">${esc(session.user.email)}</p>
+      <div class="points">نقاطك: <b>${total}</b></div>
+      <form id="pf" novalidate>
+        <label for="pn">الاسم</label>
+        <input id="pn" required value="${esc(profile?.full_name || '')}" autocomplete="name">
+        <label for="pp">رقم الموبايل</label>
+        <input id="pp" inputmode="tel" required value="${esc(profile?.phone || '')}" autocomplete="tel">
+        <p class="err" id="pErr" role="alert"></p>
+        <button class="btn primary" type="submit">احفظ البيانات</button>
+      </form>
+      <button class="btn ghost" data-act="logout">اخرج من الحساب</button>
+    </div>`;
+
+  $('#pf').addEventListener('submit', async (e) => {
     e.preventDefault();
-    try {
-      await sb.from('profiles').update({ full_name: $('#fullName').value.trim(), phone: $('#phone').value.trim() }).eq('id', session.user.id);
-      toast('تم حفظ بياناتك');
-    } catch (err) { console.error('update profile error', err); toast('تعذّر حفظ بياناتك'); }
+    const name = $('#pn').value.trim();
+    const phone = $('#pp').value.replace(/[\s-]/g, '');
+    if (!name) { $('#pErr').textContent = 'اكتب اسمك'; return; }
+    if (phone && !PHONE_RE.test(phone)) { $('#pErr').textContent = 'اكتب رقم موبايل مصري صحيح'; return; }
+    const { error } = await sb.from('profiles').update({ full_name: name, phone: phone || null }).eq('id', session.user.id);
+    if (error) { $('#pErr').textContent = error.message; return; }
+    await loadProfile();
+    toast('اتحفظت بياناتك');
   });
-  $('#logoutBtn').onclick = logout;
 }
 
-function init() {
-  try {
-    const stored = localStorage.getItem('sb-hazyajkncrdfewkvnoww-auth-token');
-    const rawSession = stored ? JSON.parse(stored) : null;
-    if (rawSession && rawSession.user) session = { user: { id: rawSession.user.id || rawSession.user_id } };
-  } catch {}
-  if (location.hash === '') location.hash = '#/home';
-  route();
+/* ============ دخول / تسجيل ============ */
+function viewLogin() {
+  ++rid;
+  let mode = 'login';
+  const draw = () => {
+    const isLogin = mode === 'login';
+    app.innerHTML = topbar(isLogin ? 'ادخل حسابك' : 'أنشئ حساب') + `
+      <form id="af" class="auth" novalidate>
+        ${isLogin ? '' : `
+          <label for="an">الاسم</label>
+          <input id="an" required autocomplete="name">
+          <label for="ap">رقم الموبايل</label>
+          <input id="ap" inputmode="tel" required autocomplete="tel">`}
+        <label for="ae">الإيميل</label>
+        <input id="ae" type="email" required autocomplete="email">
+        <label for="apw">كلمة السر</label>
+        <input id="apw" type="password" minlength="6" required autocomplete="${isLogin ? 'current-password' : 'new-password'}">
+        <p class="err" id="aErr" role="alert"></p>
+        <button class="btn primary" id="aBtn" type="submit" style="margin-top:14px">${isLogin ? 'دخول' : 'إنشاء الحساب'}</button>
+      </form>
+      <button class="linkbtn" type="button" id="swap">${isLogin ? 'معييش حساب؟ أنشئ واحد' : 'عندي حساب بالفعل'}</button>`;
+
+    $('#swap').onclick = () => { mode = isLogin ? 'register' : 'login'; draw(); };
+    $('#af').onsubmit = async (e) => {
+      e.preventDefault();
+      const err = $('#aErr');
+      const btn = $('#aBtn');
+      err.textContent = '';
+      const email = $('#ae').value.trim();
+      const password = $('#apw').value;
+      btn.disabled = true;
+      try {
+        if (isLogin) {
+          const { error } = await sb.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          location.hash = '#/home';
+        } else {
+          const name = $('#an').value.trim();
+          const phone = $('#ap').value.replace(/[\s-]/g, '');
+          if (!name) throw new Error('اكتب اسمك');
+          if (!PHONE_RE.test(phone)) throw new Error('اكتب رقم موبايل مصري صحيح');
+          const { data, error } = await sb.auth.signUp({ email, password, options: { data: { full_name: name, phone } } });
+          if (error) throw error;
+          if (!data.session) {
+            err.textContent = 'بعتنالك رسالة تأكيد على الإيميل. أكّده وبعدين ادخل.';
+            btn.disabled = false;
+            return;
+          }
+          location.hash = '#/home';
+        }
+      } catch (ex) {
+        err.textContent = isLogin && ex.message && !/Invalid login/i.test(ex.message) ? ex.message : translateAuthError(ex.message);
+        btn.disabled = false;
+      }
+    };
+  };
+  draw();
 }
-window.addEventListener('load', init);
+
+/* ============ الأحداث العامة (delegation) ============ */
+app.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const act = b.dataset.act;
+  if (act === 'inc') return setQty(b.dataset.id, 1);
+  if (act === 'dec') return setQty(b.dataset.id, -1);
+  if (act === 'pay') return payOrder(b.dataset.order, b);
+  if (act === 'logout') return logout();
+  if (act === 'scroll') return document.getElementById(b.dataset.target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+/* ============ الإقلاع ============ */
+function registerSW() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+}
+
+(async function boot() {
+  registerSW();
+  const { data } = await sb.auth.getSession();
+  session = data.session;
+  await loadProfile();
+
+  sb.auth.onAuthStateChange((event, s) => {
+    // نأجل الاستدعاءات لبرّه الـ callback عشان نتفادى تعارض داخلي في المكتبة
+    setTimeout(async () => {
+      session = s;
+      await loadProfile();
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') route();
+    }, 0);
+  });
+
+  if (!location.hash) location.hash = '#/home';
+  else route();
+})();
 </script>
 </body>
 </html>
