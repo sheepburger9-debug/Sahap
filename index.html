@@ -306,10 +306,15 @@ async function loadBlocks() {
       .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0)),
   }));
 }
-async function loadLayout(pageKey) {
-  // الدالة العامة الموجودة: ترجع ترتيب الصفحة مع أكواد المواضع الفعلية
-  const { data, error } = await sb.rpc('get_public_homepage_layout', { p_page_key: pageKey });
-  if (error || !Array.isArray(data)) return [];
+async function loadLayout(pageKey, categoryId = null) {
+  // ترتيب الصفحة من homepage_layout_items. التصنيف بيتحمّل بمعرفه الحقيقي (category_id) بس
+  if (pageKey === 'category' && !categoryId) return [];
+  const { data, error } = await sb.rpc('get_public_homepage_layout', {
+    p_page_key: pageKey,
+    p_category_id: pageKey === 'category' ? categoryId : null,
+  });
+  if (error) { console.warn('[layout]', pageKey, error.message); return []; }
+  if (!Array.isArray(data)) return [];
   return data.map((x) => ({
     item_type: x.item_type,
     display_order: x.display_order,
@@ -317,6 +322,7 @@ async function loadLayout(pageKey) {
     ad_placements: { code: x.placement_code },
   }));
 }
+
 // الإعلانات المؤهلة فقط، من دالة على السيرفر تُرجع حقول العرض بس (بدون ميزانية أو أسعار)
 async function loadAds() {
   const { data, error } = await sb.rpc('get_eligible_ads');
@@ -661,7 +667,6 @@ async function viewHome() {
 // الإعلانات: «الكل» ← restaurants_top / restaurants_between_*
 //            تصنيف محدد ← category_top / category_between_*
 const RESTAURANT_SLOTS = [['restaurants_between_1', 4], ['restaurants_between_2', 8], ['restaurants_between_3', 12]];
-const CATEGORY_SLOTS = [['category_between_1', 3], ['category_between_2', 7]];
 
 // يرجّع الإعلانات المؤهلة للموضع، ويستبعد أي حملة ظهرت قبل كده في نفس الصفحة
 function pickAds(ads, code, used) {
@@ -683,28 +688,38 @@ async function viewRestaurants(query) {
     <div id="top"></div>
     <div id="list"><p class="meta">جاري التحميل…</p></div>`;
 
-  const [rests, cats, blocks, layout, ads] = await Promise.all([
+  const [rests, cats, blocks, restLayout, ads] = await Promise.all([
     loadRestaurants(), loadCategories(), loadBlocks(), loadLayout('restaurants'), loadAds(),
   ]);
   if (my !== rid) return;
 
-  // التصنيف من الرابط لازم يكون نشط وموجود؛ غير كده نرجع لـ«الكل» (من غير قائمة فاضية غلط)
-  const catSlugs = new Set(cats.map((c) => c.slug));
-  let active = catSlugs.has(query.get('c') || '') ? query.get('c') : '';
+  // التصنيف من الرابط لازم يكون نشط وموجود؛ غير كده نرجع لـ«الكل»
+  const catBySlug = new Map(cats.map((c) => [c.slug, c]));
+  let active = catBySlug.has(query.get('c') || '') ? query.get('c') : '';
   if ((query.get('c') || '') !== active) {
     history.replaceState(null, '', '#/restaurants');
   }
 
-  // شاشة المطاعم بتعرض ترتيبها الخاص بس: بلوكات ولافتات مواضع restaurants_* و category_*
-  // أي لافتات تانية (زي مواضع الرئيسية) بتتستبعد، والعروض بتاعة الرئيسية مش بتتحمّل هنا أصلاً
-  const RESTAURANT_CODE = /^(restaurants_|category_)/;
-  const ownLayout = layout.filter((it) =>
+  // «الكل»: بلوكات المطاعم ولافتات restaurants_* فقط من تخطيط المطاعم
+  const restPage = restLayout.filter((it) =>
     it.item_type === 'restaurant_block' ||
-    (it.item_type === 'ad_banner' && RESTAURANT_CODE.test(it.ad_placements?.code || '')));
-  // لو مفيش ترتيب خاص بالمطاعم ما نعرضش كل البلوكات (ده كان بيعرض بلوكات الرئيسية)
-  const blocksForPage = ownLayout.length ? blocks : [];
-  const layoutNoAds = ownLayout.filter((it) => it.item_type !== 'ad_banner');
-  const pageAdsLayout = ownLayout;
+    (it.item_type === 'ad_banner' && /^restaurants_/.test(it.ad_placements?.code || '')));
+
+  // تصنيف محدد: تخطيطه يُحمَّل بمعرف التصنيف الحقيقي، ولا يرث بلوكات الرئيسية أو المطاعم
+  let catPage = [];      // لافتات التصنيف المحمّلة
+  let catPageFor = null; // معرف التصنيف اللي catPage تابع له
+  let layoutSeq = 0;     // يمنع عرض رد قديم لو المستخدم بدّل التصنيف بسرعة
+  const ensureCatLayout = async () => {
+    const cat = active ? catBySlug.get(active) : null;
+    if (!cat || catPageFor === cat.id) return;
+    const seq = ++layoutSeq;
+    const lay = await loadLayout('category', cat.id);
+    if (seq !== layoutSeq) return; // رد قديم، الأحدث هو اللي يتعرض
+    catPage = lay.filter((it) => it.item_type === 'ad_banner' && /^category_/.test(it.ad_placements?.code || ''));
+    catPageFor = cat.id;
+  };
+  await ensureCatLayout();
+  if (my !== rid) return;
 
   const matches = (r, term) =>
     (!active || r.restaurant_categories?.slug === active) &&
@@ -716,17 +731,29 @@ async function viewRestaurants(query) {
   };
 
   const render = () => {
+    if (!$('#list')) return; // الصفحة اتغيرت
     const term = $('#s').value.trim().toLowerCase();
-    const isCat = active !== '';
     const list = rests.filter((r) => matches(r, term));
-    const byId = new Map(list.map((r) => [r.id, r]));   // البلوكات بتتفلتر بنفس الشروط
-    const used = new Set();                              // كل حملة تظهر مرة واحدة في الصفحة
-    const slots = isCat ? CATEGORY_SLOTS : RESTAURANT_SLOTS;
-    const topCode = isCat ? 'category_top' : 'restaurants_top';
+    const used = new Set(); // كل حملة تظهر مرة واحدة في الصفحة
+    let slots;
 
-    $('#top-ads').innerHTML = adsHtml(pickAds(ads, topCode, used));
-    const skip = new Set([topCode, ...slots.map((x) => x[0])]);
-    $('#top').innerHTML = layoutHtml(isCat ? layoutNoAds : pageAdsLayout, blocksForPage, byId, ads, skip);
+    if (active) {
+      const cat = catBySlug.get(active);
+      // لو التخطيط مش محمّل للتصنيف ده بالظبط ما نعرضش أي لافتة (ولا لافتات تصنيف تاني)
+      const lay = cat && catPageFor === cat.id ? catPage : [];
+      const top = lay.filter((it) => it.ad_placements.code === 'category_top');
+      const mids = lay.filter((it) => it.ad_placements.code !== 'category_top');
+      $('#top-ads').innerHTML = top.length ? adsHtml(pickAds(ads, 'category_top', used)) : '';
+      $('#top').innerHTML = '';
+      // موضع كل لافتة من ترتيب التخطيط، موزعة على عدد المطاعم المعروضة بعد البحث والتصفية
+      slots = mids.map((it, i) => [it.ad_placements.code, Math.floor(((i + 1) * list.length) / (mids.length + 1))]);
+    } else {
+      const byId = new Map(list.map((r) => [r.id, r]));
+      const skip = new Set(['restaurants_top', ...RESTAURANT_SLOTS.map((x) => x[0])]);
+      $('#top-ads').innerHTML = adsHtml(pickAds(ads, 'restaurants_top', used));
+      $('#top').innerHTML = layoutHtml(restPage, restPage.length ? blocks : [], byId, ads, skip);
+      slots = RESTAURANT_SLOTS;
+    }
 
     const listHtml = () => {
       let out = '';
@@ -740,10 +767,11 @@ async function viewRestaurants(query) {
     };
 
     const emptyTxt = term ? 'مفيش مطعم يطابق بحثك'
-      : isCat ? 'مفيش مطاعم في التصنيف ده دلوقتي'
+      : active ? 'مفيش مطاعم في التصنيف ده دلوقتي'
       : 'مفيش مطاعم متاحة دلوقتي';
     $('#list').innerHTML = list.length ? listHtml() : emptyHtml(emptyTxt);
     observeAds($('#top-ads'));
+    observeAds($('#top'));
     observeAds($('#list'));
   };
 
@@ -751,13 +779,15 @@ async function viewRestaurants(query) {
   render();
   observeAds(app);
   $('#s').addEventListener('input', render);
-  $('#cats').addEventListener('click', (e) => {
+  $('#cats').addEventListener('click', async (e) => {
     const b = e.target.closest('button[data-c]');
     if (!b) return;
     active = b.dataset.c;
     // نحدّث الرابط بدون إعادة تحميل، فالتصنيف يفضل محفوظ عند الريفرش أو عند فتح الرابط
     history.replaceState(null, '', active ? `#/restaurants?c=${encodeURIComponent(active)}` : '#/restaurants');
     drawChips();
+    await ensureCatLayout();
+    if (my !== rid) return;
     render();
   });
 }
@@ -1159,7 +1189,7 @@ app.addEventListener('click', (e) => {
 /* ============ الإقلاع ============ */
 function registerSW() {
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(() => {}));
   }
 }
 
