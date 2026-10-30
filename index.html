@@ -328,10 +328,36 @@ async function loadBanners() {
   return (data || []).map((x) => x.restaurant_offers).filter(Boolean);
 }
 async function loadBlocks() {
-  const { data } = await sb.from('restaurant_blocks')
-    .select('id, title, subtitle, display_order, block_restaurant_overrides(restaurant_id)')
-    .eq('is_visible', true).order('display_order');
-  return (data || []).map((b) => ({ ...b, ids: (b.block_restaurant_overrides || []).map((o) => o.restaurant_id) }));
+  const { data, error } = await sb.from('restaurant_blocks')
+    .select(`
+      id,
+      title,
+      subtitle,
+      display_order,
+      badge_id,
+      badges (
+        id,
+        name,
+        display_text,
+        background_color,
+        text_color
+      ),
+      block_restaurant_overrides(restaurant_id)
+    `)
+    .eq('is_visible', true)
+    .order('display_order');
+
+  if (error) {
+    console.error('خطأ تحميل بلوكات المطاعم:', error);
+    return [];
+  }
+
+  return (data || []).map((b) => ({
+    ...b,
+    badge: b.badges,
+    ids: (b.block_restaurant_overrides || [])
+      .map((o) => o.restaurant_id)
+  }));
 }
 async function loadMethods(restaurantId) {
   const { data } = await sb.rpc('get_payment_methods', { p_restaurant_id: restaurantId });
