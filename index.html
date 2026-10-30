@@ -428,9 +428,15 @@ function restRowHtml(r) {
       ${badge ? badgeHtml(badge) : ''}
     </span></a>`;
 }
-function miniHtml(r) {
+function miniHtml(r, badge = null) {
   return `<a class="mini" href="#/r/${esc(r.slug)}">
-    <span class="cover">${cover(r)}</span>
+    <span class="cover">
+      ${cover(r)}
+      ${badge ? `<span class="badge mini-badge"
+        style="background:${esc(badge.background_color || '#fff')};color:${esc(badge.text_color || '#1A1F1B')}">
+        ${esc(badge.display_text || badge.name)}
+      </span>` : ''}
+    </span>
     <strong>${esc(r.name)}</strong>
     <span class="meta">${Number(r.rating || 0).toFixed(1)} ★ · ${esc(r.restaurant_categories?.name || '')}</span>
   </a>`;
