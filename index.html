@@ -611,12 +611,23 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 
+// شريط أعلى الرئيسية: مختص بمحتوى غير تصنيفات المطاعم (تصنيفات المطاعم بتفضل في شاشة المطاعم).
+// كل عنصر: { label: 'النص', href: '#/orders' } أو رابط https. لو القائمة فاضية الشريط مش بيتعرض.
+const HOME_TOP_CHIPS = [];
+function homeStripHtml() {
+  if (!HOME_TOP_CHIPS.length) return '';
+  const ok = (h) => (String(h).startsWith('#/') || /^https?:\/\//i.test(h) ? h : '#/home');
+  return `<nav class="chips" aria-label="اختصارات">
+      ${HOME_TOP_CHIPS.map((c) => `<a class="chip" href="${esc(ok(c.href))}">${esc(c.label)}</a>`).join('')}
+    </nav>`;
+}
+
 async function viewHome() {
   const my = ++rid;
   viewSeq++;
   app.innerHTML = topbar() + '<p class="meta">جاري التحميل…</p>';
-  const [rests, cats, offers, blocks, layout, ads] = await Promise.all([
-    loadRestaurants(), loadCategories(), loadBanners(), loadBlocks(), loadLayout('home'), loadAds(),
+  const [rests, offers, blocks, layout, ads] = await Promise.all([
+    loadRestaurants(), loadBanners(), loadBlocks(), loadLayout('home'), loadAds(),
   ]);
   if (my !== rid) return;
 
@@ -634,11 +645,9 @@ async function viewHome() {
 
   app.innerHTML = `
     ${topbar()}
+    ${homeStripHtml()}
     ${bannerHtml ? `<section class="banners" aria-label="عروض">${bannerHtml}</section>` : ''}
     ${adsHtml(ads.get('home_banner'))}
-    <nav class="chips" aria-label="التصنيفات">
-      ${cats.map((c) => `<a class="chip" href="#/restaurants?c=${esc(c.slug)}">${esc(c.name)}</a>`).join('')}
-    </nav>
     ${layoutHtml(layout, blocks, byId, ads, new Set(['home_middle']))}
     ${adsHtml(ads.get('home_middle'))}
     <h2 class="sec">كل المطاعم</h2>
@@ -686,9 +695,16 @@ async function viewRestaurants(query) {
     history.replaceState(null, '', '#/restaurants');
   }
 
-  // ترتيب الصفحة بدون إعلانات المطاعم (في تصنيف محدد نعرض إعلانات التصنيف بدلها)
-  const layoutNoAds = layout.filter((it) => it.item_type !== 'ad_banner');
-  const pageAdsLayout = layout;
+  // شاشة المطاعم بتعرض ترتيبها الخاص بس: بلوكات ولافتات مواضع restaurants_* و category_*
+  // أي لافتات تانية (زي مواضع الرئيسية) بتتستبعد، والعروض بتاعة الرئيسية مش بتتحمّل هنا أصلاً
+  const RESTAURANT_CODE = /^(restaurants_|category_)/;
+  const ownLayout = layout.filter((it) =>
+    it.item_type === 'restaurant_block' ||
+    (it.item_type === 'ad_banner' && RESTAURANT_CODE.test(it.ad_placements?.code || '')));
+  // لو مفيش ترتيب خاص بالمطاعم ما نعرضش كل البلوكات (ده كان بيعرض بلوكات الرئيسية)
+  const blocksForPage = ownLayout.length ? blocks : [];
+  const layoutNoAds = ownLayout.filter((it) => it.item_type !== 'ad_banner');
+  const pageAdsLayout = ownLayout;
 
   const matches = (r, term) =>
     (!active || r.restaurant_categories?.slug === active) &&
@@ -710,7 +726,7 @@ async function viewRestaurants(query) {
 
     $('#top-ads').innerHTML = adsHtml(pickAds(ads, topCode, used));
     const skip = new Set([topCode, ...slots.map((x) => x[0])]);
-    $('#top').innerHTML = layoutHtml(isCat ? layoutNoAds : pageAdsLayout, blocks, byId, ads, skip);
+    $('#top').innerHTML = layoutHtml(isCat ? layoutNoAds : pageAdsLayout, blocksForPage, byId, ads, skip);
 
     const listHtml = () => {
       let out = '';
