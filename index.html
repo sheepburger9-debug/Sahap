@@ -7,7 +7,7 @@
 <meta name="description" content="سحاب: اطلب أكلك من أقرب المطاعم">
 <title>سحاب</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23F2A511'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='%231A1F1B'%3Eس%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23F2A511'/%3E%3Ctext x='50' y='70' font-size='56' text-anchor='middle' fill='%232A1C00' font-family='Arial, sans-serif'%3Eس%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@600;700&display=swap" rel="stylesheet">
@@ -82,7 +82,7 @@ label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 6px}
    ================================================================ */
 .banners{display:flex;gap:12px;overflow-x:auto;margin:6px -16px 0;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
 .banners::-webkit-scrollbar{display:none}
-.banner{flex:0 0 88%;scroll-snap-align:start;position:relative;overflow:hidden;min-height:176px;border-radius:20px;background:var(--saffron);color:var(--saffron-ink);padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-decoration:none}
+.banner{flex:0 0 88%;scroll-snap-align:start;position:relative;overflow:hidden;min-height:176px;border-radius:20px;background:var(--saffron);color:var(--saffron-ink);padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px}
 .banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3}
 .banner > *{position:relative}
 .banner .bt{font-family:"Reem Kufi",sans-serif;font-size:24px;font-weight:700;line-height:1.2}
@@ -137,14 +137,17 @@ img.thumb{display:block}
 /* ================================================================
    شريط السلة السفلي العائم
    ================================================================ */
-.cartbar{position:fixed;bottom:76px;inset-inline:12px;max-width:496px;margin:0 auto;background:var(--ink);color:#fff;border-radius:16px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:9;box-shadow:0 10px 30px rgba(20,28,22,.25)}
+.cartbar{position:fixed;bottom:86px;inset-inline:12px;max-width:496px;margin:0 auto;background:linear-gradient(135deg,#1A1F1B,#2d352f);color:#fff;border-radius:18px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 16px 30px rgba(26,31,27,.26);z-index:15}
+.cartbar span{font-weight:600}
 
 /* ================================================================
    شريط التنقل السفلي (Tabbar)
    ================================================================ */
-.tabbar{position:fixed;bottom:0;inset-inline:0;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:6px 4px max(8px,env(safe-area-inset-bottom));z-index:10}
-.tabbar a{text-align:center;color:var(--ink-2);text-decoration:none;font-size:13px;padding:8px 4px;border-radius:10px}
-.tabbar a[aria-current="page"]{color:var(--ink);font-weight:700;background:var(--bg)}
+.tabbar{position:fixed;bottom:10px;inset-inline:12px;max-width:520px;margin:0 auto;background:rgba(28,34,29,.92);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:8px 10px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;box-shadow:0 18px 35px rgba(17,22,18,.28);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:25}
+.tabbar a{display:flex;align-items:center;justify-content:center;height:56px;border-radius:16px;color:#C7D1C7;text-decoration:none;transition:transform .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease}
+.tabbar a svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tabbar a[aria-current="page"]{background:linear-gradient(180deg,#F7C54B,#F2A511);color:var(--saffron-ink);box-shadow:0 10px 18px rgba(242,165,17,.32);transform:translateY(-2px)}
+.tabbar a:active{transform:scale(.98)}
 
 /* ================================================================
    الشيت (Bottom Sheet) للنماذج والتفاصيل
@@ -200,10 +203,18 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 
 <!-- ============ شريط التنقل السفلي ============ -->
 <nav class="tabbar" aria-label="التنقل">
-  <a href="#/home" data-tab="home">الرئيسية</a>
-  <a href="#/restaurants" data-tab="restaurants">المطاعم</a>
-  <a href="#/orders" data-tab="orders">طلباتي</a>
-  <a href="#/account" data-tab="account">حسابي</a>
+  <a href="#/home" data-tab="home" aria-label="الرئيسية" aria-current="page">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V20h14V9.5"></path><path d="M10 20v-6h4v6"></path></svg>
+  </a>
+  <a href="#/restaurants" data-tab="restaurants" aria-label="المطاعم">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V7.5A1.5 1.5 0 0 1 6.5 6H17.5A1.5 1.5 0 0 1 19 7.5V19"></path><path d="M8 6V3"></path><path d="M16 6V3"></path><path d="M9 10h6"></path><path d="M9 14h6"></path></svg>
+  </a>
+  <a href="#/orders" data-tab="orders" aria-label="طلباتي">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10l2 4v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8l2-4Z"></path><path d="M9 10h6"></path><path d="M8 4V2.5"></path><path d="M16 4V2.5"></path></svg>
+  </a>
+  <a href="#/account" data-tab="account" aria-label="حسابي">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"></path><path d="M5 20a7 7 0 0 1 14 0"></path></svg>
+  </a>
 </nav>
 
 <!-- ============ مكتبة سوبابيز ============ -->
@@ -312,7 +323,8 @@ async function logout() {
    ================================================================ */
 async function loadRestaurants() {
   const { data, error } = await sb.from('restaurants')
-    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, badges(name, display_text, background_color, text_color))')
+    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, badges(id, name, display_text, background_color, text_color))')
+    .eq('is_active', true)
     .order('rating', { ascending: false });
   if (error) { toast('تعذّر تحميل المطاعم'); return []; }
   return data || [];
@@ -504,7 +516,7 @@ async function viewHome() {
     </a>`;
   }).join('');
 
-    
+  
   const blocksHtml = blocks.map((bl) => {
     const list = bl.ids
       .map((id) => byId.get(id))
@@ -679,7 +691,7 @@ async function viewRestaurant([, slug]) {
   app.innerHTML = backbar('') + '<p class="meta">جاري التحميل…</p>';
 
   const { data: r } = await sb.from('restaurants')
-    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, restaurant_categories(name), restaurant_badge_assignments(is_active, badges(name, display_text, background_color, text_color))')
+    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, restaurant_categories(name), restaurant_badge_assignments(is_active, badges(id, name, display_text, background_color, text_color))')
     .eq('slug', slug).maybeSingle();
   if (my !== rid) return;
   if (!r) { app.innerHTML = backbar('') + emptyHtml('المطعم ده مش متاح دلوقتي'); return; }
@@ -744,7 +756,7 @@ function productHtml(p) {
   const qty = inCart?.quantity || 0;
   const img = [...(p.product_images || [])].sort((a, b) => a.display_order - b.display_order)[0]?.image_url;
   const control = qty
-    ? `<span class="qty"><button data-act="dec" data-id="${esc(p.id)}" aria-label="قلل ${esc(p.name)}">−</button><span aria-live="polite">${qty}</span><button data-act="inc" data-id="${esc(p.id)}" aria-label="زوّد ${esc(p.name)}">+</button></span>`
+    ? `<span class="qty"><button data-act="dec" data-id="${esc(p.id)}" aria-label="قلل ${esc(p.name)}">−</button><span aria-live="polite">${qty}</span><button data-act="inc" data-id="${esc(p.id)}" aria-label="زيد ${esc(p.name)}">+</button></span>`
     : `<button class="addbtn" data-act="inc" data-id="${esc(p.id)}">أضف</button>`;
   return `<article class="product">
     ${img ? `<img class="thumb" src="${esc(img)}" alt="" loading="lazy">` : `<span class="thumb" aria-hidden="true">${esc(p.emoji || '•')}</span>`}
@@ -999,150 +1011,126 @@ async function viewAccount() {
         <input id="pn" required value="${esc(profile?.full_name || '')}" autocomplete="name">
         <label for="pp">رقم الموبايل</label>
         <input id="pp" inputmode="tel" required value="${esc(profile?.phone || '')}" autocomplete="tel">
-        <p class="err" id="pErr" role="alert"></p>
-        <button class="btn primary" type="submit">احفظ البيانات</button>
+        <button class="btn primary" type="submit">حفظ البيانات</button>
       </form>
-      <button class="btn ghost" data-act="logout">اخرج من الحساب</button>
-    </div>`;
+      <button class="btn ghost" id="logoutBtn" style="margin-top:16px">تسجيل الخروج</button>
+    </div>
+  `;
 
   $('#pf').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name = $('#pn').value.trim();
+    const full_name = $('#pn').value.trim();
     const phone = $('#pp').value.replace(/[\s-]/g, '');
-    if (!name) { $('#pErr').textContent = 'اكتب اسمك'; return; }
-    if (phone && !PHONE_RE.test(phone)) { $('#pErr').textContent = 'اكتب رقم موبايل مصري صحيح'; return; }
-    const { error } = await sb.from('profiles').update({ full_name: name, phone: phone || null }).eq('id', session.user.id);
-    if (error) { $('#pErr').textContent = error.message; return; }
+    if (!full_name) { toast('اكتب اسمك'); return; }
+    if (!PHONE_RE.test(phone)) { toast('رقم الموبايل مش صحيح'); return; }
+    const { error } = await sb.from('profiles').upsert({ id: session.user.id, full_name, phone });
+    if (error) { toast(error.message || 'تعذّر حفظ البيانات'); return; }
+    toast('تم حفظ البيانات');
+    profile = { ...profile, full_name, phone };
+  });
+
+  $('#logoutBtn').addEventListener('click', logout);
+}
+
+async function viewLogin() {
+  app.innerHTML = topbar('تسجيل الدخول') + `
+    <div class="auth">
+      <form id="loginForm" novalidate>
+        <label for="email">الإيميل</label>
+        <input id="email" type="email" required autocomplete="email">
+        <label for="pass">كلمة السر</label>
+        <input id="pass" type="password" required autocomplete="current-password">
+        <button class="btn primary" type="submit">دخول</button>
+      </form>
+      <button class="linkbtn" id="showRegister">تسجيل جديد</button>
+    </div>
+  `;
+
+  $('#loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = $('#email').value.trim();
+    const password = $('#pass').value;
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { toast(translateAuthError(error.message)); return; }
+    session = data;
     await loadProfile();
-    toast('اتحفظت بياناتك');
+    const pending = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
+    if (pending) {
+      sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
+      location.hash = `#/r/${pending}`;
+      return;
+    }
+    location.hash = '#/home';
+  });
+
+  $('#showRegister').addEventListener('click', () => {
+    app.innerHTML = topbar('إنشاء حساب') + `
+      <div class="auth">
+        <form id="regForm" novalidate>
+          <label for="regName">الاسم</label>
+          <input id="regName" required autocomplete="name">
+          <label for="regEmail">الإيميل</label>
+          <input id="regEmail" type="email" required autocomplete="email">
+          <label for="regPass">كلمة السر</label>
+          <input id="regPass" type="password" required autocomplete="new-password">
+          <button class="btn primary" type="submit">إنشاء الحساب</button>
+        </form>
+      </div>
+    `;
+
+    $('#regForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const full_name = $('#regName').value.trim();
+      const email = $('#regEmail').value.trim();
+      const password = $('#regPass').value;
+      if (!full_name) { toast('اكتب اسمك'); return; }
+      if (!email) { toast('اكتب الإيميل'); return; }
+      if (password.length < 6) { toast('كلمة السر لازم تكون 6 حروف على الأقل'); return; }
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error) { toast(translateAuthError(error.message)); return; }
+      session = data;
+      await sb.from('profiles').upsert({ id: data.user.id, full_name, phone: null });
+      location.hash = '#/home';
+      toast('تم إنشاء الحساب');
+    });
   });
 }
 
-
 /* ================================================================
-   قسم 19: صفحة الدخول / التسجيل
-   (بعد الدخول: نزامن سلة الزائر ونرجع لصفحة المطعم إن وجدت)
+   التهيئة
    ================================================================ */
-function viewLogin() {
-  ++rid;
-  let mode = 'login';
-  const draw = () => {
-    const isLogin = mode === 'login';
-    app.innerHTML = topbar(isLogin ? 'ادخل حسابك' : 'أنشئ حساب') + `
-      <form id="af" class="auth" novalidate>
-        ${isLogin ? '' : `
-          <label for="an">الاسم</label>
-          <input id="an" required autocomplete="name">
-          <label for="ap">رقم الموبايل</label>
-          <input id="ap" inputmode="tel" required autocomplete="tel">`}
-        <label for="ae">الإيميل</label>
-        <input id="ae" type="email" required autocomplete="email">
-        <label for="apw">كلمة السر</label>
-        <input id="apw" type="password" minlength="6" required autocomplete="${isLogin ? 'current-password' : 'new-password'}">
-        <p class="err" id="aErr" role="alert"></p>
-        <button class="btn primary" id="aBtn" type="submit" style="margin-top:14px">${isLogin ? 'دخول' : 'إنشاء الحساب'}</button>
-      </form>
-      <button class="linkbtn" type="button" id="swap">${isLogin ? 'معييش حساب؟ أنشئ واحد' : 'عندي حساب بالفعل'}</button>`;
-
-    $('#swap').onclick = () => { mode = isLogin ? 'register' : 'login'; draw(); };
-    $('#af').onsubmit = async (e) => {
-      e.preventDefault();
-      const err = $('#aErr');
-      const btn = $('#aBtn');
-      err.textContent = '';
-      const email = $('#ae').value.trim();
-      const password = $('#apw').value;
-      btn.disabled = true;
-
-      // دالة مساعدة: بعد الدخول نزامن السلة ونرجع لصفحة المطعم أو للرئيسية
-      const afterAuth = async () => {
-        const pendingSlug = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
-        await syncGuestCart();
-        if (pendingSlug) {
-          sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
-          location.hash = `#/r/${pendingSlug}`;
-        } else {
-          location.hash = '#/home';
-        }
-      };
-
-      try {
-        if (isLogin) {
-          const { data, error } = await sb.auth.signInWithPassword({ email, password });
-          if (error) throw error;
-          session = data.session;
-          await afterAuth();
-        } else {
-          const name = $('#an').value.trim();
-          const phone = $('#ap').value.replace(/[\s-]/g, '');
-          if (!name) throw new Error('اكتب اسمك');
-          if (!PHONE_RE.test(phone)) throw new Error('اكتب رقم موبايل مصري صحيح');
-          const { data, error } = await sb.auth.signUp({ email, password, options: { data: { full_name: name, phone } } });
-          if (error) throw error;
-          if (!data.session) {
-            err.textContent = 'بعتنالك رسالة تأكيد على الإيميل. أكّده وبعدين ادخل.';
-            btn.disabled = false;
-            return;
-          }
-          session = data.session;
-          await afterAuth();
-        }
-      } catch (ex) {
-        err.textContent = isLogin && ex.message && !/Invalid login/i.test(ex.message) ? ex.message : translateAuthError(ex.message);
-        btn.disabled = false;
-      }
-    };
-  };
-  draw();
-}
-
-
-/* ================================================================
-   قسم 20: أحداث عامة (Delegation من app)
-   ================================================================ */
-app.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-act]');
-  if (!b) return;
-  const act = b.dataset.act;
-  if (act === 'inc') return setQty(b.dataset.id, 1);
-  if (act === 'dec') return setQty(b.dataset.id, -1);
-  if (act === 'pay') return payOrder(b.dataset.order, b);
-  if (act === 'logout') return logout();
-  if (act === 'scroll') return document.getElementById(b.dataset.target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
-
-
-/* ================================================================
-   قسم 21: تسجيل Service Worker (PWA)
-   ================================================================ */
-function registerSW() {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-  }
-}
-
-
-/* ================================================================
-   قسم 22: الإقلاع (Boot)
-   ================================================================ */
-(async function boot() {
-  registerSW();
+(async () => {
   const { data } = await sb.auth.getSession();
   session = data.session;
-  await loadProfile();
-
-  sb.auth.onAuthStateChange((event, s) => {
-    // نأجل الاستدعاءات لبرّه الـ callback عشان نتفادى تعارض داخلي في المكتبة
-    setTimeout(async () => {
-      session = s;
-      await loadProfile();
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') route();
-    }, 0);
-  });
-
-  if (!location.hash) location.hash = '#/home';
-  else route();
+  if (session) await loadProfile();
+  route();
 })();
+
+/* ================================================================
+   ربط الأحداث للمنتجات
+   ================================================================ */
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-act]');
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const id = btn.dataset.id;
+
+  if (act === 'inc' || act === 'dec') {
+    await setQty(Number(id), act === 'inc' ? 1 : -1);
+    return;
+  }
+
+  if (act === 'scroll') {
+    const target = document.getElementById(btn.dataset.target);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
+  if (act === 'pay') {
+    const orderId = btn.dataset.order;
+    await payOrder(orderId, btn);
+  }
+});
 </script>
 </body>
 </html>
