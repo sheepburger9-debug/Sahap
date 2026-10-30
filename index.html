@@ -1,4 +1,37 @@
 <!DOCTYPE html>
+<!--
+==============================================================
+  سحاب — خريطة الملف (اقرأ ده الأول)
+==============================================================
+  1. قسم الـ CSS            : كل تنسيقات الشكل (الألوان، الأزرار، الكروت، الشاشات)
+                          ← لو عايز تغير شكل الواجهة، ابدأ من هنا
+  2. HTML الشاشات          : الهيكل الأساسي لكل شاشة (ما بينيتها ليست في الجافاسكريبت)
+  3. قسم الـ JavaScript     : المنطق:
+       [أ] معالج الأخطاء وعرض رسالة الخطأ
+       [1] إعدادات Supabase (الرابط والمفتاح)
+       [2] البيانات (المتغيرات اللي بتتملى من Supabase)
+       [3] أدوات مساعدة (تنسيق، تعقيم، اختصارات)
+       [4] تحميل البيانات من Supabase
+       [5] الثيم (فاتح/داكن)
+       [6] PWA (تثبيت التطبيق، واتساب، الاتصال)
+       [7] تسجيل الدخول والجلسة
+       [8] التنقل بين الشاشات (Routing)
+       [9] واجهة الدخول والتسجيل
+       [11] هياكل التحميل
+       [12] الصفحة الرئيسية
+       [13] الكاروسيل
+       [14] صفحة المطعم
+       [15] واتساب
+       [16] صفحة كل المطاعم
+       [17] السلة
+       [18] الدفع وإرسال الطلب
+       [19] الطلبات
+       [20] النقاط
+       [21] نقطة البداية (init)
+  ملحوظة: صفحة الترحيب اتشالت مؤقتاً، والـ CSS بتاعها لسه موجود لو احتجناها.
+==============================================================
+-->
+
 <html lang="ar" dir="rtl" data-theme="light">
 <head>
 <meta charset="UTF-8" />
@@ -19,6 +52,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+/* المتغيرات العامة (الألوان، المقاسات، الخطوط، الظلال). عدّل هنا لتغيير شكل الموقع كله. */
 :root {
   --u: clamp(4px, 1.5vmin, 12px);
   --s-1: calc(var(--u) * 1); --s-2: calc(var(--u) * 2); --s-3: calc(var(--u) * 3);
@@ -61,6 +95,7 @@
   --sh-lg:0 18px 48px rgba(60,25,10,.14);
   --sh-glow:0 8px 24px rgba(232,93,42,.28);
 }
+/* ألوان الوضع الليلي (تتبدّل تلقائياً عند اختيار الدارك). */
 [data-theme="dark"] {
   --p-50:#3a1e0e; --p-100:#5a2c12; --p-200:#7a3a18; --p-300:#9a4a20;
   --p-700:#ff8a5a; --p-800:#ffb088;
@@ -71,6 +106,7 @@
   --text:#f5e8dd; --text-mute:#b39a87; --text-soft:#8d7a6d;
   --primary-dark:#ff8a5a;
 }
+/* إعادة ضبط أساسية للمتصفحات المختلفة. */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{
@@ -86,6 +122,7 @@ input,textarea,select{font:inherit;color:inherit}
 a{color:var(--p-500);text-decoration:none}
 ul{list-style:none}
 h1,h2,h3,h4{font-weight:800;letter-spacing:-.01em;line-height:1.28}
+/* الهيكل العام للتطبيق (Grid): الهيدر + المحتوى + شريط التنقل السفلي. */
 #app{
   display:grid;grid-template-columns:1fr;grid-template-rows:auto 1fr auto;
   grid-template-areas:"header" "main" "bottomnav";
@@ -99,6 +136,7 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.01em;line-height:1.28}
 @media (min-aspect-ratio: 16/9){
   #app-main > .screen{max-width:180vmin;margin-inline:auto;width:100%;}
 }
+/* الهيدر العلوي (الشعار، الثيم، السلة). */
 .app-header-sahab{
   grid-area:header;height:calc(var(--header-h) + env(safe-area-inset-top));
   padding:env(safe-area-inset-top) var(--s-3) 0;
@@ -113,14 +151,17 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.01em;line-height:1.28}
   border-radius:var(--r-md);background:var(--grad-sunset);
   display:grid;place-items:center;box-shadow:var(--sh-glow);color:#fff;font-size:var(--t-lg);
 }
+/* الأزرار الدائرية الصغيرة في الهيدر. */
 .icon-btn-sahab{width:var(--icon-btn);height:var(--icon-btn);border-radius:50%;display:grid;place-items:center;transition:background .2s;min-width:var(--icon-btn)}
 .icon-btn-sahab:hover{background:var(--p-50)}
 .icon-btn-sahab i{font-size:var(--t-xl)}
+/* منطقة المحتوى القابلة للتمرير (كل الشاشات بتظهر هنا). */
 #app-main{
   grid-area:main;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
   position:relative;padding-bottom:calc(var(--bottom-h) + env(safe-area-inset-bottom) + var(--s-2));
 }
 @media (min-aspect-ratio: 1/1){#app-main{padding-bottom:var(--s-5)}}
+/* شريط التنقل السفلي (يظهر على الموبايل). */
 .bottom-nav-sahab{
   grid-area:bottomnav;height:calc(var(--bottom-h) + env(safe-area-inset-bottom));
   padding-bottom:env(safe-area-inset-bottom);
@@ -142,6 +183,7 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.01em;line-height:1.28}
 }
 .bottom-nav-sahab i{font-size:var(--t-xl);transition:transform .2s}
 .bottom-nav-sahab button.is-active i{transform:scale(1.1)}
+/* القائمة الجانبية (تظهر على الشاشات العريضة/اللاب توب). */
 .side-nav-sahab{
   grid-area:nav;display:none;flex-direction:column;gap:var(--s-1);
   background:var(--surface);border-inline-start:1px solid var(--border);
@@ -169,11 +211,14 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.01em;line-height:1.28}
 .side-nav-sahab .nav-item.is-active{background:var(--grad-sunset);color:#fff;box-shadow:var(--sh-glow)}
 .side-nav-sahab .nav-item i{font-size:var(--t-xl);flex-shrink:0}
 .side-nav-sahab .nav-item span{white-space:nowrap}
+/* إظهار/إخفاء الشاشات: الشاشة اللي عليها is-active بس هي اللي تظهر. */
 .screen{display:none}
 .screen.is-active{display:block;animation:fadeIn .3s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* تأثيرات الحركة عند ظهور العناصر. */
 .reveal{animation:fadeUp .45s cubic-bezier(.16,1,.3,1) both}
+/* الزر الأساسي (تدرج برتقالي). */
 .btn-sahab{
   display:inline-flex;align-items:center;justify-content:center;gap:var(--s-2);
   background:var(--grad-sunset);color:#fff;border:0;border-radius:var(--r-md);
@@ -183,18 +228,24 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.01em;line-height:1.28}
 }
 .btn-sahab:active{transform:scale(.97)}
 .btn-sahab:disabled{opacity:.6;cursor:not-allowed}
+/* زر بإطار فقط (ثانوي). */
 .btn-sahab-outline{background:transparent;color:var(--text);border:1.5px solid var(--border-2);border-radius:var(--r-md);min-height:var(--btn-h);padding:0 var(--s-4);font-weight:800;font-size:var(--t-base)}
 .btn-sahab-ghost{background:var(--p-50);color:var(--p-700);border:0;border-radius:var(--r-md);min-height:var(--btn-h);padding:0 var(--s-4);font-weight:800;font-size:var(--t-base);width:100%}
+/* زر الخطر (مثل تسجيل الخروج). */
 .btn-sahab-danger{background:#FEF2F2;color:var(--danger);border:0;border-radius:var(--r-md);min-height:var(--btn-h);padding:0 var(--s-4);font-weight:800;font-size:var(--t-base);width:100%}
 .btn-sahab-sm{min-height:38px;padding:0 var(--s-3);font-size:var(--t-sm);border-radius:var(--r-sm);width:auto}
 .btn-sahab-lg{min-height:var(--btn-lg-h);font-size:var(--t-lg);border-radius:var(--r-lg);width:100%}
+/* زر الواتساب الأخضر. */
 .btn-whatsapp{background:#25D366;color:#fff;border-radius:var(--r-md);min-height:var(--btn-h);padding:0 var(--s-4);font-weight:800;font-size:var(--t-base);display:inline-flex;align-items:center;justify-content:center;gap:var(--s-2);width:100%}
+/* حقول الإدخال (الإيميل، الباسورد، العنوان...). */
 .form-control-sahab{width:100%;min-height:var(--input-h);padding:var(--s-2) var(--s-3);background:var(--surface);border:1.5px solid var(--border-2);border-radius:var(--r-md);font-size:var(--t-base);color:var(--text);transition:all .2s}
 .form-control-sahab:focus{outline:none;border-color:var(--p-500);background:var(--p-50);box-shadow:0 0 0 4px rgba(232,93,42,.1)}
 .form-label-sahab{font-size:var(--t-sm);font-weight:700;color:var(--text-mute);margin-bottom:var(--s-1);display:block}
 textarea.form-control-sahab{min-height:80px;resize:vertical}
+/* شريط البحث في الرئيسية. */
 .search-sahab{display:flex;align-items:center;gap:var(--s-2);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-full);padding:0 var(--s-4);height:var(--input-h);box-shadow:0 4px 16px rgba(69,32,15,.04)}
 .search-sahab input{flex:1;border:0;background:transparent;outline:none;height:100%;font-size:var(--t-sm);color:var(--text)}
+/* شريط التصنيفات الأفقي (الكل، مشويات، حلويات...). */
 .chips-sahab{display:flex;gap:var(--s-2);overflow-x:auto;padding:var(--s-1) var(--s-3) var(--s-2);scrollbar-width:none}
 .chips-sahab::-webkit-scrollbar{display:none}
 .chip-sahab{
@@ -205,9 +256,11 @@ textarea.form-control-sahab{min-height:80px;resize:vertical}
   transition:all .2s;white-space:nowrap;
 }
 .chip-sahab.is-active{background:var(--p-500);border-color:var(--p-500);color:#fff;box-shadow:0 4px 12px rgba(232,93,42,.28)}
+/* عناوين الأقسام (عروض مميزة، الأكثر مبيعاً...). */
 .section-head-sahab{display:flex;justify-content:space-between;align-items:center;margin:var(--s-5) var(--s-3) var(--s-3)}
 .section-head-sahab h2{font-size:var(--t-xl);font-weight:900}
 .section-head-sahab .note{font-size:var(--t-xs);color:var(--text-mute);font-weight:700}
+/* الكاروسيل: سلايدر البلوكات في أعلى الرئيسية. */
 .carousel-viewport-sahab{margin:0 var(--s-3);border-radius:var(--r-lg);overflow:hidden;position:relative;background:var(--surface);border:1px solid var(--border);box-shadow:var(--sh-md)}
 .carousel-track-sahab{display:flex;direction:ltr;transition:transform .55s cubic-bezier(.16,1,.3,1)}
 .carousel-slide-sahab{flex:0 0 100%;direction:rtl;padding:var(--s-3);background:linear-gradient(135deg, var(--p-50), var(--gold-100))}
@@ -215,6 +268,7 @@ textarea.form-control-sahab{min-height:80px;resize:vertical}
 .carousel-slide-sahab .title{font-size:var(--t-sm);font-weight:900;color:var(--a-800)}
 .carousel-slide-sahab .sub{font-size:var(--t-2xs);color:var(--text-mute);font-weight:700}
 .carousel-grid-sahab{display:grid;grid-template-columns:repeat(auto-fit, minmax(calc(var(--u) * 14), 1fr));gap:var(--s-2)}
+/* كروت المطاعم داخل شرائح الكاروسيل. */
 .ads-card-sahab{
   background:var(--surface);border-radius:var(--r-md);padding:var(--s-2) var(--s-1);
   display:flex;flex-direction:column;align-items:center;text-align:center;
@@ -238,8 +292,10 @@ textarea.form-control-sahab{min-height:80px;resize:vertical}
 .carousel-dots-sahab{display:flex;justify-content:center;gap:6px;padding:var(--s-2) 0 var(--s-1)}
 .carousel-dots-sahab .dot{width:7px;height:7px;border-radius:50%;background:var(--border-2);transition:all .3s}
 .carousel-dots-sahab .dot.is-active{width:22px;border-radius:4px;background:var(--p-500)}
+/* الصفوف الأفقية القابلة للتمرير (الأكثر مبيعاً، الأعلى تقييماً). */
 .h-scroll-sahab{display:flex;gap:var(--s-3);overflow-x:auto;padding:var(--s-1) var(--s-3) var(--s-4);scrollbar-width:none;scroll-snap-type:x mandatory}
 .h-scroll-sahab::-webkit-scrollbar{display:none}
+/* كارت المنتج في الصف الأفقي. */
 .product-card-h-sahab{
   flex:0 0 clamp(calc(var(--u) * 18), 40vw, calc(var(--u) * 24));
   scroll-snap-align:start;background:var(--surface);border-radius:var(--r-lg);
@@ -257,21 +313,25 @@ textarea.form-control-sahab{min-height:80px;resize:vertical}
 .price-old-sahab{font-size:var(--t-xs);color:var(--text-mute);text-decoration:line-through}
 .add-btn-h-sahab{position:absolute;bottom:var(--s-2);inset-inline-end:var(--s-2);width:calc(var(--u) * 7);height:calc(var(--u) * 7);border-radius:50%;background:var(--p-500);color:#fff;display:grid;place-items:center;box-shadow:var(--sh-md);font-size:var(--t-lg);font-weight:900;transition:transform .1s}
 .add-btn-h-sahab:active{transform:scale(.85)}
+/* كارت المطعم في القائمة الرأسية. */
 .store-card-sahab{display:flex;gap:var(--s-3);padding:var(--s-3);background:var(--surface);border-radius:var(--r-lg);border:1px solid var(--border);text-align:start;width:100%;margin-bottom:var(--s-3);cursor:pointer;transition:transform .18s, border-color .18s}
 .store-card-sahab:active{transform:scale(.98);border-color:var(--p-200)}
 .store-card-sahab .media{width:calc(var(--u) * 18);height:calc(var(--u) * 18);border-radius:var(--r-md);flex-shrink:0;display:grid;place-items:center;font-size:var(--t-4xl);position:relative;background:linear-gradient(135deg, var(--p-50), var(--gold-100))}
 .store-card-sahab .body{flex:1;min-width:0}
 .store-card-sahab .name{font-size:var(--t-lg);font-weight:800}
 .store-card-sahab .meta{font-size:var(--t-sm);color:var(--text-mute);display:flex;flex-wrap:wrap;gap:var(--s-2);align-items:center}
+/* الشارات والتاجات (عروض متاحة، شارات المطاعم). */
 .promo-tag-sahab{background:#D1FAE5;color:#047857;font-weight:800;font-size:var(--t-xs);padding:3px 8px;border-radius:4px;display:inline-block;margin-top:var(--s-1)}
 .promo-tag-sahab.purple{background:#F3E8FF;color:#7E22CE}
 [data-theme="dark"] .promo-tag-sahab{background:#064e3b;color:#6ee7b7}
 [data-theme="dark"] .promo-tag-sahab.purple{background:#4c1d95;color:#c4b5fd}
+/* بلاطة المطعم المربعة (تظهر في الأعلى تقييماً وصفحة المطاعم). */
 .store-tile-sahab{flex:0 0 clamp(calc(var(--u) * 15), 36vw, calc(var(--u) * 22));scroll-snap-align:start;background:var(--surface);border-radius:var(--r-lg);padding:var(--s-2);border:1px solid var(--border);text-align:center;cursor:pointer;transition:transform .18s}
 .store-tile-sahab:active{transform:scale(.95)}
 .store-tile-sahab .media{width:calc(var(--u) * 14);height:calc(var(--u) * 14);border-radius:var(--r-md);margin:0 auto var(--s-2);display:grid;place-items:center;font-size:var(--t-3xl);background:linear-gradient(135deg, var(--p-50), var(--gold-100));position:relative}
 .store-tile-sahab .name{font-size:var(--t-sm);font-weight:800;line-height:1.3;margin-bottom:var(--s-1)}
 .store-tile-sahab .meta{font-size:var(--t-xs);color:var(--text-mute);display:flex;justify-content:center;gap:var(--s-2)}
+/* مجموعات صفحة 'كل المطاعم' حسب التصنيف. */
 .nearby-group-sahab{margin:0 var(--s-3) var(--s-5)}
 .nearby-group-sahab .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--s-2)}
 .nearby-group-sahab .head h3{font-size:var(--t-lg)}
@@ -279,6 +339,7 @@ textarea.form-control-sahab{min-height:80px;resize:vertical}
 .nearby-group-sahab .count{font-size:var(--t-2xs);font-weight:800;background:var(--p-50);color:var(--p-700);padding:4px 10px;border-radius:var(--r-full);white-space:nowrap}
 .nearby-grid-sahab{display:grid;grid-template-columns:repeat(auto-fill, minmax(calc(var(--u) * 16), 1fr));gap:var(--s-2)}
 .nearby-grid-sahab .store-tile-sahab{width:100%}
+/* بانر ترويجي كبير (غير مستخدم حالياً). */
 .day-promo-sahab{margin:var(--s-5) var(--s-3) var(--s-2);min-height:calc(var(--u) * 20);border-radius:var(--r-xl);padding:var(--s-4);display:flex;align-items:center;justify-content:space-between;overflow:hidden;position:relative;color:#fff;background:linear-gradient(120deg, #4D1E2E 0%, #8D3447 50%, #E85D2A 100%);box-shadow:0 12px 28px rgba(124,45,54,.18)}
 .day-promo-sahab .copy{position:relative;z-index:1;max-width:70%}
 .day-promo-sahab .eyebrow{font-size:var(--t-2xs);font-weight:900;letter-spacing:.04em;opacity:.8}
@@ -286,6 +347,7 @@ textarea.form-control-sahab{min-height:80px;resize:vertical}
 .day-promo-sahab p{font-size:var(--t-sm);opacity:.88;margin-bottom:var(--s-3)}
 .day-promo-sahab .btn-day{padding:var(--s-2) var(--s-3);border-radius:var(--r-full);background:#fff;color:#762C37;font-size:var(--t-sm);font-weight:900}
 .day-promo-sahab .art{font-size:calc(var(--u) * 16);z-index:1;transform:rotate(-10deg)}
+/* صورة الغلاف في صفحة المطعم. */
 .store-hero-sahab{height:calc(var(--u) * 30);background:var(--grad-plum);position:relative;display:flex;align-items:flex-end;padding:var(--s-4)}
 .store-hero-sahab::after{content:'';position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,.72), transparent)}
 .store-hero-sahab .content{position:relative;z-index:1;color:#fff;display:flex;gap:var(--s-3);align-items:center;width:100%}
@@ -293,7 +355,9 @@ textarea.form-control-sahab{min-height:80px;resize:vertical}
 .store-hero-sahab h2{font-size:var(--t-2xl);font-weight:900;margin-bottom:4px}
 .store-hero-sahab .meta{font-size:var(--t-sm);opacity:.9;display:flex;gap:var(--s-3);flex-wrap:wrap}
 .cat-chips-sahab{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border);padding:var(--s-2) 0}
+/* شبكة المنتجات داخل صفحة المطعم. */
 .product-grid-sahab{display:grid;grid-template-columns:repeat(auto-fill, minmax(min(100%, calc(var(--u) * 18)), 1fr));gap:var(--s-3)}
+/* كارت المنتج داخل صفحة المطعم. */
 .product-card-sahab{background:var(--surface);border-radius:var(--r-lg);border:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;position:relative}
 .product-card-sahab .media{aspect-ratio:1.35;display:grid;place-items:center;font-size:var(--t-4xl);background:linear-gradient(135deg, var(--p-50), var(--gold-100));position:relative}
 .product-card-sahab .body{padding:var(--s-2) var(--s-3) var(--s-3);display:flex;flex-direction:column;gap:4px;flex:1}
@@ -301,22 +365,27 @@ textarea.form-control-sahab{min-height:80px;resize:vertical}
 .product-card-sahab .desc{font-size:var(--t-sm);color:var(--text-mute);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .product-card-sahab .foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:var(--s-2);padding-top:var(--s-1)}
 .product-card-sahab .price{font-weight:900;color:var(--p-700);font-size:var(--t-base)}
+/* عنصر في السلة (الاسم، السعر، الكمية). */
 .cart-item-sahab{display:flex;gap:var(--s-3);align-items:center;padding:var(--s-3) 0;border-bottom:1px solid var(--border)}
 .cart-item-sahab:last-child{border-bottom:0}
 .cart-item-sahab .media{width:calc(var(--u) * 13);height:calc(var(--u) * 13);border-radius:var(--r-md);background:linear-gradient(135deg, var(--p-50), var(--gold-100));display:grid;place-items:center;font-size:var(--t-2xl);flex-shrink:0}
 .cart-item-sahab .body{flex:1;min-width:0}
 .cart-item-sahab .name{font-weight:800;font-size:var(--t-sm)}
+/* أزرار الزيادة والنقصان للكمية. */
 .qty-sahab{display:inline-flex;align-items:center;gap:2px;background:var(--p-50);border-radius:var(--r-full);padding:2px}
 .qty-sahab button{width:calc(var(--u) * 7);height:calc(var(--u) * 7);border-radius:50%;background:var(--surface);display:grid;place-items:center;font-weight:800;color:var(--p-500);border:1px solid var(--p-100)}
 .qty-sahab span{min-width:22px;text-align:center;font-weight:800;font-size:var(--t-sm)}
+/* ملخص الحساب (المجموع الفرعي، التوصيل، الإجمالي). */
 .summary-sahab{background:var(--bg-alt);border-radius:var(--r-lg);padding:var(--s-3);display:flex;flex-direction:column;gap:var(--s-1);border:1px solid var(--border)}
 .summary-sahab .row{display:flex;justify-content:space-between;font-size:var(--t-sm);color:var(--text-mute)}
 .summary-sahab .row.total{font-weight:900;color:var(--text);font-size:var(--t-base);border-top:1px dashed var(--border-2);padding-top:var(--s-2);margin-top:var(--s-1)}
+/* شريط السلة العائم في أسفل الشاشة. */
 .sticky-cart-bar-sahab{position:fixed;bottom:calc(var(--bottom-h) + env(safe-area-inset-bottom) + var(--s-2));left:50%;transform:translateX(-50%);width:min(calc(100% - var(--s-4) * 2), 480px);z-index:35}
 .sticky-cart-bar-sahab button{width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--grad-sunset);color:#fff;padding:var(--s-3) var(--s-4);border-radius:var(--r-full);font-weight:900;font-size:var(--t-base);box-shadow:0 8px 28px rgba(232,93,42,.45);min-height:var(--btn-h)}
 @media (min-aspect-ratio: 1/1){
   .sticky-cart-bar-sahab{bottom:var(--s-4);left:calc((100% - var(--nav-w)) / 2);width:min(calc(100% - var(--nav-w) - var(--s-6)), 480px)}
 }
+/* صفحة الترحيب (متوقفة مؤقتاً — الـ CSS محفوظ لو احتجناها تاني). */
 .landing-shell-sahab{position:relative;height:100%;min-height:100%;overflow:hidden;background:var(--grad-plum)}
 #app-main > .screen[data-screen="landing"]{height:100%;min-height:100%;}
 #app-main > .screen[data-screen="landing"] .landing-track-sahab{min-height:100%;}
@@ -336,13 +405,16 @@ textarea.form-control-sahab{min-height:80px;resize:vertical}
 .landing-dots-sahab .dot.is-active{width:26px;border-radius:4px;background:#fff}
 .landing-cta-sahab{position:absolute;bottom:0;left:0;right:0;padding:var(--s-4) var(--s-4) calc(var(--s-4) + env(safe-area-inset-bottom));z-index:10}
 .landing-cta-sahab .btn-sahab{border-radius:50px;font-size:var(--t-lg);box-shadow:0 12px 32px rgba(232,93,42,.5)}
+/* الجزء العلوي من صفحة الحساب الشخصي. */
 .profile-hero-sahab{background:var(--grad-plum);color:#fff;padding:var(--s-5) var(--s-4);border-radius:0 0 var(--r-xl) var(--r-xl)}
+/* قائمة الخيارات في صفحة الحساب. */
 .menu-group-sahab{background:var(--surface);border-radius:var(--r-lg);border:1px solid var(--border);overflow:hidden;margin-bottom:var(--s-3)}
 .menu-item-sahab{display:flex;align-items:center;gap:var(--s-3);width:100%;padding:var(--s-3) var(--s-4);background:var(--surface);text-align:start;border:0;border-bottom:1px solid var(--border);min-height:56px}
 .menu-item-sahab:last-child{border-bottom:0}
 .menu-item-sahab .icon{width:calc(var(--u) * 9);height:calc(var(--u) * 9);border-radius:var(--r-md);display:grid;place-items:center;font-size:var(--t-lg);background:var(--p-50);color:var(--p-500);flex-shrink:0}
 .menu-item-sahab .body{flex:1}
 .menu-item-sahab .title{font-weight:800;font-size:var(--t-base)}
+/* كارت رصيد النقاط. */
 .points-hero{background:linear-gradient(135deg, #F5A524 0%, #C77F0D 100%);color:#fff;border-radius:var(--r-xl);padding:var(--s-5);text-align:center;margin-bottom:var(--s-4);box-shadow:0 8px 24px rgba(245,165,36,.35)}
 .points-hero .lbl{font-size:var(--t-sm);opacity:.9;font-weight:700}
 .points-hero .balance{font-size:calc(var(--u) * 10);font-weight:900;line-height:1;margin:var(--s-2) 0}
@@ -350,6 +422,7 @@ textarea.form-control-sahab{min-height:80px;resize:vertical}
 .points-ledger-item .pts{font-weight:900;font-size:var(--t-lg)}
 .points-ledger-item .pts.positive{color:var(--success)}
 .points-ledger-item .pts.negative{color:var(--danger)}
+/* كارت سياسة الخصوصية في صفحة الدفع. */
 .privacy-card-sahab{background:linear-gradient(135deg, #EFF6FF, #F0F9FF);border:1.5px solid #BFDBFE;border-radius:var(--r-lg);padding:var(--s-4);margin:var(--s-4) 0}
 [data-theme="dark"] .privacy-card-sahab{background:linear-gradient(135deg, #0f2540, #0a1a2e);border-color:#1e3a5f}
 .privacy-card-sahab .head{display:flex;align-items:center;gap:var(--s-2);margin-bottom:var(--s-2)}
@@ -357,22 +430,29 @@ textarea.form-control-sahab{min-height:80px;resize:vertical}
 [data-theme="dark"] .privacy-card-sahab strong{color:#7eb8f0}
 .privacy-card-sahab p{font-size:var(--t-sm);color:#1E3A8A;line-height:1.6}
 [data-theme="dark"] .privacy-card-sahab p{color:#a8c8e8}
+/* رسالة الفراغ (سلة فاضية، لا توجد طلبات...). */
 .empty-state-sahab{padding:var(--s-6) var(--s-4);text-align:center}
 .empty-state-sahab .icon{font-size:var(--t-4xl);margin-bottom:var(--s-3)}
 .empty-state-sahab h3{font-size:var(--t-lg);font-weight:800;margin-bottom:var(--s-1)}
 .empty-state-sahab p{color:var(--text-mute);font-size:var(--t-sm);margin-bottom:var(--s-4)}
+/* عداد السلة الأحمر فوق أيقونة السلة. */
 .badge-sahab{position:absolute;top:4px;inset-inline-end:4px;min-width:18px;height:18px;padding:0 5px;border-radius:var(--r-full);background:var(--danger);color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;border:2px solid var(--surface)}
+/* الرسائل المنبثقة الصغيرة (تمت الإضافة ✓...). */
 .toast-sahab{position:fixed;bottom:calc(var(--bottom-h) + env(safe-area-inset-bottom) + var(--s-4));left:50%;transform:translate(-50%, 24px);background:var(--text);color:var(--bg);padding:var(--s-3) var(--s-4);border-radius:var(--r-md);font-size:var(--t-sm);font-weight:700;z-index:200;opacity:0;pointer-events:none;transition:opacity .22s, transform .22s;max-width:90vw;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.3)}
 .toast-sahab.is-show{opacity:1;transform:translate(-50%, 0)}
 @media (min-aspect-ratio: 1/1){.toast-sahab{bottom:var(--s-5);left:calc((100% - var(--nav-w)) / 2)}}
+/* شريط التنبيه لو إعدادات Supabase ناقصة. */
 .config-banner{background:#FEF3C7;color:#78350F;padding:var(--s-2) var(--s-3);font-size:var(--t-xs);font-weight:700;text-align:center;border-bottom:1px solid #FDE68A;display:none;grid-column:1 / -1}
 .config-banner.is-show{display:block}
 [data-theme="dark"] .config-banner{background:#422006;color:#fde68a;border-bottom-color:#78350f}
+/* بانر دعوة تثبيت التطبيق. */
 .install-banner{position:fixed;top:calc(env(safe-area-inset-top) + var(--s-2));left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-full);padding:var(--s-2) var(--s-3);display:none;align-items:center;gap:var(--s-2);z-index:150;box-shadow:var(--sh-md);max-width:calc(100% - var(--s-4) * 2);font-size:var(--t-sm)}
 .install-banner.is-show{display:flex;animation:fadeUp .3s ease}
 .install-banner button{font-weight:800;font-size:var(--t-sm)}
+/* مؤشر 'وضع عدم الاتصال'. */
 .offline-indicator{position:fixed;bottom:calc(var(--bottom-h) + env(safe-area-inset-bottom) + var(--s-1));left:50%;transform:translateX(-50%);background:#1F2937;color:#F3F4F6;padding:var(--s-2) var(--s-3);border-radius:var(--r-full);font-size:var(--t-xs);font-weight:700;z-index:90;display:none}
 .offline-indicator.is-show{display:block}
+/* تأثير التحميل (الهياكل الرمادية المتحركة). */
 .skeleton{background:linear-gradient(90deg, var(--border) 25%, var(--bg-alt) 50%, var(--border) 75%);background-size:200% 100%;animation:skeleton-shimmer 1.4s infinite;border-radius:var(--r-sm)}
 [data-theme="dark"] .skeleton{background:linear-gradient(90deg, #2a1c14 25%, #36241a 50%, #2a1c14 75%);background-size:200% 100%}
 @keyframes skeleton-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -380,18 +460,23 @@ textarea.form-control-sahab{min-height:80px;resize:vertical}
 .skeleton-title{height:var(--t-xl);width:60%;margin-bottom:var(--s-2)}
 .skeleton-card{height:calc(var(--u) * 22);margin-bottom:var(--s-2)}
 .skeleton-hero{height:calc(var(--u) * 30);border-radius:0}
+/* أدوات مساعدة صغيرة. */
 .d-none{display:none !important}
+/* احترام إعداد 'تقليل الحركة' في الجهاز. */
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
 button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:2px solid var(--p-500);outline-offset:2px}
 </style>
 </head>
 <body>
 
+<!-- الحاوية الرئيسية للتطبيق كله. -->
 <div id="app">
+  <!-- تنبيه: يظهر فقط لو إعدادات Supabase ناقصة. -->
   <div class="config-banner" id="config-banner">
     ⚙️ اضبط بيانات Supabase في الكود لتفعيل الحسابات الحقيقية
   </div>
 
+  <!-- الهيدر العلوي: الشعار، تبديل الثيم، السلة. -->
   <header class="app-header-sahab d-none" id="app-header">
     <div class="logo" onclick="location.hash='#/home'">
       <span class="logo-mark">☁️</span>
@@ -411,24 +496,12 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
     </div>
   </header>
 
+  <!-- منطقة المحتوى: كل الشاشات موجودة هنا، وواحدة بس ظاهرة في المرة. -->
   <main id="app-main">
 
-    <section class="screen is-active" data-screen="landing">
-      <div class="landing-shell-sahab">
-        <div class="landing-brand-sahab">
-          <span class="mark">☁️</span>
-          <span>سحاب</span>
-        </div>
-        <div class="landing-track-sahab" id="landing-track"></div>
-        <div class="landing-dots-sahab" id="landing-dots"></div>
-        <div class="landing-cta-sahab">
-          <button id="enter-sahab-btn" type="button" class="btn-sahab w-100 fs-5" onclick="location.hash='#/home'">
-            ادخل وتصفح سحاب 🍽️
-          </button>
-        </div>
-      </div>
-    </section>
+    <!-- (تم حذف صفحة الترحيب مؤقتاً — الموقع يفتح على الرئيسية) -->
 
+    <!-- شاشة الدخول وإنشاء الحساب. -->
     <section class="screen" data-screen="auth">
       <div class="p-3" style="min-height:100svh;background:var(--bg)">
         <button class="btn-sahab-outline btn-sahab-sm mb-4" onclick="history.back()">
@@ -488,7 +561,8 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
       </div>
     </section>
 
-    <section class="screen" data-screen="home">
+    <!-- الشاشة الرئيسية: البحث، التصنيفات، الكاروسيل، الصفوف، قائمة المطاعم. -->
+    <section class="screen is-active" data-screen="home">
       <div class="px-3 pt-3">
         <div class="search-sahab">
           <i class="bi bi-search text-muted"></i>
@@ -521,10 +595,12 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
       <div class="px-3" id="home-restaurants"></div>
     </section>
 
+    <!-- صفحة المطعم (يتم ملؤها بالجافاسكريبت). -->
     <section class="screen" data-screen="store">
       <div id="store-content"></div>
     </section>
 
+    <!-- صفحة 'كل المطاعم' مجمعة حسب التصنيف. -->
     <section class="screen" data-screen="nearby">
       <div class="px-3 pt-3">
         <h2 class="fs-4 fw-bold">كل المطاعم</h2>
@@ -533,6 +609,7 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
       <div id="nearby-collections" class="pt-3"></div>
     </section>
 
+    <!-- صفحة السلة. -->
     <section class="screen" data-screen="cart">
       <div class="p-3">
         <h2 class="fs-4 mb-3">🛒 سلة التسوق</h2>
@@ -540,6 +617,7 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
       </div>
     </section>
 
+    <!-- صفحة إتمام الطلب (بيانات التوصيل والكوبون). -->
     <section class="screen" data-screen="checkout">
       <div class="p-3">
         <h2 class="fs-4 mb-3">إتمام الطلب</h2>
@@ -547,6 +625,7 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
       </div>
     </section>
 
+    <!-- رسالة نجاح الطلب. -->
     <section class="screen" data-screen="order-success">
       <div class="p-5 text-center">
         <div class="mx-auto mb-4" style="width:104px;height:104px;border-radius:50%;background:#D1FAE5;color:var(--success);display:grid;place-items:center;font-size:52px">✓</div>
@@ -560,6 +639,7 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
       </div>
     </section>
 
+    <!-- صفحة طلباتي. -->
     <section class="screen" data-screen="orders">
       <div class="p-3">
         <h2 class="fs-4 mb-3">📦 طلباتي</h2>
@@ -567,6 +647,7 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
       </div>
     </section>
 
+    <!-- صفحة نقاطي. -->
     <section class="screen" data-screen="points">
       <div class="p-3">
         <h2 class="fs-4 mb-3">💰 نقاطي</h2>
@@ -574,6 +655,7 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
       </div>
     </section>
 
+    <!-- صفحة الحساب الشخصي والإعدادات. -->
     <section class="screen" data-screen="profile">
       <div class="profile-hero-sahab">
         <div class="d-flex align-items-center gap-3">
@@ -619,6 +701,7 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
 
   </main>
 
+  <!-- شريط التنقل السفلي (موبايل). -->
   <nav class="bottom-nav-sahab d-none" id="bottom-nav">
     <button data-nav="home" onclick="location.hash='#/home'"><i class="bi bi-house"></i><span>الرئيسية</span></button>
     <button data-nav="nearby" onclick="location.hash='#/nearby'"><i class="bi bi-geo-alt"></i><span>المطاعم</span></button>
@@ -627,6 +710,7 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
     <button data-nav="profile" onclick="location.hash='#/profile'"><i class="bi bi-person"></i><span>حسابي</span></button>
   </nav>
 
+  <!-- القائمة الجانبية (شاشات عريضة). -->
   <nav class="side-nav-sahab d-none" id="side-nav">
     <div class="nav-logo" onclick="location.hash='#/home'">
       <div class="nav-logo-mark">☁️</div>
@@ -640,6 +724,7 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
   </nav>
 </div>
 
+<!-- شريط السلة العائم. -->
 <div class="sticky-cart-bar-sahab d-none" id="sticky-cart-bar">
   <button onclick="location.hash='#/cart'">
     <span>🛒 عرض السلة <span id="sticky-cart-count" class="opacity-75 small ms-1">(0)</span></span>
@@ -647,16 +732,20 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
   </button>
 </div>
 
+<!-- مكان الرسائل المنبثقة. -->
 <div class="toast-sahab" id="toast"></div>
 
+<!-- بانر تثبيت التطبيق. -->
 <div class="install-banner" id="install-banner">
   <span>📱 ثبّت سحاب على جهازك</span>
   <button onclick="promptInstall()" class="btn-sahab btn-sahab-sm">تثبيت</button>
   <button onclick="dismissInstall()" style="padding:4px 8px;color:var(--text-mute)">✕</button>
 </div>
 
+<!-- مؤشر عدم الاتصال. -->
 <div class="offline-indicator" id="offline-indicator">📡 وضع عدم الاتصال</div>
 
+<!-- مكتبة Bootstrap (للتنسيقات والمكونات الجاهزة). -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -685,10 +774,15 @@ window.addEventListener('unhandledrejection', function (event) {
 /* ============================================================
    [1] إعدادات Supabase — غير دول لحاجاتك
    ============================================================ */
+// رابط مشروع Supabase (قاعدة البيانات والمصادقة).
 const SUPABASE_URL = 'https://hazyajkncrdfewkvnoww.supabase.co';
+// المفتاح العام (publishable) — آمن للاستخدام في المتصفح.
 const SUPABASE_ANON_KEY = 'sb_publishable_9Kf6dTQTqI9h7-yGALWMWg_bjPzM6Zu';
+// هل الإعدادات مكتملة؟ لو لا، يظهر تنبيه في الأعلى.
 const SUPABASE_CONFIGURED = !SUPABASE_URL.includes('YOUR_') && !SUPABASE_ANON_KEY.includes('YOUR_');
+// رقم واتساب الدعم — غيّره لرقمك.
 const SUPPORT_WHATSAPP = '201001234567'; // غيّر لرقم دعمك
+// عميل Supabase (يتم إنشاؤه أدناه).
 let supabase = null;
 if (SUPABASE_CONFIGURED && window.supabase) {
   try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
@@ -698,6 +792,7 @@ if (SUPABASE_CONFIGURED && window.supabase) {
 /* ============================================================
    [2] البيانات — بتتحمل من Supabase
    ============================================================ */
+// البيانات المحمّلة من Supabase (تُملأ في loadAllData).
 let CATEGORIES = [];
 let STORES = [];
 let PRODUCTS = [];
@@ -709,24 +804,31 @@ let OFFERS = [];
 let BANNERS = [];
 let POINTS_SETTINGS = null;
 
+// حالة التطبيق: المستخدم الحالي، السلة، الطلبات.
 const state = {
   user: null,
   cart: (() => { try { const saved = JSON.parse(localStorage.getItem('sahab_cart') || '[]'); return Array.isArray(saved) ? saved : []; } catch (e) { console.warn('Saved cart is invalid; starting with an empty cart.', e); return []; } })(),
   orders: [],
   currentStoreId: null,
 };
+// الشاشات اللي اتزارت قبل كده (عشان التحميل يظهر مرة واحدة).
 const seenScreens = new Set();
 
 /* ============================================================
    [3] Utilities
    ============================================================ */
+// اختصارات للبحث عن العناصر في الصفحة.
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
+// تنسيق السعر بالجنيه المصري.
 const fmt = n => Number(n).toFixed(0) + ' ج.م';
+// تعقيم النص قبل عرضه في HTML (حماية من الأكواد الضارة).
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// البحث عن مطعم بالـ id.
 const getStore = id => STORES.find(s => s.id === id);
 const getStoreProducts = id => PRODUCTS.filter(p => p.restaurant_id === id);
 
+// إظهار رسالة منبثقة صغيرة لفترة قصيرة.
 function toast(msg) {
   const el = $('#toast');
   el.textContent = msg;
@@ -734,9 +836,11 @@ function toast(msg) {
   clearTimeout(el._t);
   el._t = setTimeout(() => el.classList.remove('is-show'), 2200);
 }
+// حفظ السلة في localStorage عشان تفضل بعد تحديث الصفحة.
 function saveCart() {
   localStorage.setItem('sahab_cart', JSON.stringify(state.cart));
 }
+// إيموجي لكل تصنيف.
 function categoryEmoji(slug) {
   return { grills:'🍖','fast-food':'🍔',seafood:'🐟',desserts:'🍰',
     drinks:'🥤',pizza:'🍕',shawarma:'🌯',cafes:'☕' }[slug] || '🍽️';
@@ -745,6 +849,7 @@ function categoryEmoji(slug) {
 /* ============================================================
    [4] تحميل البيانات من Supabase
    ============================================================ */
+// تحميل كل البيانات من Supabase (المطاعم، المنتجات، الشارات، العروض، البلوكات، النقاط).
 async function loadAllData() {
   if (!supabase) {
     console.error('Supabase client is not initialized. Check URL, publishable key and CDN.');
@@ -846,16 +951,19 @@ async function loadAllData() {
 /* ============================================================
    [5] الثيم
    ============================================================ */
+// تشغيل الثيم (فاتح/داكن) حسب المحفوظ أو إعداد الجهاز.
 function initTheme() {
   const saved = localStorage.getItem('sahab_theme');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   applyTheme(saved || (prefersDark ? 'dark' : 'light'));
 }
+// تطبيق الثيم على الصفحة وتغيير أيقونة الزر.
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   const icon = $('#theme-icon');
   if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
 }
+// تبديل الوضع الليلي/النهاري وحفظ الاختيار.
 window.toggleTheme = function() {
   const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   applyTheme(next);
@@ -865,6 +973,7 @@ window.toggleTheme = function() {
 /* ============================================================
    [6] PWA
    ============================================================ */
+// متغير يحفظ حدث تثبيت التطبيق (PWA).
 let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
@@ -873,6 +982,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
   if ($('#install-menu-item')) $('#install-menu-item').style.display = 'flex';
   if (!localStorage.getItem('sahab_install_dismissed')) $('#install-banner')?.classList.add('is-show');
 });
+// تشغيل نافذة تثبيت التطبيق على الجهاز.
 window.promptInstall = async function() {
   if (!deferredPrompt) { toast('التطبيق مثبت بالفعل'); return; }
   deferredPrompt.prompt();
@@ -881,11 +991,13 @@ window.promptInstall = async function() {
   $('#install-btn')?.classList.add('d-none');
   $('#install-banner')?.classList.remove('is-show');
 };
+// إخفاء بانر التثبيت وتذكّر إن المستخدم رفضه.
 window.dismissInstall = function() {
   $('#install-banner')?.classList.remove('is-show');
   localStorage.setItem('sahab_install_dismissed', '1');
 };
 window.addEventListener('appinstalled', () => toast('تم تثبيت سحاب ✨'));
+// إظهار مؤشر 'وضع عدم الاتصال' لما الإنترنت يقطع.
 function updateOnlineStatus() {
   $('#offline-indicator')?.classList.toggle('is-show', !navigator.onLine);
 }
@@ -901,6 +1013,7 @@ if ('serviceWorker' in navigator) {
 /* ============================================================
    [7] Auth
    ============================================================ */
+// تسجيل الدخول بالإيميل وكلمة المرور، وتحميل بيانات الحساب.
 async function signIn(email, password) {
   if (!supabase) return { ok: false, error: 'الاتصال بالسيرفر مش متاح' };
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -917,6 +1030,7 @@ async function signIn(email, password) {
   };
   return { ok: true };
 }
+// إنشاء حساب جديد في Supabase.
 async function signUp(name, phone, email, password) {
   if (!supabase) return { ok: false, error: 'الاتصال بالسيرفر مش متاح' };
   const { data, error } = await supabase.auth.signUp({
@@ -930,6 +1044,7 @@ async function signUp(name, phone, email, password) {
   }
   return { ok: true };
 }
+// تسجيل الخروج ومسح بيانات المستخدم والسلة من الذاكرة.
 async function signOut() {
   if (supabase) { try { await supabase.auth.signOut(); } catch(e){} }
   state.user = null;
@@ -937,6 +1052,7 @@ async function signOut() {
   saveCart();
   updateBadges();
 }
+// استعادة الجلسة المحفوظة عند فتح الموقع.
 async function checkSession() {
   if (!supabase) return;
   try {
@@ -958,9 +1074,10 @@ async function checkSession() {
 /* ============================================================
    [8] Routing
    ============================================================ */
+// عرض الشاشة المطلوبة وإخفاء الباقي، وتحميل بياناتها.
 async function showScreen(name) {
   $$('.screen').forEach(s => s.classList.toggle('is-active', s.dataset.screen === name));
-  const isPublic = name === 'landing' || name === 'auth';
+  const isPublic = name === 'auth';
   $('#app-header').classList.toggle('d-none', isPublic);
   $('#bottom-nav').classList.toggle('d-none', isPublic);
   $('#side-nav')?.classList.toggle('d-none', isPublic);
@@ -968,7 +1085,6 @@ async function showScreen(name) {
   $$('[data-nav]').forEach(b => b.classList.toggle('is-active', b.dataset.nav === name));
   $('#app-main').scrollTo({ top:0, behavior:'instant' });
 
-  if (name === 'landing') renderLanding();
   if (name === 'profile') {
     $('#profile-name').textContent = state.user?.name || 'ضيف';
     $('#profile-email').textContent = state.user?.email || 'سجّل دخول';
@@ -998,10 +1114,12 @@ async function showScreen(name) {
   }
 }
 
+// قراءة الرابط (#/...) وتحديد الشاشة، ومنع الصفحات المحمية عن الزوار.
 function route() {
   const hash = location.hash.replace(/^#\/?/, '');
   const parts = hash.split('/');
-  const name = parts[0] || 'landing';
+  const name = parts[0] || 'home';
+  if (name === 'landing') return location.hash = '#/home';
   const requiresAuth = ['checkout','orders','profile','points'].includes(name);
   if (requiresAuth && !state.user) {
     location.hash = '#/auth';
@@ -1010,11 +1128,13 @@ function route() {
   if (name === 'store' && parts[1]) state.currentStoreId = parts[1];
   showScreen(name);
 }
+// تغيير الشاشة لما الرابط يتغير (مثلاً #/cart).
 window.addEventListener('hashchange', route);
 
 /* ============================================================
    [9] Auth UI
    ============================================================ */
+// التبديل بين تبويب 'دخول' و'حساب جديد'.
 window.switchAuth = function(type) {
   const loginTab = $('#tab-login'), regTab = $('#tab-register');
   const loginForm = $('#form-login'), regForm = $('#form-register');
@@ -1031,6 +1151,7 @@ window.switchAuth = function(type) {
   }
 };
 
+// بعد تسجيل الدخول: الرجوع للرئيسية أو الصفحة اللي كان المستخدم عايزها.
 function finishLogin() {
   const hash = location.hash;
   if (hash === '#/auth' || !hash) location.hash = '#/home';
@@ -1063,65 +1184,20 @@ $('#form-register').onsubmit = async (e) => {
   finishLogin();
 };
 
-window.logout = async () => { await signOut(); location.hash = '#/landing'; };
+// زر تسجيل الخروج.
+window.logout = async () => { await signOut(); location.hash = '#/home'; };
 
+// الانتقال لصفحة مطعم معيّن.
 window.goStore = function(id) {
   location.hash = '#/store/' + id;
 };
 
-/* ============================================================
-   [10] Landing
-   ============================================================ */
-let landingIndex = 0, landingTimer = null;
-
-function renderLanding() {
-  const track = $('#landing-track');
-  const dots = $('#landing-dots');
-  // اعرض أفضل 3 مطاعم كـ ads
-  const featured = STORES.slice(0, 3);
-  if (!featured.length) {
-    track.innerHTML = `<div class="ad-slide-sahab" style="background:linear-gradient(135deg,#E85D2A,#A55078)">
-      <div class="content"><div class="badge-ad">مرحباً</div><div class="emoji">🍽️</div>
-      <h1>سحاب</h1><p>اكتشف أفضل المطاعم في مدينتك</p></div></div>`;
-    dots.innerHTML = '';
-    return;
-  }
-  track.innerHTML = featured.map(s => `
-    <div class="ad-slide-sahab" style="background:linear-gradient(135deg,#E85D2A,#A55078)">
-      <div class="content">
-        <div class="badge-ad">مطعم مميز</div>
-        <div class="emoji">${s.emoji}</div>
-        <h1>${esc(s.name)}</h1>
-        <p>⭐ ${s.rating} · ⏱ ${s.deliveryMin} دقيقة · 🛵 ${fmt(s.deliveryFee)}</p>
-        <button class="go-btn" onclick="event.stopPropagation();goStore('${s.id}')">اطلب الآن ←</button>
-      </div>
-    </div>`).join('');
-  dots.innerHTML = featured.map((_, i) =>
-    `<button class="dot ${i===0?'is-active':''}" onclick="goLandingSlide(${i})"></button>`
-  ).join('');
-  landingIndex = 0;
-  updateLanding();
-  startLandingAuto();
-}
-window.goLandingSlide = i => { landingIndex = i; updateLanding(); startLandingAuto(); };
-function updateLanding() {
-  const t = $('#landing-track'); if (!t) return;
-  t.style.transform = `translateX(${-landingIndex * 100}%)`;
-  $$('#landing-dots .dot').forEach((d,i) => d.classList.toggle('is-active', i === landingIndex));
-}
-function startLandingAuto() {
-  stopLandingAuto();
-  landingTimer = setInterval(() => {
-    const n = STORES.slice(0, 3).length || 1;
-    landingIndex = (landingIndex + 1) % n;
-    updateLanding();
-  }, 5000);
-}
-function stopLandingAuto() { if (landingTimer) clearInterval(landingTimer); landingTimer = null; }
+/* [10] صفحة الترحيب: تم إيقافها مؤقتاً. لإعادتها، انسخ الكود من النسخة السابقة. */
 
 /* ============================================================
    [11] Skeletons
    ============================================================ */
+// هياكل تحميل (Skeleton) للرئيسية أثناء الانتظار.
 function renderHomeSkeleton() {
   $('#home-bestsellers').innerHTML = Array(3).fill('<div class="product-card-h-sahab"><div class="skeleton" style="height:110px"></div><div class="body"><div class="skeleton skeleton-line"></div></div></div>').join('');
   $('#home-top-rated').innerHTML = Array(3).fill('<div class="store-tile-sahab"><div class="skeleton" style="height:64px;border-radius:14px;margin:0 auto 8px"></div><div class="skeleton skeleton-line"></div></div>').join('');
@@ -1133,6 +1209,7 @@ function renderHomeSkeleton() {
    ============================================================ */
 let carouselIndex = 0, carouselTimer = null;
 
+// رسم الرئيسية: التصنيفات، الكاروسيل، الأكثر مبيعاً، الأعلى تقييماً، قائمة المطاعم.
 function renderHome() {
   // chips من التصنيفات
   $('#home-chips').innerHTML = `
@@ -1194,6 +1271,7 @@ function renderHome() {
   $('#home-restaurants').innerHTML = STORES.map(storeCardHTML).join('') || '<p class="text-muted text-center">لا توجد مطاعم</p>';
 }
 
+// البحث عن مطعم أو أكلة أثناء الكتابة.
 window.searchHome = function(q) {
   const ql = q.trim().toLowerCase();
   if (!ql) return filterHomeCategory('all', $('#home-chips .chip-sahab'));
@@ -1202,6 +1280,7 @@ window.searchHome = function(q) {
     || '<div class="empty-state-sahab"><div class="icon">🔎</div><h3>ملقيناش نتيجة</h3><p>جرّب كلمة تانية</p></div>';
 };
 
+// فلترة المطاعم حسب التصنيف المختار.
 window.filterHomeCategory = function(cat, btn) {
   $$('#home-chips .chip-sahab').forEach(c => c.classList.toggle('is-active', c === btn));
   const list = cat === 'all' ? STORES : STORES.filter(s => s.category_id === cat);
@@ -1209,6 +1288,7 @@ window.filterHomeCategory = function(cat, btn) {
     || '<div class="empty-state-sahab"><div class="icon">🍽️</div><h3>مفيش مطاعم</h3><p>جرب قسم تاني</p></div>';
 };
 
+// HTML كارت المطعم (يُستخدم في القوائم).
 function storeCardHTML(s) {
   const fast = s.deliveryMin < 30;
   return `
@@ -1233,14 +1313,19 @@ function storeCardHTML(s) {
 /* ============================================================
    [13] Carousel
    ============================================================ */
+// الانتقال للشريحة التالية في الكاروسيل.
 window.nextSlide = () => { carouselIndex = (carouselIndex+1) % Math.max(BLOCKS.length,1); updateCarousel(); startCarouselAuto(); };
+// الرجوع للشريحة السابقة.
 window.prevSlide = () => { carouselIndex = (carouselIndex-1+Math.max(BLOCKS.length,1)) % Math.max(BLOCKS.length,1); updateCarousel(); startCarouselAuto(); };
+// الذهاب لشريحة محددة بالنقاط.
 window.goSlide = i => { carouselIndex = i; updateCarousel(); startCarouselAuto(); };
+// تحديث موقع الكاروسيل ونقاطه.
 function updateCarousel() {
   const t = $('#carousel-track'); if (!t) return;
   t.style.transform = `translateX(${-carouselIndex * 100}%)`;
   $$('#carousel-dots .dot').forEach((d,i) => d.classList.toggle('is-active', i === carouselIndex));
 }
+// تشغيل التبديل التلقائي للكاروسيل كل 4.5 ثانية.
 function startCarouselAuto() {
   stopCarouselAuto();
   if (BLOCKS.length < 2) return;
@@ -1249,11 +1334,13 @@ function startCarouselAuto() {
     updateCarousel();
   }, 4500);
 }
+// إيقاف التبديل التلقائي.
 function stopCarouselAuto() { if (carouselTimer) clearInterval(carouselTimer); carouselTimer = null; }
 
 /* ============================================================
    [14] Store Details
    ============================================================ */
+// رسم صفحة المطعم: الغلاف، زر واتساب، وكل الأصناف.
 function renderStoreDetails(storeId) {
   const store = getStore(storeId);
   if (!store) { toast('المطعم غير موجود'); return; }
@@ -1291,6 +1378,7 @@ function renderStoreDetails(storeId) {
     </div>`;
 }
 
+// HTML كارت المنتج داخل صفحة المطعم.
 function productCardHTML(p) {
   return `
     <div class="product-card-sahab">
@@ -1309,6 +1397,7 @@ function productCardHTML(p) {
 /* ============================================================
    [15] WhatsApp
    ============================================================ */
+// إرسال الطلب للمطعم على واتساب برسالة جاهزة.
 window.orderStoreWhatsApp = function(storeId) {
   const store = getStore(storeId);
   if (!store || !store.whatsapp) { toast('رقم المطعم غير متاح'); return; }
@@ -1324,6 +1413,7 @@ window.orderStoreWhatsApp = function(storeId) {
   window.open(`https://wa.me/${store.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
+// فتح واتساب الدعم.
 window.openSupportWhatsApp = function() {
   const msg = 'مرحباً فريق سحاب! 👋\nعندي استفسار...';
   window.open(`https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -1332,6 +1422,7 @@ window.openSupportWhatsApp = function() {
 /* ============================================================
    [16] Nearby
    ============================================================ */
+// رسم صفحة 'كل المطاعم' مجمعة حسب التصنيف.
 function renderNearby() {
   const groups = CATEGORIES.map(c => ({
     title: `${categoryEmoji(c.slug)} ${c.name}`,
@@ -1359,6 +1450,7 @@ function renderNearby() {
 /* ============================================================
    [17] Cart
    ============================================================ */
+// إضافة منتج للسلة (وتأكيد إنه من نفس المطعم).
 window.addToCart = function(productId) {
   const product = PRODUCTS.find(p => p.id === productId);
   if (!product) return;
@@ -1374,6 +1466,7 @@ window.addToCart = function(productId) {
   toast('تمت الإضافة ✓');
 };
 
+// زيادة أو نقصان كمية منتج في السلة.
 window.updateQty = function(id, change) {
   const item = state.cart.find(i => i.id === id);
   if (!item) return;
@@ -1382,12 +1475,14 @@ window.updateQty = function(id, change) {
   saveCart(); updateBadges(); renderCart(); updateStickyCartBar(true);
 };
 
+// تحديث عداد السلة في الهيدر.
 function updateBadges() {
   const count = state.cart.reduce((s,i) => s + i.qty, 0);
   const b = $('#badge-cart');
   if (b) { b.textContent = count; b.classList.toggle('d-none', count === 0); }
 }
 
+// إظهار/إخفاء شريط السلة العائم وتحديث المجموع.
 function updateStickyCartBar(show) {
   const bar = $('#sticky-cart-bar'); if (!bar) return;
   const count = state.cart.reduce((s,i) => s + i.qty, 0);
@@ -1400,6 +1495,7 @@ function updateStickyCartBar(show) {
   } else bar.classList.add('d-none');
 }
 
+// رسم صفحة السلة وحساب المجموع والتوصيل.
 function renderCart() {
   const root = $('#cart-content');
   if (!state.cart.length) {
@@ -1439,6 +1535,7 @@ function renderCart() {
     ${store?.whatsapp ? `<button class="btn-whatsapp mt-2" onclick="orderStoreWhatsApp('${store.id}')"><i class="bi bi-whatsapp"></i> اطلب على واتساب</button>` : ''}`;
 }
 
+// الانتقال لصفحة الدفع (يتطلب تسجيل دخول).
 window.goCheckout = function() {
   if (!state.user) {
     toast('سجّل دخول لإتمام الطلب');
@@ -1451,6 +1548,7 @@ window.goCheckout = function() {
 /* ============================================================
    [18] Checkout
    ============================================================ */
+// رسم صفحة إتمام الطلب (بيانات التوصيل والكوبون).
 function renderCheckout() {
   if (!state.user) { location.hash = '#/auth'; return; }
   if (!state.cart.length) { location.hash = '#/cart'; return; }
@@ -1491,6 +1589,7 @@ function renderCheckout() {
     <button class="btn-sahab w-100 btn-sahab-lg mt-3" onclick="placeOrder()" id="place-order-btn">تأكيد الطلب (${fmt(total)})</button>`;
 }
 
+// إرسال الطلب: إنشاء سلة في Supabase ثم استدعاء checkout_cart.
 window.placeOrder = async function() {
   if (!state.user) { location.hash = '#/auth'; return; }
   if (!state.cart.length) { location.hash = '#/home'; return; }
@@ -1563,6 +1662,7 @@ window.placeOrder = async function() {
 /* ============================================================
    [19] Orders
    ============================================================ */
+// تحميل طلبات العميل من Supabase.
 async function loadOrders() {
   if (!supabase || !state.user?.id) { state.orders = []; return; }
   const { data, error } = await supabase
@@ -1574,6 +1674,7 @@ async function loadOrders() {
   state.orders = data || [];
 }
 
+// رسم قائمة الطلبات وحالتها.
 function renderOrders() {
   const root = $('#orders-list');
   if (!state.orders.length) {
@@ -1603,6 +1704,7 @@ function renderOrders() {
 /* ============================================================
    [20] Points — نقاط العميل
    ============================================================ */
+// رسم صفحة النقاط: الرصيد وسجل الحركات.
 async function renderPoints() {
   const root = $('#points-content');
   if (!state.user?.id) {
@@ -1648,6 +1750,7 @@ async function renderPoints() {
 /* ============================================================
    [21] Init
    ============================================================ */
+// نقطة البداية: تشغيل الثيم، عرض الرئيسية فوراً، ثم تحميل البيانات في الخلفية.
 (function init() {
   // ابدأ بعرض الواجهة فوراً، ولا تجعل ظهور الصفحة متوقفاً على استجابة Supabase.
   try {
@@ -1662,7 +1765,6 @@ async function renderPoints() {
   if (!SUPABASE_CONFIGURED) $('#config-banner')?.classList.add('is-show');
 
   // عرض صفحة البداية ببيانات افتراضية حتى لو تأخر اتصال الإنترنت أو Supabase.
-  try { renderLanding(); } catch (error) { console.error('Landing render failed:', error); }
   try { route(); } catch (error) { console.error('Route failed:', error); }
 
   // تحميل بيانات الحساب والمطاعم في الخلفية بعد ظهور الواجهة.
@@ -1670,8 +1772,7 @@ async function renderPoints() {
     try {
       await checkSession();
       await loadAllData();
-      renderLanding();
-      const current = (location.hash.replace(/^#\/?/, '').split('/')[0] || 'landing');
+      const current = (location.hash.replace(/^#\/?/, '').split('/')[0] || 'home');
       if (current === 'home') await showScreen('home');
       else if (current === 'profile' && state.user) await showScreen('profile');
     } catch (error) {
@@ -1680,13 +1781,10 @@ async function renderPoints() {
     }
   })();
 
-  // رندر nearby بعد التحميل لو هنروحلها
+  // إعادة رسم صفحة "كل المطاعم" عند فتحها من الرابط
   window.addEventListener('hashchange', () => {
     if (location.hash === '#/nearby') renderNearby();
   });
-
-  // زر الدخول يعتمد على تغيير المسار إلى #/home من HTML مباشرة.
-  // مستمع hashchange الموجود بالأعلى يتولى إظهار شاشة التصفح دون انتظار Supabase.
 
 })();
 </script>
