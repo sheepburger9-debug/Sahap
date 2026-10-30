@@ -504,18 +504,44 @@ async function viewHome() {
     </a>`;
   }).join('');
 
-    const blocksHtml = blocks.map((bl) => {
+    
+  const blocksHtml = blocks.map((bl) => {
     const list = bl.ids
       .map((id) => byId.get(id))
       .filter(Boolean);
 
-    if (!list.length) return '';
+    const offerCards = (bl.offerItems || [])
+      .map((offer) => {
+        const restaurant = byId.get(offer.restaurant_id);
+
+        if (!restaurant) return '';
+
+        return `<a class="mini" href="#/r/${esc(restaurant.slug)}">
+          <span class="cover">
+            ${offer.image_url
+              ? `<img src="${esc(offer.image_url)}" alt="" loading="lazy">`
+              : esc(restaurant.name.charAt(0))}
+          </span>
+          <strong>${esc(offer.title)}</strong>
+          <span class="meta">${esc(restaurant.name)}</span>
+          ${offer.description
+            ? `<span class="meta">${esc(offer.description)}</span>`
+            : ''}
+        </a>`;
+      })
+      .join('');
+
+    const content = offerCards || list
+      .map((r) => miniHtml(r, bl.badge))
+      .join('');
+
+    if (!content) return '';
 
     return `<section class="block">
       <h2 class="sec">${esc(bl.title)}</h2>
       ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
       <div class="rail">
-        ${list.map((r) => miniHtml(r, bl.badge)).join('')}
+        ${content}
       </div>
     </section>`;
   }).join('');
