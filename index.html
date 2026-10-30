@@ -563,6 +563,8 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
 
     <!-- الشاشة الرئيسية: البحث، التصنيفات، الكاروسيل، الصفوف، قائمة المطاعم. -->
     <section class="screen is-active" data-screen="home">
+      <!-- سطر حالة الاتصال بقاعدة البيانات (متصل / غير متصل مع السبب) -->
+      <div id="db-status" class="small text-center px-3 pt-2" style="color:var(--text-mute)">جاري الاتصال بقاعدة البيانات...</div>
       <div class="px-3 pt-3">
         <div class="search-sahab">
           <i class="bi bi-search text-muted"></i>
@@ -784,9 +786,36 @@ const SUPABASE_CONFIGURED = !SUPABASE_URL.includes('YOUR_') && !SUPABASE_ANON_KE
 const SUPPORT_WHATSAPP = '201001234567'; // غيّر لرقم دعمك
 // عميل Supabase (يتم إنشاؤه أدناه).
 let supabase = null;
-if (SUPABASE_CONFIGURED && window.supabase) {
+
+// إنشاء عميل Supabase بعد ما تتأكد إن المكتبة اتحملت.
+function createSupabaseClient() {
+  if (!SUPABASE_CONFIGURED || !window.supabase || supabase) return;
   try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
-  catch(e) { console.error('Supabase init failed:', e); }
+  catch (e) { console.error('Supabase init failed:', e); }
+}
+
+// مكتبة Supabase بتتحمل من CDN. لو الـ CDN الأساسي فشل (الشبكة بتقفله مثلاً)،
+// بنجرب CDN تاني قبل ما نقول إن فيه مشكلة.
+const SUPABASE_LIB_SOURCES = [
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
+  'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
+];
+function loadScriptOnce(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => resolve(true);
+    s.onerror = () => reject(new Error('failed: ' + src));
+    document.head.appendChild(s);
+  });
+}
+async function ensureSupabaseLib() {
+  if (window.supabase) return true;
+  for (const src of SUPABASE_LIB_SOURCES) {
+    try { await loadScriptOnce(src); if (window.supabase) return true; }
+    catch (e) { console.warn('Supabase CDN failed:', e.message); }
+  }
+  return !!window.supabase;
 }
 
 /* ============================================================
@@ -1751,6 +1780,14 @@ async function renderPoints() {
    [21] Init
    ============================================================ */
 // نقطة البداية: تشغيل الثيم، عرض الرئيسية فوراً، ثم تحميل البيانات في الخلفية.
+// تحديث سطر حالة الاتصال في الرئيسية.
+function setDbStatus(ok, msg) {
+  const el = $('#db-status');
+  if (!el) return;
+  el.textContent = ok ? '✓ متصل بقاعدة البيانات' : '⚠️ ' + msg;
+  el.style.color = ok ? 'var(--success)' : 'var(--danger)';
+}
+
 (function init() {
   // ابدأ بعرض الواجهة فوراً، ولا تجعل ظهور الصفحة متوقفاً على استجابة Supabase.
   try {
@@ -1770,8 +1807,17 @@ async function renderPoints() {
   // تحميل بيانات الحساب والمطاعم في الخلفية بعد ظهور الواجهة.
   (async () => {
     try {
+      const libOk = await ensureSupabaseLib();
+      createSupabaseClient();
+      if (!libOk) {
+        setDbStatus(false, 'مكتبة Supabase ما اتحملتش (مشكلة في الشبكة أو الـ CDN)');
+      }
       await checkSession();
-      await loadAllData();
+      const dataOk = supabase ? await loadAllData() : false;
+      if (supabase) {
+        setDbStatus(dataOk, 'تعذر تحميل البيانات من Supabase (افتح Console لمعرفة السبب)');
+        if (dataOk) setDbStatus(true, '');
+      }
       const current = (location.hash.replace(/^#\/?/, '').split('/')[0] || 'home');
       if (current === 'home') await showScreen('home');
       else if (current === 'profile' && state.user) await showScreen('profile');
