@@ -327,6 +327,7 @@ async function loadBanners() {
     .eq('is_active', true).order('display_order');
   return (data || []).map((x) => x.restaurant_offers).filter(Boolean);
 }
+
 async function loadBlocks() {
   const { data, error } = await sb.from('restaurant_blocks')
     .select(`
@@ -342,13 +343,27 @@ async function loadBlocks() {
         background_color,
         text_color
       ),
-      block_restaurant_overrides(restaurant_id)
+      block_restaurant_overrides (
+        restaurant_id
+      ),
+      block_offer_items (
+        id,
+        offer_id,
+        display_order,
+        restaurant_offers (
+          id,
+          title,
+          description,
+          image_url,
+          restaurant_id
+        )
+      )
     `)
     .eq('is_visible', true)
     .order('display_order');
 
   if (error) {
-    console.error('خطأ تحميل بلوكات المطاعم:', error);
+    console.error('خطأ تحميل البلوكات:', error);
     return [];
   }
 
@@ -356,9 +371,18 @@ async function loadBlocks() {
     ...b,
     badge: b.badges,
     ids: (b.block_restaurant_overrides || [])
-      .map((o) => o.restaurant_id)
+      .map((o) => o.restaurant_id),
+    offerItems: (b.block_offer_items || [])
+      .filter((item) => item.restaurant_offers)
+      .sort((a, b) => a.display_order - b.display_order)
+      .map((item) => ({
+        ...item.restaurant_offers,
+        offer_item_id: item.id,
+        offer_order: item.display_order
+      }))
   }));
 }
+
 async function loadMethods(restaurantId) {
   const { data } = await sb.rpc('get_payment_methods', { p_restaurant_id: restaurantId });
   return data || { cash: false, paymob: false };
