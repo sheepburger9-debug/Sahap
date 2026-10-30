@@ -63,13 +63,26 @@ label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 6px}
 .banner .bt{font-family:"Reem Kufi",sans-serif;font-size:24px;font-weight:700;line-height:1.2}
 
 .block .rail{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.col{flex:0 0 86%;min-width:0;scroll-snap-align:start;display:flex;flex-direction:column;gap:12px}
+.col .rcard{margin:0}
 .block .rail::-webkit-scrollbar{display:none}
 .mini{flex:0 0 150px;text-decoration:none;display:flex;flex-direction:column;gap:4px}
 .cover{height:96px;border-radius:12px;background:#D9E1D2;overflow:hidden;display:grid;place-items:center;font-family:"Reem Kufi",sans-serif;font-size:32px;color:var(--olive)}
 .cover img{width:100%;height:100%;object-fit:cover}
 .mini strong{font-size:15px}
-.col{flex:0 0 var(--col-w);min-width:0;scroll-snap-align:start;display:flex;flex-direction:column}
-.col .row:last-child{border-bottom:0}
+/* كارت المطعم: نص على الشمال، والصورة في مربع على اليمين، والعرض فوق الصورة */
+.rcard{display:flex;align-items:stretch;min-height:104px;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;text-decoration:none;color:inherit;margin:0 0 12px}
+.rcard-img{position:relative;flex:0 0 40%;min-height:104px;border-inline-start:1px solid var(--line);background:#fff;overflow:hidden;display:grid;place-items:center}
+.rcard-img img{display:block;width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.rcard-fb{font-family:"Reem Kufi",sans-serif;font-size:32px;color:var(--olive)}
+.rcard-img .badge{position:absolute;bottom:6px;left:6px;margin:0;font-weight:700;font-size:12px;padding:3px 10px;z-index:1}
+.rcard-img .rcard-logo{position:absolute;inset:auto;top:6px;right:6px;width:44px;height:44px;border-radius:10px;object-fit:cover;background:#fff;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.2);z-index:1}
+.rcard-fav{position:absolute;top:6px;left:6px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.9);display:grid;place-items:center;z-index:1;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.rcard-fav svg{width:16px;height:16px;fill:#5B645D}
+.rcard-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:12px 14px}
+.rcard .rname{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcard-line{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcard-line .star{color:var(--saffron)}
 .ad{display:block;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:14px 0}
 .ad img{display:block;width:100%;height:auto;max-height:200px;object-fit:cover}
 .ad-body{padding:12px 14px;display:flex;flex-direction:column;gap:2px}
@@ -385,21 +398,28 @@ function cover(r) {
 
 function restRowHtml(r, customBadge) {
   const badge = customBadge || badgesOf(r)[0];
-  return `<a class="row" href="#/r/${esc(r.slug)}">
-    ${thumb(r.logo_url, r.name)}
-    <span class="grow">
+  // صورة الغلاف هي الأساس، واللوجو يتحط فوقها لو موجود؛ لو مفيش غلاف يبقى اللوجو هو الصورة
+  const cover = safeUrl(r.cover_image_url);
+  const logo = safeUrl(r.logo_url);
+  const mainImg = cover || logo;
+  const logoOverlay = cover && logo ? `<img class="rcard-logo" src="${esc(logo)}" alt="" loading="lazy">` : '';
+  const fallback = esc((r.name || '?').trim()[0] || '؟');
+  // أيقونة المفضلة شكلية حالياً: مفيش جدول مفضلة في قاعدة البيانات لسه
+  const heart = `<span class="rcard-fav" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.7 4.5 6.6 4.5c2.2 0 3.7 1.2 5.4 3 1.7-1.8 3.2-3 5.4-3 3.9 0 5.7 3.9 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg></span>`;
+  return `<a class="rcard" href="#/r/${esc(r.slug)}" aria-label="${esc(r.name)}">
+    <span class="rcard-img">${mainImg ? `<img src="${esc(mainImg)}" alt="" loading="lazy">` : `<span class="rcard-fb" aria-hidden="true">${fallback}</span>`}${logoOverlay}${heart}${badge ? badgeHtml(badge) : ''}</span>
+    <span class="rcard-body">
       <strong class="rname">${esc(r.name)}</strong>
-      <span class="meta" style="display:block">${esc(r.restaurant_categories?.name || '')} · ${stars(r.rating)} ${Number(r.rating || 0).toFixed(1)}</span>
-      <span class="meta" style="display:block">${deliveryText(r)}</span>
-      ${badge ? badgeHtml(badge) : ''}
+      <span class="rcard-line"><span class="star">★</span> ${Number(r.rating || 0).toFixed(1)} · ${deliveryText(r)}</span>
     </span></a>`;
 }
-const PER_COL = 3; // عدد المطاعم رأسياً في كل عمود (الاتفاق الحالي)
 const safeUrl = (u) => (/^https?:\/\//i.test(u || '') ? u : '');
 
+const PER_COL = 3; // عدد المطاعم رأسياً في كل عمود (الاتفاق الحالي)
 function blockHtml(bl, byId) {
   const items = bl.members.map((m) => ({ r: byId.get(m.restaurant_id), m })).filter((x) => x.r);
   if (!items.length) return '';
+  // كل عمود فيه PER_COL مطاعم فوق بعض، والأعمدة جنب بعض والريل بيتسحب أفقياً
   const cols = [];
   for (let i = 0; i < items.length; i += PER_COL) cols.push(items.slice(i, i + PER_COL));
   return `<section class="block">
@@ -544,15 +564,21 @@ function observeAds(root = document) {
 }
 
 // النقر: يسجل ولا يمنع التنقل (الروابط الداخلية والخارجية زي ما هي)
+// النقرة تُحتسب مرة واحدة لكل حملة في كل عرض للصفحة، والضغط المتكرر ما بيخصمش تاني
+const clickedKeys = new Set();
 document.addEventListener('click', (e) => {
   const a = e.target && e.target.closest ? e.target.closest('a.ad[data-campaign-id]') : null;
   if (!a) return;
   const campaignId = a.dataset.campaignId;
   if (!UUID_RE.test(campaignId || '')) return;
+  const viewKey = `${a.dataset.view || viewSeq}|${campaignId}`;
+  if (clickedKeys.has(viewKey)) return;
+  clickedKeys.add(viewKey);
+  const eventKey = `click:${SESSION_RAW}:${viewKey}`;
   sessionHash().then((h) => sendAdEvent('track_ad_click', {
     p_campaign_id: campaignId,
     p_session_hash: h,
-    p_event_key: newEventKey(),
+    p_event_key: eventKey,
   }, 2));
 });
 
@@ -560,7 +586,8 @@ document.addEventListener('click', (e) => {
 // skipCodes: مواضع بتتعرض في مكان محدد بره الترتيب
 function layoutHtml(layout, blocks, byId, ads, skipCodes = new Set()) {
   const blockById = new Map(blocks.map((b) => [b.id, b]));
-  const items = layout.length ? layout : blocks.map((b) => ({ item_type: 'restaurant_block', block_id: b.id }));
+  // التخطيط هو المصدر الوحيد: البلوك اللي مش في التخطيط ما يتعرضش أبداً
+  const items = layout;
   return items.map((it) => {
     if (it.item_type === 'restaurant_block') {
       const bl = blockById.get(it.block_id);
@@ -666,7 +693,11 @@ async function viewHome() {
 // المطاعم تُربط بالتصنيف عبر restaurants.category_id ← restaurant_categories.id (الـ join في loadRestaurants)
 // الإعلانات: «الكل» ← restaurants_top / restaurants_between_*
 //            تصنيف محدد ← category_top / category_between_*
-const RESTAURANT_SLOTS = [['restaurants_between_1', 4], ['restaurants_between_2', 8], ['restaurants_between_3', 12]];
+// توزيع اللافتات داخل القائمة بالتساوي حسب ترتيب التخطيط (display_order)، ومن غير أرقام ثابتة
+function spreadSlots(items, len) {
+  const sorted = [...items].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+  return sorted.map((it, i) => [it.ad_placements.code, Math.floor(((i + 1) * len) / (sorted.length + 1))]);
+}
 
 // يرجّع الإعلانات المؤهلة للموضع، ويستبعد أي حملة ظهرت قبل كده في نفس الصفحة
 function pickAds(ads, code, used) {
@@ -706,17 +737,20 @@ async function viewRestaurants(query) {
     (it.item_type === 'ad_banner' && /^restaurants_/.test(it.ad_placements?.code || '')));
 
   // تصنيف محدد: تخطيطه يُحمَّل بمعرف التصنيف الحقيقي، ولا يرث بلوكات الرئيسية أو المطاعم
-  let catPage = [];      // لافتات التصنيف المحمّلة
-  let catPageFor = null; // معرف التصنيف اللي catPage تابع له
-  let layoutSeq = 0;     // يمنع عرض رد قديم لو المستخدم بدّل التصنيف بسرعة
+  // كل تصنيف ليه تخطيطه المخزن بمعرفه؛ الطلب المتزامن لنفس التصنيف ما بيتكررش
+  const catLayouts = new Map();     // category id -> عناصر التخطيط
+  const catLayoutLoads = new Map(); // category id -> طلب جاري
   const ensureCatLayout = async () => {
     const cat = active ? catBySlug.get(active) : null;
-    if (!cat || catPageFor === cat.id) return;
-    const seq = ++layoutSeq;
-    const lay = await loadLayout('category', cat.id);
-    if (seq !== layoutSeq) return; // رد قديم، الأحدث هو اللي يتعرض
-    catPage = lay.filter((it) => it.item_type === 'ad_banner' && /^category_/.test(it.ad_placements?.code || ''));
-    catPageFor = cat.id;
+    if (!cat || catLayouts.has(cat.id)) return;
+    if (!catLayoutLoads.has(cat.id)) {
+      catLayoutLoads.set(cat.id, loadLayout('category', cat.id).then((lay) => {
+        catLayouts.set(cat.id, lay.filter((it) =>
+          it.item_type === 'restaurant_block' ||
+          (it.item_type === 'ad_banner' && /^category_/.test(it.ad_placements?.code || ''))));
+      }).finally(() => catLayoutLoads.delete(cat.id)));
+    }
+    await catLayoutLoads.get(cat.id);
   };
   await ensureCatLayout();
   if (my !== rid) return;
@@ -734,25 +768,26 @@ async function viewRestaurants(query) {
     if (!$('#list')) return; // الصفحة اتغيرت
     const term = $('#s').value.trim().toLowerCase();
     const list = rests.filter((r) => matches(r, term));
+    const byId = new Map(list.map((r) => [r.id, r]));
     const used = new Set(); // كل حملة تظهر مرة واحدة في الصفحة
     let slots;
 
     if (active) {
       const cat = catBySlug.get(active);
       // لو التخطيط مش محمّل للتصنيف ده بالظبط ما نعرضش أي لافتة (ولا لافتات تصنيف تاني)
-      const lay = cat && catPageFor === cat.id ? catPage : [];
-      const top = lay.filter((it) => it.ad_placements.code === 'category_top');
-      const mids = lay.filter((it) => it.ad_placements.code !== 'category_top');
-      $('#top-ads').innerHTML = top.length ? adsHtml(pickAds(ads, 'category_top', used)) : '';
-      $('#top').innerHTML = '';
-      // موضع كل لافتة من ترتيب التخطيط، موزعة على عدد المطاعم المعروضة بعد البحث والتصفية
-      slots = mids.map((it, i) => [it.ad_placements.code, Math.floor(((i + 1) * list.length) / (mids.length + 1))]);
+      const lay = cat && catLayouts.has(cat.id) ? catLayouts.get(cat.id) : [];
+      const hasTop = lay.some((it) => it.ad_placements?.code === 'category_top');
+      const blocksHere = lay.filter((it) => it.item_type === 'restaurant_block');
+      const mids = lay.filter((it) => it.item_type === 'ad_banner' && it.ad_placements.code !== 'category_top');
+      $('#top-ads').innerHTML = hasTop ? adsHtml(pickAds(ads, 'category_top', used)) : '';
+      $('#top').innerHTML = layoutHtml(blocksHere, blocks, byId, ads);
+      slots = spreadSlots(mids, list.length);
     } else {
-      const byId = new Map(list.map((r) => [r.id, r]));
-      const skip = new Set(['restaurants_top', ...RESTAURANT_SLOTS.map((x) => x[0])]);
+      const restBetween = restPage.filter((it) => it.item_type === 'ad_banner' && /^restaurants_between_/.test(it.ad_placements?.code || ''));
+      const skip = new Set(['restaurants_top', ...restBetween.map((it) => it.ad_placements.code)]);
       $('#top-ads').innerHTML = adsHtml(pickAds(ads, 'restaurants_top', used));
       $('#top').innerHTML = layoutHtml(restPage, restPage.length ? blocks : [], byId, ads, skip);
-      slots = RESTAURANT_SLOTS;
+      slots = spreadSlots(restBetween, list.length);
     }
 
     const listHtml = () => {
