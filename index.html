@@ -289,6 +289,61 @@ async function loadAdInventory() {
     return [];
   }
 }
+function normalizeCampaigns(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (Array.isArray(value.campaigns)) return value.campaigns.filter(Boolean);
+  if (Array.isArray(value.items)) return value.items.filter(Boolean);
+  if (Array.isArray(value.data)) return value.data.filter(Boolean);
+  if (value.campaign && Array.isArray(value.campaign)) return value.campaign.filter(Boolean);
+  return [];
+}
+function getAdPlacementMap(adInventory) {
+  const map = new Map();
+  (adInventory || []).forEach((entry) => {
+    const placementCode = readDeep(entry, ['placement_code', 'placement', 'code', 'placement_key', 'location_code']) || readDeep(entry, ['id']);
+    if (!placementCode) return;
+    map.set(String(placementCode), entry);
+  });
+  return map;
+}
+function getEligibleCampaign(adEntry) {
+  if (!adEntry) return null;
+  const campaigns = normalizeCampaigns(adEntry);
+  const now = new Date();
+  const eligible = campaigns.find((campaign) => {
+    if (!campaign || typeof campaign !== 'object') return false;
+    const status = String(readDeep(campaign, ['status', 'state', 'campaign_status']) || '').toLowerCase();
+    if (['inactive', 'disabled', 'draft', 'archived', 'pending_review'].includes(status)) return false;
+    if (campaign.is_active === false) return false;
+    const start = readDeep(campaign, ['start_at', 'starts_at', 'started_at', 'starts']);
+    const end = readDeep(campaign, ['end_at', 'ends_at', 'ended_at', 'ends']);
+    if (start && new Date(start) > now) return false;
+    if (end && new Date(end) < now) return false;
+    const title = readDeep(campaign, ['title', 'name', 'ad_title', 'offer_title']);
+    const image = readDeep(campaign, ['image_url', 'banner_image_url', 'image', 'media_url']);
+    return Boolean(title || image || campaign.description || campaign.text || campaign.summary);
+  });
+  return eligible || null;
+}
+function renderBanner(ad) {
+  if (!ad) return '';
+  const entry = typeof ad === 'object' && ad.campaigns ? ad : { ...ad, campaigns: normalizeCampaigns(ad) };
+  const campaign = getEligibleCampaign(entry) || normalizeCampaigns(entry)[0] || null;
+  if (!campaign) return '';
+  const title = readDeep(campaign, ['title', 'name', 'ad_title', 'offer_title']) || readDeep(entry, ['title', 'name', 'ad_title', 'offer_title']) || 'عرض خاص';
+  const description = readDeep(campaign, ['description', 'summary', 'text', 'ad_description']) || readDeep(entry, ['description', 'summary', 'text', 'ad_description']) || '';
+  const image = readDeep(campaign, ['image_url', 'banner_image_url', 'image', 'media_url']) || readDeep(entry, ['image_url', 'banner_image_url', 'image', 'media_url']) || '';
+  const restaurantSlug = readDeep(campaign, ['restaurant.slug', 'restaurants.slug', 'restaurant_slug', 'slug']) || readDeep(entry, ['restaurant.slug', 'restaurants.slug', 'restaurant_slug', 'slug']) || '';
+  const restaurantName = readDeep(campaign, ['restaurant.name', 'restaurants.name', 'restaurant_name', 'merchant_name']) || readDeep(entry, ['restaurant.name', 'restaurants.name', 'restaurant_name', 'merchant_name']) || 'عرض خاص';
+  const href = restaurantSlug ? `#/r/${encodeURIComponent(restaurantSlug)}` : '#';
+  return `<a class="banner" href="${esc(href)}" aria-label="${esc(String(title))}">
+    ${image ? `<img src="${esc(image)}" alt="" loading="lazy">` : ''}
+    <span class="meta" style="color:inherit">${esc(String(restaurantName))}</span>
+    <span class="bt">${esc(String(title))}</span>
+    ${description ? `<span>${esc(String(description))}</span>` : ''}
+  </a>`;
+}
 async function loadBanners() {
   try {
     const { data, error } = await sb.from('homepage_offer_banner_items')
@@ -452,21 +507,6 @@ function restaurantCardHtml(restaurant, block = null, categoryMap = null) {
   `;
 }
 
-function renderBanner(ad) {
-  if (!ad) return '';
-  const title = readDeep(ad, ['title', 'ad_title', 'offer_title', 'name']) || 'عرض خاص';
-  const description = readDeep(ad, ['description', 'ad_description', 'offer_description']) || '';
-  const image = readDeep(ad, ['image_url', 'banner_image_url', 'image', 'media_url']) || '';
-  const restaurantSlug = readDeep(ad, ['restaurant.slug', 'restaurants.slug', 'restaurant_slug', 'slug']) || '';
-  const href = restaurantSlug ? `#/r/${esc(String(restaurantSlug))}` : '#';
-  return `<a class="banner" href="${esc(href)}" aria-label="${esc(String(title))}">
-    ${image ? `<img src="${esc(image)}" alt="" loading="lazy">` : ''}
-    <span class="meta" style="color:inherit">${esc(readDeep(ad, ['restaurant.name', 'restaurants.name', 'restaurant_name', 'merchant_name']) || 'عرض خاص')}</span>
-    <span class="bt">${esc(String(title))}</span>
-    ${description ? `<span>${esc(String(description))}</span>` : ''}
-  </a>`;
-}
-
 function normalizeHomeLayoutRow(row) {
   if (!row) return null;
   const type = String(readDeep(row, ['type', 'entity_type', 'item_type', 'component_type']) || '').trim().toLowerCase();
@@ -482,23 +522,18 @@ function normalizeHomeLayoutRow(row) {
   };
 }
 
-function resolveBlockRestaurants(block, restaurantsById) {
+function renderRestaurantBlock(block, restaurantsById, categoryMap) {
+  const style = normalizeCardStyle(block.card_style);
   const entries = Array.isArray(block?.overrides) ? block.overrides : [];
-  const unique = [];
   const seen = new Set();
+  const restaurants = [];
   for (const entry of entries) {
     if (!entry || !entry.restaurant_id) continue;
     const restaurant = restaurantsById.get(String(entry.restaurant_id)) || restaurantsById.get(Number(entry.restaurant_id));
     if (!restaurant || seen.has(String(restaurant.id))) continue;
     seen.add(String(restaurant.id));
-    unique.push(restaurant);
+    restaurants.push(restaurant);
   }
-  return unique;
-}
-
-function renderRestaurantBlock(block, restaurantsById, categoryMap) {
-  const style = normalizeCardStyle(block.card_style);
-  const restaurants = resolveBlockRestaurants(block, restaurantsById);
   if (!restaurants.length) return '';
   const cardsPerColumn = Math.max(1, Number(style.items_per_column || 3));
   const columns = [];
@@ -512,6 +547,31 @@ function renderRestaurantBlock(block, restaurantsById, categoryMap) {
     ${subtitle}
     <div class="restaurant-block__grid">${grid}</div>
   </section>`;
+}
+
+function renderHomepageLayout(layoutRows, restaurantsById, blockMap, adMap) {
+  if (!Array.isArray(layoutRows) || !layoutRows.length) return '';
+  const sorted = layoutRows
+    .map(normalizeHomeLayoutRow)
+    .filter(Boolean)
+    .sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
+
+  const markup = sorted.map((entry) => {
+    if (entry.type === 'restaurant_block' || entry.type === 'block') {
+      const blockId = entry.restaurant_block_id || entry.id;
+      const block = blockMap.get(String(blockId));
+      if (!block) return '';
+      return renderRestaurantBlock(block, restaurantsById, null);
+    }
+    if (entry.type === 'ad_banner' || entry.type === 'banner' || entry.type === 'ad') {
+      const placementCode = entry.placement_code || entry.id || null;
+      if (!placementCode) return '';
+      const ad = adMap.get(String(placementCode));
+      return renderBanner(ad);
+    }
+    return '';
+  }).join('');
+  return markup;
 }
 
 function bindFavoriteButtons() { document.querySelectorAll('.restaurant-card__favorite').forEach((button) => { button.onclick = (event) => toggleFavorite(event, button.dataset.favId); }); }
@@ -560,35 +620,13 @@ async function viewHome() {
   ]);
   if (my !== rid) return;
   const categoryMap = new Map((cats || []).map((c) => [c.id, c.name]));
-  const byId = new Map((rests || []).map((r) => [String(r.id), r]));
+  const restaurantsById = new Map((rests || []).map((r) => [String(r.id), r]));
   const blockMap = new Map((blocks || []).map((block) => [String(block.id), block]));
-  const adByPlacement = new Map();
-  (adInventory || []).forEach((ad) => {
-    const code = readDeep(ad, ['placement_code', 'placement', 'code']) || readDeep(ad, ['id']);
-    if (code) adByPlacement.set(String(code), ad);
-  });
-  const layoutEntries = (layout || [])
-    .map(normalizeHomeLayoutRow)
-    .filter(Boolean)
-    .sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
-  const renderedLayout = layoutEntries.map((entry) => {
-    if (entry.type === 'restaurant_block') {
-      const blockId = entry.restaurant_block_id || entry.id;
-      const block = blockMap.get(String(blockId));
-      if (!block) return '';
-      return renderRestaurantBlock(block, byId, categoryMap);
-    }
-    if (entry.type === 'ad_banner') {
-      const placementCode = entry.placement_code;
-      if (!placementCode) return '';
-      const ad = adByPlacement.get(String(placementCode));
-      if (!ad) return '';
-      return renderBanner(ad);
-    }
-    return '';
-  }).join('');
+  const adMap = getAdPlacementMap(adInventory);
+  const layoutHtml = renderHomepageLayout(layout, restaurantsById, blockMap, adMap);
   const categoriesHtml = `<nav class="chips" aria-label="التصنيفات">${(cats || []).map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="false">${esc(c.name)}</button>`).join('')}</nav>`;
-  app.innerHTML = `${topbar()}${categoriesHtml}${renderedLayout}`;
+  const allRestaurantsHtml = `<section class="restaurant-block"><h2 class="sec restaurant-block__header">كل المطاعم</h2>${(rests || []).map((restaurant) => restRowHtml(restaurant)).join('') || emptyHtml('لا توجد مطاعم متاحة')}</section>`;
+  app.innerHTML = `${topbar()}${categoriesHtml}${layoutHtml}${allRestaurantsHtml}`;
   bindFavoriteButtons();
 }
 
@@ -598,10 +636,22 @@ async function viewRestaurants(query) {
   app.innerHTML = `${topbar('المطاعم')}
     <input class="search" id="s" type="search" placeholder="ابحث باسم المطعم" aria-label="ابحث عن مطعم">
     <nav class="chips" id="cats" aria-label="تصفية حسب التصنيف"></nav>
+    <div id="layout"></div>
     <div id="list"><p class="meta">جاري التحميل…</p></div>`;
-  const [rests, cats] = await Promise.all([loadRestaurants(), loadCategories()]);
+  const [layout, rests, cats, blocks, adInventory] = await Promise.all([
+    loadHomepageLayout('restaurants', null),
+    loadRestaurants(),
+    loadCategories(),
+    loadBlocks(),
+    loadAdInventory(),
+  ]);
   if (my !== rid) return;
   const categoryMap = new Map((cats || []).map((c) => [c.id, c.name]));
+  const restaurantsById = new Map((rests || []).map((r) => [String(r.id), r]));
+  const blockMap = new Map((blocks || []).map((block) => [String(block.id), block]));
+  const adMap = getAdPlacementMap(adInventory);
+  const layoutHtml = renderHomepageLayout(layout, restaurantsById, blockMap, adMap);
+  $('#layout').innerHTML = layoutHtml || '';
   const drawChips = () => {
     $('#cats').innerHTML = `<button class="chip" data-c="" aria-pressed="${active === ''}">الكل</button>` + (cats || []).map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="${active === c.slug || String(c.id) === active}">${esc(c.name)}</button>`).join('');
   };
