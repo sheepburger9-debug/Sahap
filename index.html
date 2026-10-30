@@ -7,7 +7,7 @@
 <meta name="description" content="سحاب: اطلب أكلك من أقرب المطاعم">
 <title>سحاب</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23F2A511'/%3E%3Ctext x='50' y='70' font-size='46' text-anchor='middle' fill='%232A1C00' font-family='sans-serif'%3Eس%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23F2A511'/%3E%3Ctext x='50' y='70' font-size='58' font-family='Arial' font-weight='700' fill='%232A1C00'%3Eس%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@600;700&display=swap" rel="stylesheet">
@@ -55,7 +55,7 @@ label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 6px}
 .search{margin:4px 0 6px}
 .banners{display:flex;gap:12px;overflow-x:auto;margin:6px -16px 0;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
 .banners::-webkit-scrollbar{display:none}
-.banner{flex:0 0 min(88%, 460px);scroll-snap-align:start;position:relative;overflow:hidden;min-height:176px;border-radius:20px;background:var(--saffron);color:var(--saffron-ink);padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;text-decoration:none;box-shadow:0 16px 24px rgba(31,36,32,.08)}
+.banner{flex:0 0 min(88%, 460px);scroll-snap-align:start;position:relative;overflow:hidden;min-height:176px;border-radius:20px;background:var(--saffron);color:var(--saffron-ink);padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;text-decoration:none}
 .banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3}
 .banner > *{position:relative}
 .banner .bt{font-family:"Reem Kufi",sans-serif;font-size:24px;font-weight:700;line-height:1.2}
@@ -73,10 +73,11 @@ img.thumb{display:block}
 .badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;margin-top:4px}
 .restaurant-block{margin-top:18px}
 .restaurant-block__header{margin:0 0 10px}
-.restaurant-block__grid{display:grid;grid-template-columns:repeat(var(--restaurant-block-cols, 3), minmax(240px, 1fr));gap:12px;overflow-x:auto;scrollbar-width:none;padding:4px 0 8px;scroll-snap-type:x proximity}
+.restaurant-block__grid{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:4px 0 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
 .restaurant-block__grid::-webkit-scrollbar{display:none}
-.restaurant-block__col{display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:12px;min-width:0;scroll-snap-align:start}
-.restaurant-card{position:relative;display:flex;flex-direction:row;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden;min-height:150px;box-shadow:0 10px 18px rgba(14,20,15,.04)}
+.restaurant-block__col{display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:12px;flex:0 0 min(75vw, 75%);min-width:0;scroll-snap-align:start;max-width:75%}
+.restaurant-block__col .row{min-height:0}
+.restaurant-card{position:relative;display:flex;flex-direction:row;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden;min-height:150px;box-shadow:0 10px 18px rgba(14,20,15,.08)}
 .restaurant-card__media{position:relative;width:120px;min-width:120px;background:var(--soft-olive);overflow:hidden}
 .restaurant-card__media img{display:block;width:100%;height:100%;object-fit:cover}
 .restaurant-card__media-fallback{display:grid;place-items:center;width:100%;height:100%;background:#D9E1D2;color:var(--olive);font-family:"Reem Kufi",sans-serif;font-size:42px}
@@ -87,7 +88,7 @@ img.thumb{display:block}
 .restaurant-card__status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--olive);margin-top:8px}
 .restaurant-card__status::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block}
 .restaurant-card__badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;margin-top:8px;align-self:flex-start}
-.restaurant-card__favorite{position:absolute;top:10px;right:10px;z-index:2;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.72);backdrop-filter:blur(2px);border:1px solid rgba(255,255,255,.45);box-shadow:0 6px 12px rgba(12,18,16,.08);transition:transform .2s ease, background .2s ease}
+.restaurant-card__favorite{position:absolute;top:10px;right:10px;z-index:2;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.72);backdrop-filter:blur(8px)}
 .restaurant-card__favorite:active{transform:scale(.96)}
 .restaurant-card__favorite svg{width:18px;height:18px;stroke:#1A1F1B;stroke-width:2.4;fill:transparent;transition:fill .2s ease, stroke .2s ease}
 .restaurant-card__favorite.is-active{background:rgba(255,255,255,.85)}
@@ -109,9 +110,9 @@ img.thumb{display:block}
 .qty span{min-width:20px;text-align:center;font-weight:700}
 .review{padding:12px 0;border-bottom:1px solid var(--line)}
 .stars{color:var(--saffron);letter-spacing:1px}
-.cartbar{position:fixed;bottom:86px;inset-inline:12px;max-width:496px;margin:0 auto;background:linear-gradient(135deg,#1A1F1B,#2d352f);color:#fff;border-radius:18px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:16;box-shadow:0 18px 30px rgba(15,22,18,.2)}
+.cartbar{position:fixed;bottom:86px;inset-inline:12px;max-width:496px;margin:0 auto;background:linear-gradient(135deg,#1A1F1B,#2d352f);color:#fff;border-radius:18px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:12;box-shadow:0 12px 25px rgba(14,20,15,.18)}
 .cartbar span{font-weight:600}
-.tabbar{position:fixed;bottom:10px;inset-inline:12px;max-width:520px;margin:0 auto;background:rgba(28,34,29,.92);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:8px 10px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;z-index:18;backdrop-filter:blur(10px)}
+.tabbar{position:fixed;bottom:10px;inset-inline:12px;max-width:520px;margin:0 auto;background:rgba(28,34,29,.92);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:8px 10px;display:grid;grid-template-columns:repeat(4, minmax(0,1fr));gap:8px;z-index:30}
 .tabbar a{display:flex;align-items:center;justify-content:center;height:56px;border-radius:16px;color:#C7D1C7;text-decoration:none;transition:transform .2s ease, background .2s ease, color .2s ease}
 .tabbar a svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tabbar a[aria-current="page"]{background:linear-gradient(180deg,#F7C54B,#F2A511);color:var(--saffron-ink);box-shadow:0 10px 18px rgba(242,165,17,.32);transform:translateY(-2px)}
@@ -140,10 +141,8 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .toast{position:fixed;top:12px;inset-inline:12px;max-width:496px;margin:0 auto;background:var(--ink);color:#fff;padding:12px 16px;border-radius:12px;z-index:40;font-size:14px}
 @media (min-width: 768px){
   .wrap{padding-inline:20px}
-  .restaurant-block__grid{grid-template-columns:repeat(var(--restaurant-block-cols), minmax(260px,1fr));}
 }
 @media (max-width: 767px){
-  .restaurant-block__grid{grid-template-columns:repeat(var(--restaurant-block-cols), minmax(260px, 82vw));}
   .restaurant-card{min-height:130px}
   .restaurant-card__media{width:112px;min-width:112px}
 }
@@ -158,7 +157,7 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V20h14V9.5"></path><path d="M10 20v-6h4v6"></path></svg>
   </a>
   <a href="#/restaurants" data-tab="restaurants" aria-label="المطاعم">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V7.5A1.5 1.5 0 0 1 6.5 6H17.5A1.5 1.5 0 0 1 19 7.5V19"></path><path d="M8 6V3"></path><path d="M16 6V3"></path><path d="M9 10h6"></path><path d="M9 14h6"></path></svg>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V7.5A1.5 1.5 0 0 1 6.5 6H17.5A1.5 1.5 0 0 1 19 7.5V19"></path><path d="M8 6V3"></path><path d="M16 6V3"></path><path d="M9 10h6"></path></svg>
   </a>
   <a href="#/orders" data-tab="orders" aria-label="طلباتي">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10l2 4v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8l2-4Z"></path><path d="M9 10h6"></path><path d="M8 4V2.5"></path><path d="M16 4V2.5"></path></svg>
@@ -178,7 +177,7 @@ const money = (n) => `${Number(n || 0).toLocaleString('ar-EG', { maximumFraction
 const stars = (n) => { const v = Math.round(Number(n || 0)); return '★'.repeat(v) + '☆'.repeat(5 - v); };
 const app = $('#app');
 const cartbar = $('#cartbar');
-const STATUS = { pending: 'مستنين تأكيد المطعم', confirmed: 'اتأكد وبيتجهز', preparing: 'بيتحضر', delivering: 'في الطريق ليك', completed: 'اتسلم', cancelled: 'اتلغى' };
+const STATUS = { pending: 'مستنين تأكيد المطعم', confirmed: 'اتأكد وبيتجهز', preparing: 'بيتحضر', delivering: 'في الطريق ليك', completed: 'اتسلم', cancelled: 'ألغى' };
 const PHONE_RE = /^(\+?20)?01[0125][0-9]{8}$/;
 const FAVORITE_KEY = 'sahab_favorites';
 let session = null;
@@ -203,7 +202,7 @@ function normalizeCardStyle(cardStyle) {
   };
 }
 function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3200); }
-function openSheet(html, onMount) { closeSheet(); const bd = document.createElement('div'); bd.className = 'backdrop'; bd.id = 'sheet'; bd.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`; bd.addEventListener('click', (e) => { if (e.target === bd) closeSheet(); }); document.body.appendChild(bd); onMount?.(bd.querySelector('.sheet')); }
+function openSheet(html, onMount) { closeSheet(); const bd = document.createElement('div'); bd.className = 'backdrop'; bd.id = 'sheet'; bd.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`; document.body.appendChild(bd); onMount?.(bd.querySelector('.sheet')); }
 function closeSheet() { $('#sheet')?.remove(); }
 async function invokeError(error, fallback) { if (!error) return fallback; try { const j = await error.context.json(); return j.error || fallback; } catch { return fallback; } }
 function translateAuthError(msg = '') {
@@ -212,6 +211,20 @@ function translateAuthError(msg = '') {
   if (/least 6/i.test(msg)) return 'كلمة السر لازم تكون 6 حروف على الأقل';
   if (/valid email/i.test(msg)) return 'اكتب إيميل صحيح';
   return msg || 'حصلت مشكلة، حاول تاني';
+}
+function readDeep(data, paths) {
+  for (const path of paths) {
+    const keys = path.split('.');
+    let current = data;
+    let found = true;
+    for (const key of keys) {
+      const next = current && typeof current === 'object' ? current[key] : undefined;
+      if (next === undefined || next === null) { found = false; break; }
+      current = next;
+    }
+    if (found && current !== undefined && current !== null && current !== '') return current;
+  }
+  return undefined;
 }
 
 async function loadProfile() {
@@ -229,7 +242,7 @@ async function logout() { try { await sb.auth.signOut(); } catch {} location.has
 async function loadRestaurants() {
   try {
     const { data, error } = await sb.from('restaurants')
-      .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, is_published, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, badges(id, name, display_text, background_color, text_color))')
+      .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, is_published, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, badges(name, display_text, background_color, text_color))')
       .eq('is_published', true)
       .order('rating', { ascending: false });
     if (error) throw error;
@@ -337,19 +350,11 @@ async function loadBlocks() {
     return blocks.map((block) => {
       const style = normalizeCardStyle(block.card_style);
       const entries = overrideMap.get(block.id) || [];
-      const safeEntries = entries.filter((entry) => {
-        const now = new Date();
-        const starts = entry.badge_starts_at ? new Date(entry.badge_starts_at) : null;
-        const ends = entry.badge_ends_at ? new Date(entry.badge_ends_at) : null;
-        if (starts && starts > now) return false;
-        if (ends && ends < now) return false;
-        return true;
-      });
       return {
         ...block,
         card_style: style,
-        overrides: safeEntries,
-        items: safeEntries,
+        overrides: entries,
+        items: entries,
       };
     });
   } catch (err) {
@@ -392,8 +397,8 @@ function topbar(title) { return `<header class="topbar"><h1 class="ttl">${title 
 function backbar(title) { return `<header class="topbar"><a class="chip" href="#/restaurants">رجوع للمطاعم</a><h1 class="ttl" style="font-size:18px">${esc(title || '')}</h1></header>`; }
 
 function resolveRestaurantBadge(block, restaurant) {
-  const blockEntries = Array.isArray(block?.overrides) ? block.overrides : [];
-  const blockBadge = blockEntries.find((entry) => {
+  const blockEntries = Array.isArray(block?.overrides) ? block.overrides.filter((entry) => String(entry.restaurant_id) === String(restaurant.id)) : [];
+  const activeEntry = blockEntries.find((entry) => {
     const now = new Date();
     const starts = entry.badge_starts_at ? new Date(entry.badge_starts_at) : null;
     const ends = entry.badge_ends_at ? new Date(entry.badge_ends_at) : null;
@@ -401,10 +406,10 @@ function resolveRestaurantBadge(block, restaurant) {
     if (ends && ends < now) return false;
     return true;
   });
-  if (blockBadge) {
-    const text = blockBadge.badge_text_override || blockBadge.badges?.name || 'عرض';
-    const style = safeJsonParse(blockBadge.badge_style_override, {});
-    return { id: blockBadge.badge_id, name: text, display_text: text, background_color: style.background_color || '#F2A511', text_color: style.text_color || '#2A1C00' };
+  if (activeEntry) {
+    const text = activeEntry.badge_text_override || activeEntry.badges?.name || 'عرض';
+    const style = safeJsonParse(activeEntry.badge_style_override, {});
+    return { id: activeEntry.badge_id, name: text, display_text: text, background_color: style.background_color || '#F2A511', text_color: style.text_color || '#2A1C00' };
   }
   const restaurantBadges = badgesOf(restaurant);
   if (restaurantBadges[0]) return restaurantBadges[0];
@@ -423,8 +428,8 @@ function restaurantCardHtml(restaurant, block = null, categoryMap = null) {
         <a class="restaurant-card__link" href="#/r/${esc(restaurant.slug)}">
           ${img ? `<img src="${esc(img)}" alt="${esc(restaurant.name)}" loading="lazy">` : `<div class="restaurant-card__media-fallback" aria-hidden="true">${esc((restaurant.name || '?').trim()[0] || '؟')}</div>`}
         </a>
-        <button class="restaurant-card__favorite ${isFav ? 'is-active' : ''}" data-fav-id="${esc(String(restaurant.id))}" aria-label="${isFav ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'}" aria-pressed="${isFav ? 'true' : 'false'}" type="button">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.35-9.5-8.3C.7 9.26 2.04 4.5 6.5 4.5c2.06 0 3.2 1.1 3.8 2.16.6-1.06 1.74-2.16 3.8-2.16 4.46 0 5.8 4.76 4 7.7-2 3.95-9.5 8.3-9.5 8.3Z"></path></svg>
+        <button class="restaurant-card__favorite ${isFav ? 'is-active' : ''}" data-fav-id="${esc(String(restaurant.id))}" aria-label="${isFav ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'}" aria-pressed="${isFav ? 'true' : 'false'}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.35-9.5-8.3C.7 9.26 2.04 4.5 6.5 4.5c2.06 0 3.2 1.1 3.8 2.16.6-1.06 1.74-2.16 3.8-2.16 4.46 0 5.8 4.76 4 7.7-2 3.95-9.5 8.14-9.5 8.14Z"></path></svg>
         </button>
       </div>
       <div class="restaurant-card__body">
@@ -440,16 +445,34 @@ function restaurantCardHtml(restaurant, block = null, categoryMap = null) {
   `;
 }
 
-function renderBanner(banner) {
-  if (!banner || !banner.title) return '';
-  const href = banner.restaurant_id ? `#/r/${esc(String(banner.restaurant_id))}` : '#';
-  const image = banner.image_url || '';
-  return `<a class="banner" href="${esc(href)}" aria-label="${esc(banner.title)}">
+function renderBanner(ad) {
+  if (!ad) return '';
+  const title = readDeep(ad, ['title', 'ad_title', 'offer_title', 'name']) || 'عرض خاص';
+  const description = readDeep(ad, ['description', 'ad_description', 'offer_description']) || '';
+  const image = readDeep(ad, ['image_url', 'banner_image_url', 'image', 'media_url']) || '';
+  const restaurantSlug = readDeep(ad, ['restaurant.slug', 'restaurants.slug', 'restaurant_slug', 'slug']) || '';
+  const href = restaurantSlug ? `#/r/${esc(String(restaurantSlug))}` : '#';
+  return `<a class="banner" href="${esc(href)}" aria-label="${esc(String(title))}">
     ${image ? `<img src="${esc(image)}" alt="" loading="lazy">` : ''}
-    <span class="meta" style="color:inherit">${esc(banner.restaurant_name || 'عرض خاص')}</span>
-    <span class="bt">${esc(banner.title)}</span>
-    ${banner.description ? `<span>${esc(banner.description)}</span>` : ''}
+    <span class="meta" style="color:inherit">${esc(readDeep(ad, ['restaurant.name', 'restaurants.name', 'restaurant_name', 'merchant_name']) || 'عرض خاص')}</span>
+    <span class="bt">${esc(String(title))}</span>
+    ${description ? `<span>${esc(String(description))}</span>` : ''}
   </a>`;
+}
+
+function normalizeHomeLayoutRow(row) {
+  if (!row) return null;
+  const type = String(readDeep(row, ['type', 'entity_type', 'item_type', 'component_type']) || '').trim().toLowerCase();
+  if (!type) return null;
+  return {
+    id: readDeep(row, ['id', 'item_id', 'layout_id']),
+    type,
+    display_order: Number(readDeep(row, ['display_order', 'sort_order', 'order']) ?? 0),
+    placement_code: readDeep(row, ['placement_code', 'placement', 'code']) || null,
+    restaurant_block_id: readDeep(row, ['restaurant_block_id', 'block_id', 'restaurant_block.id', 'block.id']) || null,
+    restaurant_id: readDeep(row, ['restaurant_id', 'restaurant.id', 'restaurants.id']) || null,
+    restaurant_slug: readDeep(row, ['restaurant_slug', 'restaurant.slug', 'restaurants.slug']) || null,
+  };
 }
 
 function renderRestaurantBlock(block, restaurantsById, categoryMap) {
@@ -459,22 +482,23 @@ function renderRestaurantBlock(block, restaurantsById, categoryMap) {
   const unique = [];
   const seen = new Set();
   for (const id of explicitIds) {
-    const res = restaurantsById.get(id);
+    const res = restaurantsById.get(String(id)) || restaurantsById.get(Number(id));
     if (!res || seen.has(String(res.id))) continue;
     seen.add(String(res.id));
     unique.push(res);
   }
   if (!unique.length) return '';
-  const columnsCount = Math.max(1, Number(style.columns || 3));
-  const columnSize = Math.max(1, Number(style.items_per_column || 3));
-  const totalCols = Math.max(1, Math.ceil(unique.length / columnSize));
-  const columns = Array.from({ length: totalCols }, (_, idx) => unique.slice(idx * columnSize, (idx + 1) * columnSize));
-  const grid = columns.map((column) => `<div class="restaurant-block__col">${column.map((restaurant) => restaurantCardHtml(restaurant, block, categoryMap)).join('')}</div>`).join('');
+  const cardsPerColumn = Math.max(1, Number(style.items_per_column || 3));
+  const columns = [];
+  for (let i = 0; i < unique.length; i += cardsPerColumn) {
+    columns.push(unique.slice(i, i + cardsPerColumn));
+  }
+  const grid = columns.map((column) => `<div class="restaurant-block__col">${column.map((restaurant) => restRowHtml(restaurant)).join('')}</div>`).join('');
   const subtitle = block.subtitle ? `<p class="meta sub">${esc(block.subtitle)}</p>` : '';
   return `<section class="restaurant-block">
     <h2 class="sec restaurant-block__header">${esc(block.title || 'مطاعم')}</h2>
     ${subtitle}
-    <div class="restaurant-block__grid" style="--restaurant-block-cols:${Math.min(totalCols, columnsCount)};">${grid}</div>
+    <div class="restaurant-block__grid">${grid}</div>
   </section>`;
 }
 
@@ -515,20 +539,44 @@ window.addEventListener('hashchange', route);
 async function viewHome() {
   const my = ++rid;
   app.innerHTML = topbar() + '<p class="meta">جاري التحميل…</p>';
-  const [rests, cats, offers, blocks] = await Promise.all([loadRestaurants(), loadCategories(), loadBanners(), loadBlocks()]);
+  const [layout, rests, cats, blocks, adInventory] = await Promise.all([
+    loadHomepageLayout('home', null),
+    loadRestaurants(),
+    loadCategories(),
+    loadBlocks(),
+    loadAdInventory(),
+  ]);
   if (my !== rid) return;
   const categoryMap = new Map((cats || []).map((c) => [c.id, c.name]));
-  const byId = new Map((rests || []).map((r) => [r.id, r]));
-  const bannerHtml = (offers || []).map(renderBanner).join('');
-  const blockHtml = (blocks || [])
-    .filter((block) => {
-      const style = normalizeCardStyle(block.card_style);
-      const blockRestaurants = (block.overrides || []).map((item) => item.restaurant_id).filter(Boolean);
-      return style.card_layout !== 'none' && (blockRestaurants.length || (block.title && block.title.trim()));
-    })
-    .map((block) => renderRestaurantBlock(block, byId, categoryMap))
-    .join('');
-  app.innerHTML = `${topbar()}${bannerHtml ? `<section class="banners" aria-label="عروض">${bannerHtml}</section>` : ''}<nav class="chips" aria-label="التصنيفات">${(cats || []).map((c) => `<a class="chip" href="#/restaurants?c=${esc(c.slug)}">${esc(c.name)}</a>`).join('')}</nav>${blockHtml}${(rests || []).length ? `<h2 class="sec">كل المطاعم</h2>${(rests || []).map(restRowHtml).join('')}` : emptyHtml('مفيش مطاعم متاحة دلوقتي')}`;
+  const byId = new Map((rests || []).map((r) => [String(r.id), r]));
+  const blockMap = new Map((blocks || []).map((block) => [String(block.id), block]));
+  const adByPlacement = new Map();
+  (adInventory || []).forEach((ad) => {
+    const code = readDeep(ad, ['placement_code', 'placement', 'code']) || readDeep(ad, ['id']);
+    if (code) adByPlacement.set(String(code), ad);
+  });
+  const layoutEntries = (layout || [])
+    .map(normalizeHomeLayoutRow)
+    .filter(Boolean)
+    .sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
+  const renderedLayout = layoutEntries.map((entry) => {
+    if (entry.type === 'restaurant_block') {
+      const blockId = entry.restaurant_block_id || entry.id;
+      const block = blockMap.get(String(blockId));
+      if (!block) return '';
+      return renderRestaurantBlock(block, byId, categoryMap);
+    }
+    if (entry.type === 'ad_banner') {
+      const placementCode = entry.placement_code;
+      if (!placementCode) return '';
+      const ad = adByPlacement.get(String(placementCode));
+      if (!ad) return '';
+      return renderBanner(ad);
+    }
+    return '';
+  }).join('');
+  const categoriesHtml = `<nav class="chips" aria-label="التصنيفات">${(cats || []).map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="false">${esc(c.name)}</button>`).join('')}</nav>`;
+  app.innerHTML = `${topbar()}${categoriesHtml}${renderedLayout}`;
   bindFavoriteButtons();
 }
 
@@ -543,7 +591,7 @@ async function viewRestaurants(query) {
   if (my !== rid) return;
   const categoryMap = new Map((cats || []).map((c) => [c.id, c.name]));
   const drawChips = () => {
-    $('#cats').innerHTML = `<button class="chip" data-c="" aria-pressed="${active === ''}">الكل</button>` + (cats || []).map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="${active === c.slug}">${esc(c.name)}</button>`).join('');
+    $('#cats').innerHTML = `<button class="chip" data-c="" aria-pressed="${active === ''}">الكل</button>` + (cats || []).map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="${active === c.slug || active === String(c.id)}">${esc(c.name)}</button>`).join('');
   };
   const draw = () => {
     const term = $('#s').value.trim().toLowerCase();
@@ -582,14 +630,14 @@ async function getCart(restaurantId, create) {
 const GUEST_CART_KEY = 'sahab_guest_cart';
 const PENDING_CHECKOUT_KEY = 'sahab_pending_checkout';
 function guestCartLoad(restaurantId) { try { const all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); return all[restaurantId] || []; } catch { return []; } }
-function guestCartSave(restaurantId, items) { try { const all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); if (items.length) all[restaurantId] = items; else delete all[restaurantId]; if (Object.keys(all).length) sessionStorage.setItem(GUEST_CART_KEY, JSON.stringify(all)); else sessionStorage.removeItem(GUEST_CART_KEY); } catch {} }
-function loadCartForRestaurant(restaurantId) { if (session) return getCart(restaurantId, false); const items = guestCartLoad(restaurantId); return Promise.resolve(items.length ? { id: null, coupon_code: null, items } : null); }
-async function syncGuestCart() { let all; try { all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); } catch { all = {}; } const rids = Object.keys(all).filter((rid) => all[rid]?.length); if (!rids.length) return; for (const rid of rids) { try { const cart = await getCart(rid, true); for (const item of all[rid]) { const existing = cart.items.find((i) => i.product_id === item.product_id); if (existing) await sb.from('cart_items').update({ quantity: Math.min(existing.quantity + item.quantity, 99) }).eq('id', existing.id); else await sb.from('cart_items').insert({ cart_id: cart.id, product_id: item.product_id, quantity: item.quantity }); } } catch {} } sessionStorage.removeItem(GUEST_CART_KEY); }
+function guestCartSave(restaurantId, items) { try { const all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); if (items.length) all[restaurantId] = items; else delete all[restaurantId]; sessionStorage.setItem(GUEST_CART_KEY, JSON.stringify(all)); } catch {} }
+function loadCartForRestaurant(restaurantId) { if (session) return getCart(restaurantId, false); const items = guestCartLoad(restaurantId); return Promise.resolve(items.length ? { id: null, coupon_code: null, items } : { id: null, coupon_code: null, items: [] }); }
+async function syncGuestCart() { let all; try { all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); } catch { all = {}; } const rids = Object.keys(all).filter((rid) => all[rid]?.length); if (!rids.length) return; await Promise.all(rids.map(async (ridKey) => { const store = all[ridKey]; const res = await sb.from('carts').select('id').eq('customer_id', session.user.id).eq('restaurant_id', Number(ridKey)).eq('status', 'active').maybeSingle(); if (!res.data) return; const q = await sb.from('cart_items').select('id, product_id, quantity').eq('cart_id', res.data.id); const existing = new Map((q.data || []).map((it) => [it.product_id, it])); for (const it of store) { if (existing.has(it.product_id)) { await sb.from('cart_items').update({ quantity: it.quantity }).eq('id', existing.get(it.product_id).id); } else { await sb.from('cart_items').insert({ cart_id: res.data.id, product_id: it.product_id, quantity: it.quantity }); } } })); }
 
 async function viewRestaurant([, slug]) {
   const my = ++rid;
   app.innerHTML = backbar('') + '<p class="meta">جاري التحميل…</p>';
-  const { data: r } = await sb.from('restaurants').select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id').eq('slug', slug).maybeSingle();
+  const { data: r } = await sb.from('restaurants').select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name, slug)').eq('slug', slug).maybeSingle();
   if (my !== rid) return;
   if (!r) { app.innerHTML = backbar('') + emptyHtml('المطعم ده مش متاح دلوقتي'); return; }
   const [menuCats, products, offers, reviews, methods, cart] = await Promise.all([
@@ -601,7 +649,7 @@ async function viewRestaurant([, slug]) {
     loadCartForRestaurant(r.id),
   ]);
   if (my !== rid) return;
-  R = { rest: r, menuCats: menuCats.data || [], products: products.data || [], prodMap: new Map((products.data || []).map((p) => [p.id, p])), offers: offers.data || [], reviews: reviews.data || [], methods, cart };
+  R = { rest: r, menuCats: menuCats.data || [], products: products.data || [], prodMap: new Map((products.data || []).map((p) => [p.id, p])), offers: offers.data || [], reviews: reviews.data || [], methods, cart: cart || null };
   const badges = badgesOf(r).map(badgeHtml).join(' ');
   const payNames = [methods.cash && 'كاش', methods.paymob && 'فيزا / محفظة'].filter(Boolean).join(' · ');
   app.innerHTML = `
@@ -622,7 +670,7 @@ async function viewRestaurant([, slug]) {
       ${R.menuCats.map((c) => `<button class="chip" data-act="scroll" data-target="sec-${esc(c.id)}">${esc(c.name)}</button>`).join('')}
     </nav>
     <div id="menu"></div>
-    ${R.reviews.length ? `<h2 class="sec">آراء العملاء</h2>${R.reviews.map((x) => `<div class="review"><span class="stars">${stars(x.rating)}</span>${x.review_text ? `<p>${esc(x.review_text)}</p>` : ''}<p class="meta">${new Date(x.created_at).toLocaleDateString('ar-EG', { dateStyle: 'medium' })}</p></div>`).join('')}` : ''}
+    ${R.reviews.length ? `<h2 class="sec">آراء العملاء</h2>${R.reviews.map((x) => `<div class="review"><span class="stars">${stars(x.rating)}</span>${x.review_text ? `<p>${esc(x.review_text)}</p>` : ''}<p class="meta">${new Date(x.created_at).toLocaleDateString('ar-EG')}</p></div>`).join('')}` : ''}
   `;
   drawMenu();
   if (!r.is_open) toast('المطعم مقفول دلوقتي');
@@ -633,7 +681,7 @@ function productHtml(p) {
   const qty = inCart?.quantity || 0;
   const img = [...(p.product_images || [])].sort((a, b) => a.display_order - b.display_order)[0]?.image_url;
   const control = qty ? `<span class="qty"><button data-act="dec" data-id="${esc(p.id)}" aria-label="قلل ${esc(p.name)}">−</button><span aria-live="polite">${qty}</span><button data-act="inc" data-id="${esc(p.id)}" aria-label="زيد ${esc(p.name)}">+</button></span>` : `<button class="addbtn" data-act="inc" data-id="${esc(p.id)}">أضف</button>`;
-  return `<article class="product"><div class="thumb" aria-hidden="true">${img ? `<img src="${esc(img)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px">` : esc(p.emoji || '•')}</div><div class="grow"><strong>${esc(p.name)}</strong>${p.description ? `<p class="meta">${esc(p.description)}</p>` : ''}<div class="pricerow"><span class="price">${money(p.price)}</span>${control}</div></div></article>`;
+  return `<article class="product"><div class="thumb" aria-hidden="true">${img ? `<img src="${esc(img)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px">` : esc((p.name || '?').trim()[0] || '؟')}</div><div class="grow"><strong>${esc(p.name)}</strong>${p.description ? `<p class="meta">${esc(p.description)}</p>` : ''}<div class="pricerow"><span class="price">${money(p.price)}</span>${control}</div></div></article>`;
 }
 
 function drawMenu() {
@@ -643,7 +691,7 @@ function drawMenu() {
   const groups = R.menuCats.map((c) => ({ id: c.id, name: c.name, items: R.products.filter((p) => p.category_id === c.id) })).filter((g) => g.items.length);
   const loose = R.products.filter((p) => !p.category_id || !known.has(p.category_id));
   if (loose.length) groups.push({ id: 'other', name: 'أطباق أخرى', items: loose });
-  el.innerHTML = groups.length ? groups.map((g) => `<section id="sec-${esc(g.id)}"><h2 class="sec">${esc(g.name)}</h2>${g.items.map(productHtml).join('')}</section>`).join('') : emptyHtml('المنيو فاضي دلوقتي');
+  el.innerHTML = groups.length ? groups.map((g) => `<section id="sec-${esc(g.id)}"><h2 class="sec">${esc(g.name)}</h2>${g.items.map(productHtml).join('')}</section>`).join('') : emptyHtml('المطعم لسه ما أضافش أي أطباق');
   drawCartBar();
   document.querySelectorAll('[data-act="inc"]').forEach((b) => b.onclick = () => setQty(Number(b.dataset.id), 1));
   document.querySelectorAll('[data-act="dec"]').forEach((b) => b.onclick = () => setQty(Number(b.dataset.id), -1));
@@ -651,7 +699,7 @@ function drawMenu() {
 }
 
 function cartLines() { if (!R?.cart) return []; return R.cart.items.filter((i) => R.prodMap.has(i.product_id)).map((i) => ({ ...i, product: R.prodMap.get(i.product_id) })); }
-function drawCartBar() { const lines = cartLines(); const count = lines.reduce((s, i) => s + i.quantity, 0); if (!count || location.hash.indexOf('#/r/') !== 0) { cartbar.classList.add('hidden'); cartbar.innerHTML = ''; return; } const sub = lines.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0); cartbar.classList.remove('hidden'); cartbar.innerHTML = `<span>${count} عنصر · ${money(sub)}</span><button class="btn primary auto" id="openCheckout">راجع الطلب</button>`; $('#openCheckout').onclick = openCheckout; }
+function drawCartBar() { const lines = cartLines(); const count = lines.reduce((s, i) => s + i.quantity, 0); if (!count || location.hash.indexOf('#/r/') !== 0) { cartbar.classList.add('hidden'); cartbar.innerHTML = ''; return; } const total = lines.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0); cartbar.innerHTML = `<span>${count} عناصر</span><b>${money(total)}</b><button class="btn primary auto" data-act="checkout">تأكيد الطلب</button>`; cartbar.classList.remove('hidden'); cartbar.querySelector('[data-act="checkout"]').onclick = openCheckout; }
 
 async function setQty(productId, delta) {
   if (!session) {
@@ -763,17 +811,20 @@ function orderHtml(o) {
     else if (p.provider === 'cash') payText = 'الدفع عند الاستلام';
     else if (p.status === 'pending' && o.status === 'pending') { payText = 'لسه مادفعتش'; payBtn = `<button class="btn primary auto" data-act="pay" data-order="${esc(o.id)}">ادفع الآن</button>`; }
   }
-  return `<article class="order"><div class="between"><strong>${esc(o.restaurants?.name || 'مطعم')}</strong><b>${money(o.total_amount)}</b></div><p class="meta">${items}</p><p class="meta" style="margin-top:4px">${new Date(o.created_at).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' })}</p><span class="pill">${esc(STATUS[o.status] || o.status)}</span>${payText ? `<p class="meta" style="margin-top:6px">${esc(payText)}</p>` : ''}${payBtn}</article>`;
+  return `<article class="order"><div class="between"><strong>${esc(o.restaurants?.name || 'مطعم')}</strong><b>${money(o.total_amount)}</b></div><p class="meta">${items}</p><p class="meta" style="margin-top:6px">${esc(STATUS[o.status] || o.status)}</p>${payText ? `<span class="pill">${esc(payText)}</span>` : ''}${payBtn ? `<div>${payBtn}</div>` : ''}</article>`;
 }
 
 async function viewOrders() {
   const my = ++rid;
   app.innerHTML = topbar('طلباتي') + '<p class="meta">جاري التحميل…</p>';
   try {
-    const { data: orders, error } = await sb.from('orders').select('id, status, total_amount, created_at, restaurants(name), payments(id, provider, status), order_items(product_name_snapshot, quantity)').order('created_at', { ascending: false }).limit(30);
+    const { data: orders, error } = await sb.from('orders').select('id, status, total_amount, created_at, restaurants(name), payments(id, provider, status), order_items(product_name_snapshot, quantity)').order('created_at', { ascending: false });
     if (my !== rid) return;
     if (error) throw error;
     app.innerHTML = topbar('طلباتي') + (orders.length ? orders.map(orderHtml).join('') : emptyHtml('لسه ماطلبتش حاجة. ابدأ من المطاعم.'));
+    document.querySelectorAll('[data-act="pay"]').forEach((btn) => {
+      btn.onclick = () => payOrder(btn.dataset.order, btn);
+    });
     const waiting = orders.some((o) => o.status === 'pending' && (o.payments || []).some((p) => p.provider === 'paymob' && p.status === 'pending'));
     if (waiting) pollTimer = setInterval(() => { if (location.hash === '#/orders') viewOrders(); }, 8000);
   } catch (err) {
@@ -816,7 +867,7 @@ async function viewAccount() {
   const my = ++rid;
   await loadProfile();
   if (my !== rid) return;
-  app.innerHTML = `${topbar('حسابي')}<div class="points"><b>${esc(profile?.full_name || 'ضيف')}</b><div class="meta">${esc(profile?.phone || 'لا يوجد رقم')}</div></div><div class="acct"><form id="profileForm"><label>الاسم</label><input id="fullName" value="${esc(profile?.full_name || '')}" required><label>رقم الهاتف</label><input id="phone" value="${esc(profile?.phone || '')}" required><button class="btn primary" type="submit">حفظ</button></form></div><button class="btn ghost" id="logoutBtn" type="button">تسجيل الخروج</button>`;
+  app.innerHTML = `${topbar('حسابي')}<div class="points"><b>${esc(profile?.full_name || 'ضيف')}</b><div class="meta">${esc(profile?.phone || 'لا يوجد رقم')}</div></div><div class="acct"><form id="profileForm"><label>الاسم كامل</label><input id="fullName" value="${esc(profile?.full_name || '')}"><label>رقم الهاتف</label><input id="phone" value="${esc(profile?.phone || '')}"><button class="btn primary" type="submit">حفظ</button></form><button class="btn ghost" id="logoutBtn" type="button">تسجيل الخروج</button></div>`;
   $('#profileForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
