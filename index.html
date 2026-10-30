@@ -7,26 +7,19 @@
 <meta name="description" content="سحاب: اطلب أكلك من أقرب المطاعم">
 <title>سحاب</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23F2A511'/%3E%3Ctext x='50' y='70' font-size='56' text-anchor='middle' fill='%232A1C00' font-family='Arial, sans-serif'%3Eس%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23F2A511'/%3E%3Ctext x='50' y='70' font-size='46' text-anchor='middle' fill='%232A1C00' font-family='sans-serif'%3Eس%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@600;700&display=swap" rel="stylesheet">
-
 <style>
-/* ================================================================
-   المتغيرات العامة (الألوان والحدود والخطوط)
-   ================================================================ */
 :root{
   --ink:#1A1F1B; --ink-2:#5B645D; --line:#DDE3D8;
   --bg:#EEF2EA; --card:#FFFFFF;
   --saffron:#F2A511; --saffron-ink:#2A1C00;
   --tomato:#B8402A; --olive:#3E5B3A;
+  --soft-olive:#E6EDE1;
   --r:14px;
 }
-
-/* ================================================================
-   الأساسيات (Reset + Typography)
-   ================================================================ */
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;font-size:15px;line-height:1.6;-webkit-tap-highlight-color:transparent}
 h1,h2,h3{font-family:"Reem Kufi",system-ui,sans-serif;margin:0;line-height:1.25}
@@ -37,11 +30,7 @@ input,textarea{font:inherit;width:100%;padding:12px 14px;border:1px solid var(--
 input:focus,textarea:focus{outline:2px solid var(--saffron);outline-offset:0;border-color:transparent}
 :focus-visible{outline:3px solid var(--saffron);outline-offset:2px}
 label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 6px}
-
-/* ================================================================
-   الحاويات والعناصر العامة
-   ================================================================ */
-.wrap{max-width:520px;margin:0 auto;padding:0 16px 120px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 120px}
 .hidden{display:none!important}
 .grow{flex:1;min-width:0}
 .meta{font-size:13px;color:var(--ink-2)}
@@ -50,65 +39,61 @@ label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 6px}
 .sub{margin:-6px 0 10px}
 .empty{text-align:center;padding:48px 16px;color:var(--ink-2)}
 .center{text-align:center}
-
-/* ================================================================
-   الشريط العلوي
-   ================================================================ */
 .topbar{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 10px;min-height:60px}
 .ttl{font-size:26px;font-weight:700}
 .brand{font-family:"Reem Kufi",sans-serif;font-size:28px;font-weight:700;letter-spacing:0}
-
-/* ================================================================
-   الأزرار والروابط
-   ================================================================ */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:#fff;border-radius:999px;padding:13px 20px;font-weight:600;width:100%;text-decoration:none}
 .btn.primary{background:var(--saffron);color:var(--saffron-ink)}
 .btn.ghost{background:transparent;border:1px solid var(--ink);color:var(--ink)}
 .btn.auto{width:auto}
 .btn:disabled{opacity:.5;cursor:default}
 .linkbtn{display:block;margin:16px auto 0;color:var(--olive);font-weight:600;padding:8px}
-
-/* ================================================================
-   التصنيفات (Chips) والبحث
-   ================================================================ */
 .chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{white-space:nowrap;padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:14px;text-decoration:none;color:var(--ink)}
 .chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
 .search{margin:4px 0 6px}
-
-/* ================================================================
-   بانرات العروض (السلايدر الأفقي)
-   ================================================================ */
 .banners{display:flex;gap:12px;overflow-x:auto;margin:6px -16px 0;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
 .banners::-webkit-scrollbar{display:none}
-.banner{flex:0 0 88%;scroll-snap-align:start;position:relative;overflow:hidden;min-height:176px;border-radius:20px;background:var(--saffron);color:var(--saffron-ink);padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px}
+.banner{flex:0 0 min(88%, 460px);scroll-snap-align:start;position:relative;overflow:hidden;min-height:176px;border-radius:20px;background:var(--saffron);color:var(--saffron-ink);padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;text-decoration:none;box-shadow:0 16px 24px rgba(31,36,32,.08)}
 .banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3}
 .banner > *{position:relative}
 .banner .bt{font-family:"Reem Kufi",sans-serif;font-size:24px;font-weight:700;line-height:1.2}
-
-/* ================================================================
-   البلوكات الأفقية (Mini Cards)
-   ================================================================ */
+.block{margin-top:12px}
 .block .rail{display:flex;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scrollbar-width:none}
 .block .rail::-webkit-scrollbar{display:none}
 .mini{flex:0 0 150px;text-decoration:none;display:flex;flex-direction:column;gap:4px}
 .cover{height:96px;border-radius:12px;background:#D9E1D2;overflow:hidden;display:grid;place-items:center;font-family:"Reem Kufi",sans-serif;font-size:32px;color:var(--olive)}
 .cover img{width:100%;height:100%;object-fit:cover}
 .mini strong{font-size:15px}
-
-/* ================================================================
-   كروت المطاعم (الصفوف)
-   ================================================================ */
 .row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
 .rname{font-size:16px;font-weight:600}
 .thumb{width:72px;height:72px;flex:none;border-radius:12px;background:#D9E1D2;object-fit:cover;display:grid;place-items:center;font-size:28px;color:var(--olive);font-family:"Reem Kufi",sans-serif}
 img.thumb{display:block}
 .badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;margin-top:4px}
-
-/* ================================================================
-   صفحة المطعم (Hero + Header + Facts)
-   ================================================================ */
+.restaurant-block{margin-top:18px}
+.restaurant-block__header{margin:0 0 10px}
+.restaurant-block__grid{display:grid;grid-template-columns:repeat(var(--restaurant-block-cols, 3), minmax(240px, 1fr));gap:12px;overflow-x:auto;scrollbar-width:none;padding:4px 0 8px;scroll-snap-type:x proximity}
+.restaurant-block__grid::-webkit-scrollbar{display:none}
+.restaurant-block__col{display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:12px;min-width:0;scroll-snap-align:start}
+.restaurant-card{position:relative;display:flex;flex-direction:column;min-height:220px;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden;box-shadow:0 10px 18px rgba(14,20,15,.04)}
+.restaurant-card__link{display:block;text-decoration:none;color:inherit}
+.restaurant-card__media{position:relative;height:126px;overflow:hidden;background:var(--soft-olive)}
+.restaurant-card__media img{width:100%;height:100%;display:block;object-fit:cover}
+.restaurant-card__content{padding:12px 12px 14px;display:flex;flex-direction:column;gap:8px}
+.restaurant-card__head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.restaurant-card__titleblock{min-width:0;flex:1}
+.restaurant-card__name{font-size:17px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.restaurant-card__type{font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.restaurant-card__badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.restaurant-card__meta{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--ink-2)}
+.restaurant-card__status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--olive)}
+.restaurant-card__status::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block}
+.restaurant-card__favorite{position:absolute;top:12px;right:12px;z-index:2;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.72);backdrop-filter:blur(2px);border:1px solid rgba(255,255,255,.45);box-shadow:0 6px 12px rgba(12,18,16,.08);transition:transform .2s ease, background .2s ease}
+.restaurant-card__favorite:active{transform:scale(.96)}
+.restaurant-card__favorite svg{width:18px;height:18px;stroke:#1A1F1B;stroke-width:2.4;fill:transparent;transition:fill .2s ease, stroke .2s ease}
+.restaurant-card__favorite.is-active{background:rgba(255,255,255,.85)}
+.restaurant-card__favorite.is-active svg{fill:#F24D4D;stroke:#F24D4D}
 .hero{height:170px;border-radius:18px;overflow:hidden;background:var(--olive);display:grid;place-items:center;margin-top:4px}
 .hero img{width:100%;height:100%;object-fit:cover}
 .hero-fb{font-family:"Reem Kufi",sans-serif;font-size:72px;color:#EEF2EA}
@@ -116,10 +101,6 @@ img.thumb{display:block}
 .facts{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:14px;color:var(--ink-2)}
 .offerbox{background:#fff;border-radius:var(--r);padding:14px;margin-top:14px;border-inline-start:4px solid var(--saffron)}
 .menucats{position:sticky;top:60px;z-index:4;background:var(--bg);padding-bottom:4px}
-
-/* ================================================================
-   المنتجات والسلة (بداخل صفحة المطعم)
-   ================================================================ */
 .product{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);align-items:flex-start}
 .price{font-weight:700;color:var(--olive)}
 .pricerow{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px}
@@ -127,31 +108,15 @@ img.thumb{display:block}
 .qty{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px}
 .qty button{width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;font-size:18px;line-height:1}
 .qty span{min-width:20px;text-align:center;font-weight:700}
-
-/* ================================================================
-   التقييمات
-   ================================================================ */
 .review{padding:12px 0;border-bottom:1px solid var(--line)}
 .stars{color:var(--saffron);letter-spacing:1px}
-
-/* ================================================================
-   شريط السلة السفلي العائم
-   ================================================================ */
-.cartbar{position:fixed;bottom:86px;inset-inline:12px;max-width:496px;margin:0 auto;background:linear-gradient(135deg,#1A1F1B,#2d352f);color:#fff;border-radius:18px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 16px 30px rgba(26,31,27,.26);z-index:15}
+.cartbar{position:fixed;bottom:86px;inset-inline:12px;max-width:496px;margin:0 auto;background:linear-gradient(135deg,#1A1F1B,#2d352f);color:#fff;border-radius:18px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:16;box-shadow:0 18px 30px rgba(15,22,18,.2)}
 .cartbar span{font-weight:600}
-
-/* ================================================================
-   شريط التنقل السفلي (Tabbar)
-   ================================================================ */
-.tabbar{position:fixed;bottom:10px;inset-inline:12px;max-width:520px;margin:0 auto;background:rgba(28,34,29,.92);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:8px 10px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;box-shadow:0 18px 35px rgba(17,22,18,.28);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:25}
-.tabbar a{display:flex;align-items:center;justify-content:center;height:56px;border-radius:16px;color:#C7D1C7;text-decoration:none;transition:transform .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease}
+.tabbar{position:fixed;bottom:10px;inset-inline:12px;max-width:520px;margin:0 auto;background:rgba(28,34,29,.92);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:8px 10px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;z-index:18;backdrop-filter:blur(10px)}
+.tabbar a{display:flex;align-items:center;justify-content:center;height:56px;border-radius:16px;color:#C7D1C7;text-decoration:none;transition:transform .2s ease, background .2s ease, color .2s ease}
 .tabbar a svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tabbar a[aria-current="page"]{background:linear-gradient(180deg,#F7C54B,#F2A511);color:var(--saffron-ink);box-shadow:0 10px 18px rgba(242,165,17,.32);transform:translateY(-2px)}
 .tabbar a:active{transform:scale(.98)}
-
-/* ================================================================
-   الشيت (Bottom Sheet) للنماذج والتفاصيل
-   ================================================================ */
 .backdrop{position:fixed;inset:0;background:rgba(14,20,15,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--bg);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:18px 16px max(22px,env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
 .sheet h2{font-size:22px;margin-bottom:4px}
@@ -164,44 +129,30 @@ fieldset{border:0;margin:14px 0 0;padding:0}
 legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .inline{display:flex;gap:8px}
 .inline input{flex:1}
-
-/* ================================================================
-   صفحة الطلبات
-   ================================================================ */
 .order{background:#fff;border-radius:var(--r);padding:14px;margin-bottom:12px}
 .between{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
 .pill{display:inline-block;font-size:13px;padding:3px 10px;border-radius:999px;background:var(--bg);margin-top:8px}
 .order .btn{margin-top:10px}
-
-/* ================================================================
-   صفحة الحساب
-   ================================================================ */
 .auth{background:#fff;border-radius:18px;padding:18px;margin-top:8px}
 .points{background:#fff;border-radius:var(--r);padding:16px;margin:10px 0 4px;font-size:16px}
 .points b{font-family:"Reem Kufi",sans-serif;font-size:26px;color:var(--olive)}
 .acct form{background:#fff;border-radius:18px;padding:16px;margin-top:10px}
 .acct .btn{margin-top:16px}
-
-/* ================================================================
-   الإشعارات (Toast)
-   ================================================================ */
 .toast{position:fixed;top:12px;inset-inline:12px;max-width:496px;margin:0 auto;background:var(--ink);color:#fff;padding:12px 16px;border-radius:12px;z-index:40;font-size:14px}
-
-/* ================================================================
-   تفضيلات الحركة المخفّضة
-   ================================================================ */
+@media (min-width: 768px){
+  .wrap{padding-inline:20px}
+  .restaurant-block__grid{grid-template-columns:repeat(var(--restaurant-block-cols), minmax(260px,1fr));}
+}
+@media (max-width: 767px){
+  .restaurant-block__grid{grid-template-columns:repeat(var(--restaurant-block-cols), minmax(260px, 82vw));}
+  .restaurant-card{min-height:210px}
+}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
-
-<!-- ============ جذر التطبيق (يتم رسم الصفحات بداخله) ============ -->
 <main id="app" class="wrap" aria-live="polite"></main>
-
-<!-- ============ شريط السلة السفلي العائم ============ -->
 <div id="cartbar" class="cartbar hidden" role="region" aria-label="السلة"></div>
-
-<!-- ============ شريط التنقل السفلي ============ -->
 <nav class="tabbar" aria-label="التنقل">
   <a href="#/home" data-tab="home" aria-label="الرئيسية" aria-current="page">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V20h14V9.5"></path><path d="M10 20v-6h4v6"></path></svg>
@@ -217,52 +168,31 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
   </a>
 </nav>
 
-<!-- ============ مكتبة سوبابيز ============ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-
 <script>
-/* ================================================================
-   قسم 1: الإعدادات الأساسية (مفاتيح سوبابيز)
-   ================================================================ */
 const SB_URL = 'https://hazyajkncrdfewkvnoww.supabase.co';
 const SB_KEY = 'sb_publishable_9Kf6dTQTqI9h7-yGALWMWg_bjPzM6Zu';
 const sb = window.supabase.createClient(SB_URL, SB_KEY);
 
-
-/* ================================================================
-   قسم 2: أدوات مساعدة عامة
-   ================================================================ */
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => `${Number(n || 0).toLocaleString('ar-EG', { maximumFractionDigits: 2 })} ج.م`;
 const stars = (n) => { const v = Math.round(Number(n || 0)); return '★'.repeat(v) + '☆'.repeat(5 - v); };
-
 const app = $('#app');
 const cartbar = $('#cartbar');
-
-/* ================================================================
-   قسم 3: ثوابت الحالة (Statuses) والتحقق
-   ================================================================ */
 const STATUS = {
   pending: 'مستنين تأكيد المطعم', confirmed: 'اتأكد وبيتجهز', preparing: 'بيتحضر',
   delivering: 'في الطريق ليك', completed: 'اتسلم', cancelled: 'اتلغى',
 };
 const PHONE_RE = /^(\+?20)?01[0125][0-9]{8}$/;
+const FAVORITE_KEY = 'sahab_favorites';
 
-
-/* ================================================================
-   قسم 4: متغيرات الحالة العامة (State)
-   ================================================================ */
 let session = null;
 let profile = null;
-let rid = 0;          // رقم العرض الحالي، عشان نتجاهل ردود قديمة
+let rid = 0;
 let pollTimer = null;
-let R = null;         // حالة صفحة المطعم الحالية
+let R = null;
 
-
-/* ================================================================
-   قسم 5: أدوات مساعدة UI (Toast / Sheet / Errors)
-   ================================================================ */
 function toast(msg) {
   const t = document.createElement('div');
   t.className = 'toast';
@@ -282,12 +212,10 @@ function openSheet(html, onMount) {
   onMount?.(bd.querySelector('.sheet'));
 }
 function closeSheet() { $('#sheet')?.remove(); }
-
 async function invokeError(error, fallback) {
   if (!error) return fallback;
   try { const j = await error.context.json(); return j.error || fallback; } catch { return fallback; }
 }
-
 function translateAuthError(msg = '') {
   if (/Invalid login/i.test(msg)) return 'الإيميل أو كلمة السر غلط';
   if (/already registered/i.test(msg)) return 'الإيميل ده مسجل قبل كده، ادخل من الأول';
@@ -296,10 +224,6 @@ function translateAuthError(msg = '') {
   return msg || 'حصلت مشكلة، حاول تاني';
 }
 
-
-/* ================================================================
-   قسم 6: الجلسة (Session & Profile)
-   ================================================================ */
 async function loadProfile() {
   if (!session) { profile = null; return; }
   const { data } = await sb.from('profiles').select('id, full_name, phone, role').eq('id', session.user.id).maybeSingle();
@@ -317,10 +241,6 @@ async function logout() {
   toast('خرجت من حسابك');
 }
 
-
-/* ================================================================
-   قسم 7: تحميل البيانات من قاعدة البيانات
-   ================================================================ */
 async function loadRestaurants() {
   const { data, error } = await sb.from('restaurants')
     .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, badges(id, name, display_text, background_color, text_color))')
@@ -329,15 +249,20 @@ async function loadRestaurants() {
   if (error) { toast('تعذّر تحميل المطاعم'); return []; }
   return data || [];
 }
+
 async function loadCategories() {
   const { data } = await sb.from('restaurant_categories').select('id, name, slug').eq('is_active', true).order('display_order');
   return data || [];
 }
+
 async function loadBanners() {
   const { data } = await sb.from('homepage_offer_banner_items')
-    .select('id, display_order, restaurant_offers(id, title, description, image_url, restaurant_id)')
-    .eq('is_active', true).order('display_order');
-  return (data || []).map((x) => x.restaurant_offers).filter(Boolean);
+    .select('id, display_order, restaurant_offers(id, title, description, image_url, restaurant_id, button_text, destination_url, starts_at, ends_at, is_active)')
+    .eq('is_active', true)
+    .order('display_order');
+  return (data || [])
+    .map((x) => ({ ...x.restaurant_offers, placement: 'home', display_order: x.display_order }))
+    .filter((x) => x && x.is_active !== false);
 }
 
 async function loadBlocks() {
@@ -347,6 +272,8 @@ async function loadBlocks() {
       title,
       subtitle,
       display_order,
+      is_visible,
+      auto_scroll,
       badge_id,
       badges (
         id,
@@ -355,9 +282,7 @@ async function loadBlocks() {
         background_color,
         text_color
       ),
-      block_restaurant_overrides (
-        restaurant_id
-      ),
+      block_restaurant_overrides (restaurant_id),
       block_offer_items (
         id,
         offer_id,
@@ -373,25 +298,19 @@ async function loadBlocks() {
     `)
     .eq('is_visible', true)
     .order('display_order');
-
   if (error) {
     console.error('خطأ تحميل البلوكات:', error);
     return [];
   }
-
   return (data || []).map((b) => ({
     ...b,
     badge: b.badges,
-    ids: (b.block_restaurant_overrides || [])
-      .map((o) => o.restaurant_id),
+    auto_scroll: !!(b.auto_scroll || b.settings?.auto_scroll || b.settings?.autoScroll),
+    ids: (b.block_restaurant_overrides || []).map((o) => o.restaurant_id),
     offerItems: (b.block_offer_items || [])
       .filter((item) => item.restaurant_offers)
       .sort((a, b) => a.display_order - b.display_order)
-      .map((item) => ({
-        ...item.restaurant_offers,
-        offer_item_id: item.id,
-        offer_order: item.display_order
-      }))
+      .map((item) => ({ ...item.restaurant_offers, offer_item_id: item.id, offer_order: item.display_order }))
   }));
 }
 
@@ -400,29 +319,50 @@ async function loadMethods(restaurantId) {
   return data || { cash: false, paymob: false };
 }
 
+function getFavoriteSet() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(FAVORITE_KEY) || '[]'));
+  } catch { return new Set(); }
+}
 
-/* ================================================================
-   قسم 8: دوال مساعدة لعرض كروت المطاعم
-   ================================================================ */
+function isRestaurantFavorite(id) {
+  return getFavoriteSet().has(String(id));
+}
+
+function toggleFavorite(event, restaurantId) {
+  event.preventDefault();
+  event.stopPropagation();
+  const key = String(restaurantId);
+  const set = getFavoriteSet();
+  if (set.has(key)) set.delete(key); else set.add(key);
+  localStorage.setItem(FAVORITE_KEY, JSON.stringify([...set]));
+  document.querySelectorAll('[data-fav-id="' + esc(key).replace(/&quot;/g, '"') + '"]').forEach((btn) => {
+    const active = set.has(key);
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    btn.setAttribute('aria-label', active ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة');
+  });
+}
+
 function badgesOf(r) {
   return (r.restaurant_badge_assignments || []).filter((a) => a.is_active && a.badges).map((a) => a.badges);
 }
+
 function badgeHtml(b) {
   return `<span class="badge" style="background:${esc(b.background_color || '#fff')};color:${esc(b.text_color || '#1A1F1B')}">${esc(b.display_text || b.name)}</span>`;
 }
+
 function deliveryText(r) {
   const fee = Number(r.delivery_fee || 0) ? money(r.delivery_fee) : 'توصيل مجاني';
   return r.delivery_min_minutes ? `${r.delivery_min_minutes} دقيقة · ${fee}` : fee;
 }
+
 function thumb(url, name) {
-  return url
-    ? `<img class="thumb" src="${esc(url)}" alt="" loading="lazy">`
-    : `<span class="thumb" aria-hidden="true">${esc((name || '?').trim()[0] || '؟')}</span>`;
+  return url ? `<img class="thumb" src="${esc(url)}" alt="" loading="lazy">` : `<span class="thumb" aria-hidden="true">${esc((name || '?').trim()[0] || '؟')}</span>`;
 }
+
 function cover(r) {
-  return r.cover_image_url
-    ? `<img src="${esc(r.cover_image_url)}" alt="" loading="lazy">`
-    : esc((r.name || '?').trim()[0] || '؟');
+  return r.cover_image_url ? `<img src="${esc(r.cover_image_url)}" alt="" loading="lazy">` : esc((r.name || '?').trim()[0] || '؟');
 }
 
 function restRowHtml(r) {
@@ -436,31 +376,126 @@ function restRowHtml(r) {
       ${badge ? badgeHtml(badge) : ''}
     </span></a>`;
 }
+
 function miniHtml(r, badge = null) {
   return `<a class="mini" href="#/r/${esc(r.slug)}">
-    <span class="cover">
-      ${cover(r)}
-      ${badge ? `<span class="badge mini-badge"
-        style="background:${esc(badge.background_color || '#fff')};color:${esc(badge.text_color || '#1A1F1B')}">
-        ${esc(badge.display_text || badge.name)}
-      </span>` : ''}
-    </span>
+    <span class="cover">${cover(r)}${badge ? `<span class="badge mini-badge" style="background:${esc(badge.background_color || '#fff')};color:${esc(badge.text_color || '#1A1F1B')}">${esc(badge.display_text || badge.name)}</span>` : ''}</span>
     <strong>${esc(r.name)}</strong>
     <span class="meta">${Number(r.rating || 0).toFixed(1)} ★ · ${esc(r.restaurant_categories?.name || '')}</span>
   </a>`;
 }
+
 function emptyHtml(txt) { return `<p class="empty">${esc(txt)}</p>`; }
-function topbar(title) {
-  return `<header class="topbar"><h1 class="ttl">${title ? esc(title) : '<span class="brand">سحاب</span>'}</h1></header>`;
-}
-function backbar(title) {
-  return `<header class="topbar"><a class="chip" href="#/restaurants">رجوع للمطاعم</a><h1 class="ttl" style="font-size:18px">${esc(title || '')}</h1></header>`;
+function topbar(title) { return `<header class="topbar"><h1 class="ttl">${title ? esc(title) : '<span class="brand">سحاب</span>'}</h1></header>`; }
+function backbar(title) { return `<header class="topbar"><a class="chip" href="#/restaurants">رجوع للمطاعم</a><h1 class="ttl" style="font-size:18px">${esc(title || '')}</h1></header>`; }
+
+function resolveRestaurantBadge(block, restaurant) {
+  const blockBadge = block?.badge;
+  const restaurantBadge = (restaurant?.restaurant_badge_assignments || []).find((a) => a.is_active && a.badges);
+  const badge = (block && block.badge_id && blockBadge) ? blockBadge : (restaurantBadge ? restaurantBadge.badges : null);
+  if (!badge) return null;
+  return badge;
 }
 
+function restaurantCardHtml(restaurant, block = null) {
+  const badge = resolveRestaurantBadge(block, restaurant);
+  const isFav = isRestaurantFavorite(restaurant.id);
+  const badgeHtmlString = badge ? `<span class="restaurant-card__badge" style="background:${esc(badge.background_color || '#fff')};color:${esc(badge.text_color || '#1A1F1B')}">${esc(badge.display_text || badge.name)}</span>` : '';
+  const img = restaurant.cover_image_url || restaurant.logo_url;
+  const statusText = restaurant.is_open === false ? 'مغلق الآن' : 'مفتوح الآن';
+  return `
+    <article class="restaurant-card">
+      <a class="restaurant-card__link" href="#/r/${esc(restaurant.slug)}">
+        <div class="restaurant-card__media">
+          ${img ? `<img src="${esc(img)}" alt="${esc(restaurant.name)}" loading="lazy">` : `<div style="display:grid;place-items:center;width:100%;height:100%;background:#D9E1D2;font-family:'Reem Kufi';font-size:42px;color:var(--olive)">${esc((restaurant.name || '?').trim()[0] || '؟')}</div>`}
+        </div>
+        <div class="restaurant-card__content">
+          <div class="restaurant-card__head">
+            <div class="restaurant-card__titleblock">
+              <h3 class="restaurant-card__name">${esc(restaurant.name)}</h3>
+              <div class="restaurant-card__type">${esc(restaurant.restaurant_categories?.name || '')}</div>
+            </div>
+            ${badgeHtmlString}
+          </div>
+          <div class="restaurant-card__meta">
+            <span>★ ${Number(restaurant.rating || 0).toFixed(1)}</span>
+            <span>${esc(deliveryText(restaurant))}</span>
+          </div>
+          <div class="restaurant-card__status">${esc(statusText)}</div>
+        </div>
+      </a>
+      <button class="restaurant-card__favorite ${isFav ? 'is-active' : ''}" data-fav-id="${esc(String(restaurant.id))}" aria-label="${isFav ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'}" aria-pressed="${isFav ? 'true' : 'false'}" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.35-9.5-8.3C.7 9.26 2.04 4.5 6.5 4.5c2.06 0 3.2 1.1 3.8 2.16.6-1.06 1.74-2.16 3.8-2.16 4.46 0 5.8 4.76 4 7.7-2 3.95-9.5 8.3-9.5 8.3Z"></path></svg>
+      </button>
+    </article>
+  `;
+}
 
-/* ================================================================
-   قسم 9: الراوتر (Routes & Navigation)
-   ================================================================ */
+function renderBanner(banner) {
+  if (!banner || !banner.title) return '';
+  const href = banner.destination_url || (banner.restaurant_id ? `#/r/${esc(String(banner.restaurant_id))}` : '#');
+  const image = banner.image_url || banner.cover_image_url || '';
+  return `<a class="banner" href="${esc(href)}" aria-label="${esc(banner.title)}">
+    ${image ? `<img src="${esc(image)}" alt="" loading="lazy">` : ''}
+    <span class="meta" style="color:inherit">${esc(banner.restaurant_name || 'عرض خاص')}</span>
+    <span class="bt">${esc(banner.title)}</span>
+    ${banner.description ? `<span>${esc(banner.description)}</span>` : ''}
+  </a>`;
+}
+
+function renderRestaurantBlock(block, restaurantsById) {
+  const items = [];
+  const explicitIds = (block.ids || []).filter(Boolean);
+  if (explicitIds.length) {
+    explicitIds.forEach((id) => { const r = restaurantsById.get(id); if (r) items.push(r); });
+  }
+  const offerItems = (block.offerItems || []).filter((offer) => offer && offer.restaurant_id && restaurantsById.get(offer.restaurant_id));
+  if (offerItems.length && items.length === 0) {
+    offerItems.forEach((offer) => { const r = restaurantsById.get(offer.restaurant_id); if (r) items.push(r); });
+  }
+  const unique = [];
+  const seen = new Set();
+  for (const it of items) {
+    const key = String(it.id);
+    if (!seen.has(key)) { seen.add(key); unique.push(it); }
+  }
+  if (!unique.length) return '';
+  const cols = Math.max(1, Math.ceil(unique.length / 3));
+  const columns = Array.from({ length: cols }, (_, index) => unique.slice(index * 3, (index + 1) * 3));
+  const blockTitle = block.title || 'مطاعم';
+  const subtitle = block.subtitle ? `<p class="meta sub">${esc(block.subtitle)}</p>` : '';
+  const grid = columns.map((column) => `<div class="restaurant-block__col">${column.map((restaurant) => restaurantCardHtml(restaurant, block)).join('')}</div>`).join('');
+  const settings = block.auto_scroll ? 'data-auto-scroll="true"' : '';
+  const html = `<section class="restaurant-block" ${settings}>
+    <h2 class="sec restaurant-block__header">${esc(blockTitle)}</h2>
+    ${subtitle}
+    <div class="restaurant-block__grid" style="--restaurant-block-cols:${cols};">${grid}</div>
+  </section>`;
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = html;
+  const gridEl = wrapper.querySelector('.restaurant-block__grid');
+  if (gridEl && block.auto_scroll && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let timer = null;
+    const step = () => {
+      if (!gridEl || gridEl.matches(':hover')) return;
+      const maxScroll = gridEl.scrollWidth - gridEl.clientWidth;
+      if (maxScroll <= 0) return;
+      const next = gridEl.scrollLeft + 220;
+      gridEl.scrollTo({ left: next > maxScroll ? 0 : next, behavior: 'smooth' });
+    };
+    gridEl.addEventListener('pointerenter', () => { if (timer) clearInterval(timer); });
+    gridEl.addEventListener('pointerleave', () => { timer = setInterval(step, 2600); });
+    timer = setInterval(step, 2600);
+  }
+  return wrapper.innerHTML;
+}
+
+function bindFavoriteButtons() {
+  document.querySelectorAll('.restaurant-card__favorite').forEach((button) => {
+    button.onclick = (event) => toggleFavorite(event, button.dataset.favId);
+  });
+}
+
 const ROUTES = [
   [/^$/, viewHome, false, 'home'],
   [/^home$/, viewHome, false, 'home'],
@@ -479,7 +514,6 @@ function route() {
   const path = raw.split('?')[0];
   const query = new URLSearchParams(raw.split('?')[1] || '');
   document.querySelectorAll('.tabbar a').forEach((a) => a.removeAttribute('aria-current'));
-
   for (const [re, fn, needsAuth, tab] of ROUTES) {
     const m = path.match(re);
     if (!m) continue;
@@ -494,70 +528,14 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 
-
-/* ================================================================
-   قسم 10: صفحة الرئيسية
-   ================================================================ */
 async function viewHome() {
   const my = ++rid;
   app.innerHTML = topbar() + '<p class="meta">جاري التحميل…</p>';
   const [rests, cats, offers, blocks] = await Promise.all([loadRestaurants(), loadCategories(), loadBanners(), loadBlocks()]);
   if (my !== rid) return;
-
   const byId = new Map(rests.map((r) => [r.id, r]));
-  const bannerHtml = offers.map((o) => {
-    const r = byId.get(o.restaurant_id);
-    if (!r) return '';
-    return `<a class="banner" href="#/r/${esc(r.slug)}">
-      ${o.image_url ? `<img src="${esc(o.image_url)}" alt="" loading="lazy">` : ''}
-      <span class="meta" style="color:inherit">${esc(r.name)}</span>
-      <span class="bt">${esc(o.title)}</span>
-      ${o.description ? `<span>${esc(o.description)}</span>` : ''}
-    </a>`;
-  }).join('');
-
-  
-  const blocksHtml = blocks.map((bl) => {
-    const list = bl.ids
-      .map((id) => byId.get(id))
-      .filter(Boolean);
-
-    const offerCards = (bl.offerItems || [])
-      .map((offer) => {
-        const restaurant = byId.get(offer.restaurant_id);
-
-        if (!restaurant) return '';
-
-        return `<a class="mini" href="#/r/${esc(restaurant.slug)}">
-          <span class="cover">
-            ${offer.image_url
-              ? `<img src="${esc(offer.image_url)}" alt="" loading="lazy">`
-              : esc(restaurant.name.charAt(0))}
-          </span>
-          <strong>${esc(offer.title)}</strong>
-          <span class="meta">${esc(restaurant.name)}</span>
-          ${offer.description
-            ? `<span class="meta">${esc(offer.description)}</span>`
-            : ''}
-        </a>`;
-      })
-      .join('');
-
-    const content = offerCards || list
-      .map((r) => miniHtml(r, bl.badge))
-      .join('');
-
-    if (!content) return '';
-
-    return `<section class="block">
-      <h2 class="sec">${esc(bl.title)}</h2>
-      ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
-      <div class="rail">
-        ${content}
-      </div>
-    </section>`;
-  }).join('');
-
+  const bannerHtml = (offers || []).map(renderBanner).join('');
+  const blocksHtml = (blocks || []).map((bl) => renderRestaurantBlock(bl, byId)).join('');
   app.innerHTML = `
     ${topbar()}
     ${bannerHtml ? `<section class="banners" aria-label="عروض">${bannerHtml}</section>` : ''}
@@ -568,12 +546,9 @@ async function viewHome() {
     <h2 class="sec">كل المطاعم</h2>
     ${rests.map(restRowHtml).join('') || emptyHtml('مفيش مطاعم متاحة دلوقتي')}
   `;
+  bindFavoriteButtons();
 }
 
-
-/* ================================================================
-   قسم 11: صفحة قائمة المطاعم
-   ================================================================ */
 async function viewRestaurants(query) {
   const my = ++rid;
   let active = query.get('c') || '';
@@ -581,22 +556,17 @@ async function viewRestaurants(query) {
     <input class="search" id="s" type="search" placeholder="ابحث باسم المطعم" aria-label="ابحث عن مطعم">
     <nav class="chips" id="cats" aria-label="تصفية حسب التصنيف"></nav>
     <div id="list"><p class="meta">جاري التحميل…</p></div>`;
-
   const [rests, cats] = await Promise.all([loadRestaurants(), loadCategories()]);
   if (my !== rid) return;
-
   const drawChips = () => {
     $('#cats').innerHTML = `<button class="chip" data-c="" aria-pressed="${active === ''}">الكل</button>` +
       cats.map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="${active === c.slug}">${esc(c.name)}</button>`).join('');
   };
   const draw = () => {
     const term = $('#s').value.trim().toLowerCase();
-    const list = rests.filter((r) =>
-      (!active || r.restaurant_categories?.slug === active) &&
-      (!term || (r.name || '').toLowerCase().includes(term)));
+    const list = rests.filter((r) => (!active || r.restaurant_categories?.slug === active) && (!term || (r.name || '').toLowerCase().includes(term)));
     $('#list').innerHTML = list.map(restRowHtml).join('') || emptyHtml('مفيش مطعم يطابق بحثك');
   };
-
   drawChips();
   draw();
   $('#s').addEventListener('input', draw);
@@ -609,14 +579,9 @@ async function viewRestaurants(query) {
   });
 }
 
-
-/* ================================================================
-   قسم 12: السلة (جلب/تحديث عبر DB للمسجلين)
-   ================================================================ */
 async function getCart(restaurantId, create) {
   const uid = session.user.id;
-  let { data: cart } = await sb.from('carts').select('id, coupon_code')
-    .eq('customer_id', uid).eq('restaurant_id', restaurantId).eq('status', 'active').maybeSingle();
+  let { data: cart } = await sb.from('carts').select('id, coupon_code').eq('customer_id', uid).eq('restaurant_id', restaurantId).eq('status', 'active').maybeSingle();
   if (!cart && create) {
     const ins = await sb.from('carts').insert({ customer_id: uid, restaurant_id: restaurantId }).select('id, coupon_code').single();
     if (ins.error) throw ins.error;
@@ -627,18 +592,11 @@ async function getCart(restaurantId, create) {
   return { id: cart.id, coupon_code: cart.coupon_code, items: items || [] };
 }
 
-
-/* ================================================================
-   قسم 13: سلة الزوار (قبل تسجيل الدخول) — تُخزَّن في sessionStorage
-   ================================================================ */
 const GUEST_CART_KEY = 'sahab_guest_cart';
 const PENDING_CHECKOUT_KEY = 'sahab_pending_checkout';
 
 function guestCartLoad(restaurantId) {
-  try {
-    const all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}');
-    return all[restaurantId] || [];
-  } catch { return []; }
+  try { const all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); return all[restaurantId] || []; } catch { return []; }
 }
 function guestCartSave(restaurantId, items) {
   try {
@@ -649,15 +607,11 @@ function guestCartSave(restaurantId, items) {
     else sessionStorage.removeItem(GUEST_CART_KEY);
   } catch {}
 }
-
-/* تحميل السلة المناسبة (مسجل ← DB / زائر ← sessionStorage) */
 function loadCartForRestaurant(restaurantId) {
   if (session) return getCart(restaurantId, false);
   const items = guestCartLoad(restaurantId);
   return Promise.resolve(items.length ? { id: null, coupon_code: null, items } : null);
 }
-
-/* مزامنة سلة الزائر إلى DB بعد تسجيل الدخول */
 async function syncGuestCart() {
   let all;
   try { all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); } catch { all = {}; }
@@ -669,12 +623,9 @@ async function syncGuestCart() {
       for (const item of all[rid]) {
         const existing = cart.items.find((i) => i.product_id === item.product_id);
         if (existing) {
-          await sb.from('cart_items')
-            .update({ quantity: Math.min(existing.quantity + item.quantity, 99) })
-            .eq('id', existing.id);
+          await sb.from('cart_items').update({ quantity: Math.min(existing.quantity + item.quantity, 99) }).eq('id', existing.id);
         } else {
-          await sb.from('cart_items')
-            .insert({ cart_id: cart.id, product_id: item.product_id, quantity: item.quantity });
+          await sb.from('cart_items').insert({ cart_id: cart.id, product_id: item.product_id, quantity: item.quantity });
         }
       }
     } catch {}
@@ -682,20 +633,14 @@ async function syncGuestCart() {
   sessionStorage.removeItem(GUEST_CART_KEY);
 }
 
-
-/* ================================================================
-   قسم 14: صفحة المطعم (Menu + Hero + Reviews)
-   ================================================================ */
 async function viewRestaurant([, slug]) {
   const my = ++rid;
   app.innerHTML = backbar('') + '<p class="meta">جاري التحميل…</p>';
-
   const { data: r } = await sb.from('restaurants')
     .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, restaurant_categories(name), restaurant_badge_assignments(is_active, badges(id, name, display_text, background_color, text_color))')
     .eq('slug', slug).maybeSingle();
   if (my !== rid) return;
   if (!r) { app.innerHTML = backbar('') + emptyHtml('المطعم ده مش متاح دلوقتي'); return; }
-
   const [menuCats, products, offers, reviews, methods, cart] = await Promise.all([
     sb.from('menu_categories').select('id, name, display_order').eq('restaurant_id', r.id).eq('is_active', true).order('display_order'),
     sb.from('products').select('id, name, description, price, emoji, category_id, display_order, product_images(image_url, display_order)').eq('restaurant_id', r.id).eq('is_available', true).order('display_order'),
@@ -705,7 +650,6 @@ async function viewRestaurant([, slug]) {
     loadCartForRestaurant(r.id),
   ]);
   if (my !== rid) return;
-
   R = {
     rest: r,
     menuCats: menuCats.data || [],
@@ -716,10 +660,8 @@ async function viewRestaurant([, slug]) {
     methods,
     cart,
   };
-
   const badges = badgesOf(r).map(badgeHtml).join(' ');
   const payNames = [methods.cash && 'كاش', methods.paymob && 'فيزا / محفظة'].filter(Boolean).join(' · ');
-
   app.innerHTML = `
     ${backbar(r.name)}
     <div class="hero">${r.cover_image_url ? `<img src="${esc(r.cover_image_url)}" alt="">` : `<span class="hero-fb" aria-hidden="true">${esc(r.name.trim()[0])}</span>`}</div>
@@ -747,10 +689,6 @@ async function viewRestaurant([, slug]) {
   if (!r.is_open) toast('المطعم مقفول دلوقتي');
 }
 
-
-/* ================================================================
-   قسم 15: عرض المنتجات والسلة داخل صفحة المطعم
-   ================================================================ */
 function productHtml(p) {
   const inCart = R.cart?.items.find((i) => i.product_id === p.id);
   const qty = inCart?.quantity || 0;
@@ -772,23 +710,22 @@ function drawMenu() {
   const el = $('#menu');
   if (!el || !R) return;
   const known = new Set(R.menuCats.map((c) => c.id));
-  const groups = R.menuCats
-    .map((c) => ({ id: c.id, name: c.name, items: R.products.filter((p) => p.category_id === c.id) }))
-    .filter((g) => g.items.length);
+  const groups = R.menuCats.map((c) => ({ id: c.id, name: c.name, items: R.products.filter((p) => p.category_id === c.id) })).filter((g) => g.items.length);
   const loose = R.products.filter((p) => !p.category_id || !known.has(p.category_id));
   if (loose.length) groups.push({ id: 'other', name: 'أطباق أخرى', items: loose });
-
-  el.innerHTML = groups.length
-    ? groups.map((g) => `<section id="sec-${esc(g.id)}"><h2 class="sec">${esc(g.name)}</h2>${g.items.map(productHtml).join('')}</section>`).join('')
-    : emptyHtml('المنيو فاضي دلوقتي');
+  el.innerHTML = groups.length ? groups.map((g) => `<section id="sec-${esc(g.id)}"><h2 class="sec">${esc(g.name)}</h2>${g.items.map(productHtml).join('')}</section>`).join('') : emptyHtml('المنيو فاضي دلوقتي');
   drawCartBar();
+  document.querySelectorAll('[data-act="inc"]').forEach((b) => b.onclick = () => setQty(Number(b.dataset.id), 1));
+  document.querySelectorAll('[data-act="dec"]').forEach((b) => b.onclick = () => setQty(Number(b.dataset.id), -1));
+  document.querySelectorAll('[data-target]').forEach((b) => b.onclick = () => {
+    const target = document.getElementById(b.dataset.target);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 }
 
 function cartLines() {
   if (!R?.cart) return [];
-  return R.cart.items
-    .filter((i) => R.prodMap.has(i.product_id))
-    .map((i) => ({ ...i, product: R.prodMap.get(i.product_id) }));
+  return R.cart.items.filter((i) => R.prodMap.has(i.product_id)).map((i) => ({ ...i, product: R.prodMap.get(i.product_id) }));
 }
 
 function drawCartBar() {
@@ -797,31 +734,23 @@ function drawCartBar() {
   if (!count || location.hash.indexOf('#/r/') !== 0) { cartbar.classList.add('hidden'); cartbar.innerHTML = ''; return; }
   const sub = lines.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
   cartbar.classList.remove('hidden');
-  cartbar.innerHTML = `<span>${count} عنصر · ${money(sub)}</span>
-    <button class="btn primary auto" id="openCheckout">راجع الطلب</button>`;
+  cartbar.innerHTML = `<span>${count} عنصر · ${money(sub)}</span><button class="btn primary auto" id="openCheckout">راجع الطلب</button>`;
   $('#openCheckout').onclick = openCheckout;
 }
 
-/* زيادة/تقليل كمية صنف — يدعم الزوار والمسجلين */
 async function setQty(productId, delta) {
-  // زائر: نحدّث السلة المحلية
   if (!session) {
     const items = guestCartLoad(R.rest.id);
     const existing = items.find((i) => i.product_id === productId);
     const next = (existing?.quantity || 0) + delta;
-    if (existing && next <= 0) {
-      items.splice(items.indexOf(existing), 1);
-    } else if (existing) {
-      existing.quantity = Math.min(next, 99);
-    } else if (next > 0) {
-      items.push({ id: 'g_' + productId, product_id: productId, quantity: 1 });
-    }
+    if (existing && next <= 0) items.splice(items.indexOf(existing), 1);
+    else if (existing) existing.quantity = Math.min(next, 99);
+    else if (next > 0) items.push({ id: 'g_' + productId, product_id: productId, quantity: 1 });
     guestCartSave(R.rest.id, items);
     R.cart = items.length ? { id: null, coupon_code: null, items } : null;
     drawMenu();
     return;
   }
-  // مسجل: نحدّث DB
   try {
     const cart = await getCart(R.rest.id, true);
     const existing = cart.items.find((i) => i.product_id === productId);
@@ -831,17 +760,10 @@ async function setQty(productId, delta) {
     else if (next > 0) await sb.from('cart_items').insert({ cart_id: cart.id, product_id: productId, quantity: 1 });
     R.cart = await getCart(R.rest.id, false);
     drawMenu();
-  } catch (e) {
-    toast(e.message || 'تعذّر تحديث السلة');
-  }
+  } catch (e) { toast(e.message || 'تعذّر تحديث السلة'); }
 }
 
-
-/* ================================================================
-   قسم 16: شيت تأكيد الطلب (Checkout)
-   ================================================================ */
 function openCheckout() {
-  // زائر → نطلب منه تسجيل الدخول ونحفظ نيته
   if (!session) {
     sessionStorage.setItem(PENDING_CHECKOUT_KEY, R.rest.slug);
     return goLogin();
@@ -853,7 +775,6 @@ function openCheckout() {
   const m = R.methods;
   const hasAny = m.cash || m.paymob;
   const firstMethod = m.cash ? 'cash' : 'paymob';
-
   openSheet(`
     <h2>تأكيد الطلب</h2>
     <p class="meta">من ${esc(R.rest.name)}</p>
@@ -893,14 +814,11 @@ function openCheckout() {
       const addr = sheetEl.querySelector('#ca').value.trim();
       const coupon = sheetEl.querySelector('#cc').value.trim();
       const method = sheetEl.querySelector('input[name="pm"]:checked')?.value;
-
       if (!name) { err.textContent = 'اكتب اسمك'; return; }
       if (!PHONE_RE.test(phone)) { err.textContent = 'اكتب رقم موبايل مصري صحيح'; return; }
       if (addr.length < 5) { err.textContent = 'اكتب عنوان التوصيل بالتفصيل'; return; }
       if (!method) { err.textContent = 'اختار طريقة الدفع'; return; }
-
-      btn.disabled = true;
-      btn.textContent = 'بنأكد طلبك…';
+      btn.disabled = true; btn.textContent = 'بنأكد طلبك…';
       try {
         await sb.from('carts').update({ coupon_code: coupon || null }).eq('id', R.cart.id);
         const { data: orderId, error } = await sb.rpc('place_order', {
@@ -911,7 +829,6 @@ function openCheckout() {
           p_payment_method: method,
         });
         if (error) throw error;
-
         if (method === 'paymob') {
           const { data, error: fnErr } = await sb.functions.invoke('paymob-initiate', { body: { order_id: orderId } });
           if (fnErr || !data?.iframe_url) throw new Error(await invokeError(fnErr, 'تعذّر بدء الدفع'));
@@ -931,10 +848,6 @@ function openCheckout() {
   });
 }
 
-
-/* ================================================================
-   قسم 17: صفحة الطلبات (Orders)
-   ================================================================ */
 function orderHtml(o) {
   const p = (o.payments || [])[0];
   const items = (o.order_items || []).map((i) => `${i.quantity}× ${esc(i.product_name_snapshot)}`).join('، ');
@@ -943,10 +856,7 @@ function orderHtml(o) {
   if (p) {
     if (p.status === 'paid') payText = 'مدفوع';
     else if (p.provider === 'cash') payText = 'الدفع عند الاستلام';
-    else if (p.status === 'pending' && o.status === 'pending') {
-      payText = 'لسه مادفعتش';
-      payBtn = `<button class="btn primary auto" data-act="pay" data-order="${esc(o.id)}">ادفع الآن</button>`;
-    }
+    else if (p.status === 'pending' && o.status === 'pending') { payText = 'لسه مادفعتش'; payBtn = `<button class="btn primary auto" data-act="pay" data-order="${esc(o.id)}">ادفع الآن</button>`; }
   }
   return `<article class="order">
     <div class="between"><strong>${esc(o.restaurants?.name || 'مطعم')}</strong><b>${money(o.total_amount)}</b></div>
@@ -961,20 +871,12 @@ function orderHtml(o) {
 async function viewOrders() {
   const my = ++rid;
   app.innerHTML = topbar('طلباتي') + '<p class="meta">جاري التحميل…</p>';
-  const { data: orders, error } = await sb.from('orders')
-    .select('id, status, total_amount, created_at, restaurants(name), payments(id, provider, status), order_items(product_name_snapshot, quantity)')
-    .order('created_at', { ascending: false }).limit(30);
+  const { data: orders, error } = await sb.from('orders').select('id, status, total_amount, created_at, restaurants(name), payments(id, provider, status), order_items(product_name_snapshot, quantity)').order('created_at', { ascending: false }).limit(30);
   if (my !== rid) return;
   if (error) { app.innerHTML = topbar('طلباتي') + emptyHtml('تعذّر تحميل طلباتك'); return; }
-
-  app.innerHTML = topbar('طلباتي') + (orders.length
-    ? orders.map(orderHtml).join('')
-    : emptyHtml('لسه ماطلبتش حاجة. ابدأ من المطاعم.'));
-
+  app.innerHTML = topbar('طلباتي') + (orders.length ? orders.map(orderHtml).join('') : emptyHtml('لسه ماطلبتش حاجة. ابدأ من المطاعم.'));
   const waiting = orders.some((o) => o.status === 'pending' && (o.payments || []).some((p) => p.provider === 'paymob' && p.status === 'pending'));
-  if (waiting) {
-    pollTimer = setInterval(() => { if (location.hash === '#/orders') viewOrders(); }, 8000);
-  }
+  if (waiting) pollTimer = setInterval(() => { if (location.hash === '#/orders') viewOrders(); }, 8000);
 }
 
 async function payOrder(orderId, btn) {
@@ -982,155 +884,73 @@ async function payOrder(orderId, btn) {
   const old = btn.textContent;
   btn.textContent = 'جاري التحويل…';
   const { data, error } = await sb.functions.invoke('paymob-initiate', { body: { order_id: orderId } });
-  if (error || !data?.iframe_url) {
-    toast(await invokeError(error, 'تعذّر بدء الدفع'));
-    btn.disabled = false;
-    btn.textContent = old;
-    return;
-  }
+  if (error || !data?.iframe_url) { toast(await invokeError(error, 'تعذّر بدء الدفع')); btn.disabled = false; btn.textContent = old; return; }
   location.href = data.iframe_url;
 }
 
-
-/* ================================================================
-   قسم 18: صفحة الحساب (Account & Profile)
-   ================================================================ */
-async function viewAccount() {
-  const my = ++rid;
-  await loadProfile();
-  const { data: pts } = await sb.from('customer_points_ledger').select('points');
-  const total = (pts || []).reduce((s, x) => s + Number(x.points || 0), 0);
-  if (my !== rid) return;
-
-  app.innerHTML = topbar('حسابي') + `
-    <div class="acct">
-      <p class="meta">${esc(session.user.email)}</p>
-      <div class="points">نقاطك: <b>${total}</b></div>
-      <form id="pf" novalidate>
-        <label for="pn">الاسم</label>
-        <input id="pn" required value="${esc(profile?.full_name || '')}" autocomplete="name">
-        <label for="pp">رقم الموبايل</label>
-        <input id="pp" inputmode="tel" required value="${esc(profile?.phone || '')}" autocomplete="tel">
-        <button class="btn primary" type="submit">حفظ البيانات</button>
-      </form>
-      <button class="btn ghost" id="logoutBtn" style="margin-top:16px">تسجيل الخروج</button>
-    </div>
-  `;
-
-  $('#pf').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const full_name = $('#pn').value.trim();
-    const phone = $('#pp').value.replace(/[\s-]/g, '');
-    if (!full_name) { toast('اكتب اسمك'); return; }
-    if (!PHONE_RE.test(phone)) { toast('رقم الموبايل مش صحيح'); return; }
-    const { error } = await sb.from('profiles').upsert({ id: session.user.id, full_name, phone });
-    if (error) { toast(error.message || 'تعذّر حفظ البيانات'); return; }
-    toast('تم حفظ البيانات');
-    profile = { ...profile, full_name, phone };
-  });
-
-  $('#logoutBtn').addEventListener('click', logout);
-}
-
-async function viewLogin() {
-  app.innerHTML = topbar('تسجيل الدخول') + `
+function viewLogin() {
+  app.innerHTML = `${topbar('تسجيل الدخول')}
     <div class="auth">
-      <form id="loginForm" novalidate>
-        <label for="email">الإيميل</label>
-        <input id="email" type="email" required autocomplete="email">
-        <label for="pass">كلمة السر</label>
-        <input id="pass" type="password" required autocomplete="current-password">
+      <form id="loginForm">
+        <label>الإيميل</label>
+        <input type="email" id="email" required>
+        <label>كلمة السر</label>
+        <input type="password" id="pass" required>
+        <p class="err" id="loginErr" role="alert"></p>
         <button class="btn primary" type="submit">دخول</button>
       </form>
-      <button class="linkbtn" id="showRegister">تسجيل جديد</button>
-    </div>
-  `;
-
+    </div>`;
   $('#loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = $('#email').value.trim();
-    const password = $('#pass').value;
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) { toast(translateAuthError(error.message)); return; }
-    session = data;
-    await loadProfile();
-    const pending = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
-    if (pending) {
-      sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
-      location.hash = `#/r/${pending}`;
-      return;
-    }
-    location.hash = '#/home';
-  });
-
-  $('#showRegister').addEventListener('click', () => {
-    app.innerHTML = topbar('إنشاء حساب') + `
-      <div class="auth">
-        <form id="regForm" novalidate>
-          <label for="regName">الاسم</label>
-          <input id="regName" required autocomplete="name">
-          <label for="regEmail">الإيميل</label>
-          <input id="regEmail" type="email" required autocomplete="email">
-          <label for="regPass">كلمة السر</label>
-          <input id="regPass" type="password" required autocomplete="new-password">
-          <button class="btn primary" type="submit">إنشاء الحساب</button>
-        </form>
-      </div>
-    `;
-
-    $('#regForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const full_name = $('#regName').value.trim();
-      const email = $('#regEmail').value.trim();
-      const password = $('#regPass').value;
-      if (!full_name) { toast('اكتب اسمك'); return; }
-      if (!email) { toast('اكتب الإيميل'); return; }
-      if (password.length < 6) { toast('كلمة السر لازم تكون 6 حروف على الأقل'); return; }
-      const { data, error } = await sb.auth.signUp({ email, password });
-      if (error) { toast(translateAuthError(error.message)); return; }
+    const pass = $('#pass').value;
+    $('#loginErr').textContent = '';
+    try {
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
       session = data;
-      await sb.from('profiles').upsert({ id: data.user.id, full_name, phone: null });
-      location.hash = '#/home';
-      toast('تم إنشاء الحساب');
-    });
+      await loadProfile();
+      location.hash = sessionStorage.getItem(PENDING_CHECKOUT_KEY) ? '#/r/' + sessionStorage.getItem(PENDING_CHECKOUT_KEY) : '#/home';
+      sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
+      toast('تم تسجيل الدخول');
+    } catch (err) {
+      $('#loginErr').textContent = translateAuthError(err.message || 'تعذّر تسجيل الدخول');
+    }
   });
 }
 
-/* ================================================================
-   التهيئة
-   ================================================================ */
-(async () => {
-  const { data } = await sb.auth.getSession();
-  session = data.session;
-  if (session) await loadProfile();
+async function viewAccount() {
+  const my = ++rid;
+  await loadProfile();
+  if (my !== rid) return;
+  app.innerHTML = `${topbar('حسابي')}
+    <div class="points"><b>${esc(profile?.full_name || 'ضيف')}</b><div class="meta">${esc(profile?.phone || 'لا يوجد رقم')}</div></div>
+    <div class="acct">
+      <form id="profileForm">
+        <label>الاسم</label>
+        <input id="fullName" value="${esc(profile?.full_name || '')}" required>
+        <label>رقم الهاتف</label>
+        <input id="phone" value="${esc(profile?.phone || '')}" required>
+        <button class="btn primary" type="submit">حفظ</button>
+      </form>
+    </div>
+    <button class="btn ghost" id="logoutBtn" type="button">تسجيل الخروج</button>`;
+  $('#profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await sb.from('profiles').update({ full_name: $('#fullName').value.trim(), phone: $('#phone').value.trim() }).eq('id', session.user.id);
+    toast('تم حفظ بياناتك');
+  });
+  $('#logoutBtn').onclick = logout;
+}
+
+function init() {
+  const rawSession = JSON.parse(localStorage.getItem('sb-hazyajkncrdfewkvnoww-auth-token') || 'null');
+  if (rawSession) session = { user: { id: rawSession.user?.id || rawSession.user_id } };
+  if (location.hash === '') location.hash = '#/home';
   route();
-})();
+}
 
-/* ================================================================
-   ربط الأحداث للمنتجات
-   ================================================================ */
-document.addEventListener('click', async (e) => {
-  const btn = e.target.closest('[data-act]');
-  if (!btn) return;
-  const act = btn.dataset.act;
-  const id = btn.dataset.id;
-
-  if (act === 'inc' || act === 'dec') {
-    await setQty(Number(id), act === 'inc' ? 1 : -1);
-    return;
-  }
-
-  if (act === 'scroll') {
-    const target = document.getElementById(btn.dataset.target);
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    return;
-  }
-
-  if (act === 'pay') {
-    const orderId = btn.dataset.order;
-    await payOrder(orderId, btn);
-  }
-});
+window.addEventListener('load', init);
 </script>
 </body>
 </html>
