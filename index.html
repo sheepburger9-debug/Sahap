@@ -307,21 +307,15 @@ async function loadBlocks() {
   }));
 }
 async function loadLayout(pageKey) {
-  // الطريقة الأساسية: دالة عامة ترجع أكواد المواضع (جدول ad_placements مش مقروء للزوار)
-  const { data: viaRpc, error: rpcErr } = await sb.rpc('get_public_layout', { p_page_key: pageKey });
-  if (!rpcErr && Array.isArray(viaRpc)) {
-    return viaRpc.map((x) => ({
-      item_type: x.item_type,
-      display_order: x.display_order,
-      block_id: x.block_id,
-      ad_placements: { code: x.placement_code },
-    }));
-  }
-  // احتياط: لو الدالة مش موجودة لسه
-  const { data } = await sb.from('homepage_layout_items')
-    .select('item_type, display_order, block_id, ad_placements(code)')
-    .eq('page_key', pageKey).eq('is_visible', true).order('display_order');
-  return data || [];
+  // الدالة العامة الموجودة: ترجع ترتيب الصفحة مع أكواد المواضع الفعلية
+  const { data, error } = await sb.rpc('get_public_homepage_layout', { p_page_key: pageKey });
+  if (error || !Array.isArray(data)) return [];
+  return data.map((x) => ({
+    item_type: x.item_type,
+    display_order: x.display_order,
+    block_id: x.block_id,
+    ad_placements: { code: x.placement_code },
+  }));
 }
 // الإعلانات المؤهلة فقط، من دالة على السيرفر تُرجع حقول العرض بس (بدون ميزانية أو أسعار)
 async function loadAds() {
@@ -428,6 +422,7 @@ function adHtml(ad) {
   const url = internalUrl || externalUrl;
 
   const title = ad.creative_title || ad.restaurant_name || 'اكتشف المطعم';
+  const dataAttrs = `data-campaign-id="${esc(ad.campaign_id || '')}" data-placement="${esc(ad.placement_code || '')}"`;
 
   const tag = format === 'featured'
     ? '<span class="ad-tag">مطعم مميز</span>'
@@ -448,26 +443,116 @@ function adHtml(ad) {
   `;
 
   if (!url) {
-    return `<div class="ad ad--${format}">${inner}</div>`;
+    return `<div class="ad ad--${format}" ${dataAttrs}>${inner}</div>`;
   }
 
   if (internalUrl) {
-    return `<a class="ad ad--${format}" href="${esc(url)}"
+    return `<a class="ad ad--${format}" ${dataAttrs} href="${esc(url)}"
       aria-label="${esc(title)}">${inner}</a>`;
   }
 
-  return `<a class="ad ad--${format}" href="${esc(url)}"
+  return `<a class="ad ad--${format}" ${dataAttrs} href="${esc(url)}"
     target="_blank" rel="noopener sponsored"
     aria-label="${esc(title)}">${inner}</a>`;
 }
 
-// كل الإعلانات المؤهلة لنفس الموضع تظهر (وضع الاختبار)
+// كل الإعلانات المؤهلة لنفس الموضع تظهر
 function adsHtml(list) {
   return (list || []).map(adHtml).join('');
 }
 
-// ترتيب الصفحة من homepage_layout_items؛ لو مفيش ترتيب للصفحة نعرض البلوكات حسب ترتيبها
-function layoutHtml(layout, blocks, byId, ads) {
+/* ===== تسجيل الظهور والنقر (CPM / CPC) ===== */
+let viewSeq = 0; // رقم كل عرض للصفحة، عشان الظهور يتسجل مرة واحدة لكل زيارة
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const newEventKey = () => (crypto && crypto.randomUUID
+  ? crypto.randomUUID()
+  : 'ev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2));
+const SESSION_RAW = newEventKey(); // معرف جلسة عشوائي لكل تحميل صفحة، من غير أي بيانات شخصية
+let sessionHashP = null;
+function sessionHash() {
+  if (!sessionHashP) sessionHashP = (async () => {
+    try {
+      if (crypto && crypto.subtle) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(SESSION_RAW));
+        return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch (_) {}
+    return SESSION_RAW;
+  })();
+  return sessionHashP;
+}
+// نفس event_key في كل إعادة محاولة، والأخطاء ما بتعطلش الموقع
+async function sendAdEvent(fn, params, attempts = 3) {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const { error } = await sb.rpc(fn, params);
+      if (!error) return true;
+    } catch (_) {}
+    await new Promise((r) => setTimeout(r, 500 * 2 ** i));
+  }
+  return false;
+}
+
+const recordedImpressions = new Set();
+const impressionIO = ('IntersectionObserver' in window) ? new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    const el = e.target;
+    el.__ratio = e.intersectionRatio;
+    if (el.dataset.impressionDone) continue;
+    if (e.intersectionRatio >= 0.5) {
+      if (!el.__timer) el.__timer = setTimeout(() => { el.__timer = null; fireImpression(el); }, 1000);
+    } else if (el.__timer) {
+      clearTimeout(el.__timer);
+      el.__timer = null;
+    }
+  }
+}, { threshold: [0, 0.25, 0.5, 0.75, 1] }) : null;
+
+async function fireImpression(el) {
+  if (el.dataset.impressionDone || !el.isConnected) return;
+  const pct = Math.round((el.__ratio || 0) * 100);
+  if (pct < 50) return;
+  const campaignId = el.dataset.campaignId;
+  if (!UUID_RE.test(campaignId || '')) return;
+  const dedupe = `${el.dataset.view}|${el.dataset.placement}|${campaignId}`;
+  el.dataset.impressionDone = '1';
+  impressionIO.unobserve(el);
+  if (recordedImpressions.has(dedupe)) return;
+  recordedImpressions.add(dedupe);
+  const params = {
+    p_campaign_id: campaignId,
+    p_session_hash: await sessionHash(),
+    p_visible_percent: pct,
+    p_event_key: newEventKey(),
+  };
+  sendAdEvent('track_ad_impression', params);
+}
+
+function observeAds(root = document) {
+  if (!impressionIO || !root) return;
+  root.querySelectorAll('.ad[data-campaign-id]').forEach((el) => {
+    if (el.dataset.impressionDone) return;
+    el.dataset.view = String(viewSeq);
+    impressionIO.observe(el);
+  });
+}
+
+// النقر: يسجل ولا يمنع التنقل (الروابط الداخلية والخارجية زي ما هي)
+document.addEventListener('click', (e) => {
+  const a = e.target && e.target.closest ? e.target.closest('a.ad[data-campaign-id]') : null;
+  if (!a) return;
+  const campaignId = a.dataset.campaignId;
+  if (!UUID_RE.test(campaignId || '')) return;
+  sessionHash().then((h) => sendAdEvent('track_ad_click', {
+    p_campaign_id: campaignId,
+    p_session_hash: h,
+    p_event_key: newEventKey(),
+  }, 2));
+});
+
+// ترتيب الصفحة من homepage_layout_items (الإعلانات بتتعرض في موضعها)
+// skipCodes: مواضع بتتعرض في مكان محدد بره الترتيب
+function layoutHtml(layout, blocks, byId, ads, skipCodes = new Set()) {
   const blockById = new Map(blocks.map((b) => [b.id, b]));
   const items = layout.length ? layout : blocks.map((b) => ({ item_type: 'restaurant_block', block_id: b.id }));
   return items.map((it) => {
@@ -475,7 +560,11 @@ function layoutHtml(layout, blocks, byId, ads) {
       const bl = blockById.get(it.block_id);
       return bl ? blockHtml(bl, byId) : '';
     }
-    if (it.item_type === 'ad_banner') return adsHtml(ads.get(it.ad_placements?.code));
+    if (it.item_type === 'ad_banner') {
+      const code = it.ad_placements && it.ad_placements.code;
+      if (!code || skipCodes.has(code)) return '';
+      return adsHtml(ads.get(code));
+    }
     return '';
   }).join('');
 }
@@ -522,9 +611,9 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 
-/* ============ الرئيسية ============ */
 async function viewHome() {
   const my = ++rid;
+  viewSeq++;
   app.innerHTML = topbar() + '<p class="meta">جاري التحميل…</p>';
   const [rests, cats, offers, blocks, layout, ads] = await Promise.all([
     loadRestaurants(), loadCategories(), loadBanners(), loadBlocks(), loadLayout('home'), loadAds(),
@@ -550,17 +639,21 @@ async function viewHome() {
     <nav class="chips" aria-label="التصنيفات">
       ${cats.map((c) => `<a class="chip" href="#/restaurants?c=${esc(c.slug)}">${esc(c.name)}</a>`).join('')}
     </nav>
-    ${layoutHtml(layout, blocks, byId, ads)}
+    ${layoutHtml(layout, blocks, byId, ads, new Set(['home_middle']))}
+    ${adsHtml(ads.get('home_middle'))}
     <h2 class="sec">كل المطاعم</h2>
     ${rests.map((r) => restRowHtml(r)).join('') || emptyHtml('مفيش مطاعم متاحة دلوقتي')}
   `;
+  observeAds(app);
 }
 
 /* ============ قائمة المطاعم ============ */
 async function viewRestaurants(query) {
   const my = ++rid;
+  viewSeq++;
   let active = query.get('c') || '';
   app.innerHTML = `${topbar('المطاعم')}
+    <div id="top-ads"></div>
     <input class="search" id="s" type="search" placeholder="ابحث باسم المطعم" aria-label="ابحث عن مطعم">
     <nav class="chips" id="cats" aria-label="تصفية حسب التصنيف"></nav>
     <div id="top"></div>
@@ -572,7 +665,23 @@ async function viewRestaurants(query) {
   if (my !== rid) return;
 
   const byId = new Map(rests.map((r) => [r.id, r]));
-  $('#top').innerHTML = layoutHtml(layout, blocks, byId, ads);
+  // مواضع المطاعم بتتعرض في أماكنها الخاصة، فبنستثنيها من الترتيب العام
+  const LIST_SLOTS = [ ['restaurants_between_1', 4], ['restaurants_between_2', 8], ['restaurants_between_3', 12] ];
+  const skip = new Set(['restaurants_top', ...LIST_SLOTS.map((x) => x[0])]);
+  $('#top-ads').innerHTML = adsHtml(ads.get('restaurants_top'));
+  $('#top').innerHTML = layoutHtml(layout, blocks, byId, ads, skip);
+
+  const listHtml = (list) => {
+    let out = '';
+    list.forEach((r, i) => {
+      out += restRowHtml(r);
+      const n = i + 1;
+      for (const [code, after] of LIST_SLOTS) {
+        if (n === after) out += adsHtml(ads.get(code));
+      }
+    });
+    return out;
+  };
 
   const drawChips = () => {
     $('#cats').innerHTML = `<button class="chip" data-c="" aria-pressed="${active === ''}">الكل</button>` +
@@ -581,13 +690,15 @@ async function viewRestaurants(query) {
   const draw = () => {
     const term = $('#s').value.trim().toLowerCase();
     const list = rests.filter((r) =>
-      (!active || r.restaurant_categories?.slug === active) &&
+      (!active || (r.restaurant_categories && r.restaurant_categories.slug === active)) &&
       (!term || (r.name || '').toLowerCase().includes(term)));
-    $('#list').innerHTML = list.map((r) => restRowHtml(r)).join('') || emptyHtml('مفيش مطعم يطابق بحثك');
+    $('#list').innerHTML = listHtml(list) || emptyHtml('مفيش مطعم يطابق بحثك');
+    observeAds($('#list'));
   };
 
   drawChips();
   draw();
+  observeAds(app);
   $('#s').addEventListener('input', draw);
   $('#cats').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-c]');
