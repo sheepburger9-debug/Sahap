@@ -93,36 +93,8 @@ label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 6px}
 .block .rail{display:flex;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scrollbar-width:none}
 .block .rail::-webkit-scrollbar{display:none}
 .mini{flex:0 0 150px;text-decoration:none;display:flex;flex-direction:column;gap:4px}
-.cover{
-  height:96px;
-  border-radius:12px;
-  background:#D9E1D2;
-  overflow:hidden;
-  display:grid;
-  place-items:center;
-  font-family:"Reem Kufi",sans-serif;
-  font-size:32px;
-  color:var(--olive);
-  position:relative;
-}
-.cover img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-.cover .mini-badge{
-  position:absolute;
-  top:6px;
-  right:6px;
-  z-index:2;
-  margin:0;
-  font-family:"IBM Plex Sans Arabic",sans-serif;
-  font-size:11px;
-  padding:3px 9px;
-  border-radius:999px;
-  line-height:1.5;
-  box-shadow:0 2px 6px rgba(0,0,0,.18);
-}
+.cover{height:96px;border-radius:12px;background:#D9E1D2;overflow:hidden;display:grid;place-items:center;font-family:"Reem Kufi",sans-serif;font-size:32px;color:var(--olive)}
+.cover img{width:100%;height:100%;object-fit:cover}
 .mini strong{font-size:15px}
 
 /* ================================================================
@@ -356,37 +328,11 @@ async function loadBanners() {
   return (data || []).map((x) => x.restaurant_offers).filter(Boolean);
 }
 async function loadBlocks() {
-  const { data, error } = await sb.from('restaurant_blocks')
-    .select(`
-      id,
-      title,
-      subtitle,
-      display_order,
-      badge_id,
-      badges (
-        id,
-        name,
-        display_text,
-        background_color,
-        text_color
-      ),
-      block_restaurant_overrides(restaurant_id)
-    `)
-    .eq('is_visible', true)
-    .order('display_order');
-
-  if (error) {
-    console.error('خطأ تحميل بلوكات المطاعم:', error);
-    return [];
-  }
-
-  return (data || []).map((b) => ({
-    ...b,
-    badge: b.badges,
-    ids: (b.block_restaurant_overrides || [])
-      .map((o) => o.restaurant_id)
-  }));
-          }
+  const { data } = await sb.from('restaurant_blocks')
+    .select('id, title, subtitle, display_order, block_restaurant_overrides(restaurant_id)')
+    .eq('is_visible', true).order('display_order');
+  return (data || []).map((b) => ({ ...b, ids: (b.block_restaurant_overrides || []).map((o) => o.restaurant_id) }));
+}
 async function loadMethods(restaurantId) {
   const { data } = await sb.rpc('get_payment_methods', { p_restaurant_id: restaurantId });
   return data || { cash: false, paymob: false };
@@ -428,15 +374,9 @@ function restRowHtml(r) {
       ${badge ? badgeHtml(badge) : ''}
     </span></a>`;
 }
-function miniHtml(r, badge = null) {
+function miniHtml(r) {
   return `<a class="mini" href="#/r/${esc(r.slug)}">
-    <span class="cover">
-      ${cover(r)}
-      ${badge ? `<span class="badge mini-badge"
-        style="background:${esc(badge.background_color || '#fff')};color:${esc(badge.text_color || '#1A1F1B')}">
-        ${esc(badge.display_text || badge.name)}
-      </span>` : ''}
-    </span>
+    <span class="cover">${cover(r)}</span>
     <strong>${esc(r.name)}</strong>
     <span class="meta">${Number(r.rating || 0).toFixed(1)} ★ · ${esc(r.restaurant_categories?.name || '')}</span>
   </a>`;
@@ -508,22 +448,15 @@ async function viewHome() {
     </a>`;
   }).join('');
 
-  
   const blocksHtml = blocks.map((bl) => {
-  const list = bl.ids
-    .map((id) => byId.get(id))
-    .filter(Boolean);
-
-  if (!list.length) return '';
-
-  return `<section class="block">
-    <h2 class="sec">${esc(bl.title)}</h2>
-    ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
-    <div class="rail">
-      ${list.map((r) => miniHtml(r, bl.badge)).join('')}
-    </div>
-  </section>`;
-}).join('');
+    const list = bl.ids.map((id) => byId.get(id)).filter(Boolean);
+    if (!list.length) return '';
+    return `<section class="block">
+      <h2 class="sec">${esc(bl.title)}</h2>
+      ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
+      <div class="rail">${list.map(miniHtml).join('')}</div>
+    </section>`;
+  }).join('');
 
   app.innerHTML = `
     ${topbar()}
@@ -598,9 +531,8 @@ async function getCart(restaurantId, create) {
 /* ================================================================
    قسم 13: سلة الزوار (قبل تسجيل الدخول) — تُخزَّن في sessionStorage
    ================================================================ */
-const GUEST_CART_KEY       = 'sahab_guest_cart';       // سلة الزوار
-const PENDING_CHECKOUT_KEY = 'sahab_pending_checkout'; // slug مطعم الزائر (نيّة طلب)
-const PENDING_ORDER_KEY    = 'sahab_pending_order';    // بيانات فورم الطلب للزائر
+const GUEST_CART_KEY = 'sahab_guest_cart';
+const PENDING_CHECKOUT_KEY = 'sahab_pending_checkout';
 
 function guestCartLoad(restaurantId) {
   try {
@@ -629,12 +561,12 @@ function loadCartForRestaurant(restaurantId) {
 async function syncGuestCart() {
   let all;
   try { all = JSON.parse(sessionStorage.getItem(GUEST_CART_KEY) || '{}'); } catch { all = {}; }
-  const restIds = Object.keys(all).filter((id) => all[id]?.length);
-  if (!restIds.length) return;
-  for (const restId of restIds) {
+  const rids = Object.keys(all).filter((rid) => all[rid]?.length);
+  if (!rids.length) return;
+  for (const rid of rids) {
     try {
-      const cart = await getCart(restId, true);
-      for (const item of all[restId]) {
+      const cart = await getCart(rid, true);
+      for (const item of all[rid]) {
         const existing = cart.items.find((i) => i.product_id === item.product_id);
         if (existing) {
           await sb.from('cart_items')
@@ -713,19 +645,6 @@ async function viewRestaurant([, slug]) {
   `;
   drawMenu();
   if (!r.is_open) toast('المطعم مقفول دلوقتي');
-
-  /* لو الزائر رجع من صفحة الدخول بعد ما كان في نيّة طلب → نفتح الشيت تلقائيًا */
-  const pendingOrderStr = sessionStorage.getItem(PENDING_ORDER_KEY);
-  if (pendingOrderStr) {
-    try {
-      const prefill = JSON.parse(pendingOrderStr);
-      if (prefill.slug === r.slug) {
-        sessionStorage.removeItem(PENDING_ORDER_KEY);
-        sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
-        setTimeout(() => openCheckout(prefill), 60);
-      }
-    } catch {}
-  }
 }
 
 
@@ -780,12 +699,12 @@ function drawCartBar() {
   cartbar.classList.remove('hidden');
   cartbar.innerHTML = `<span>${count} عنصر · ${money(sub)}</span>
     <button class="btn primary auto" id="openCheckout">راجع الطلب</button>`;
-  $('#openCheckout').onclick = () => openCheckout();
+  $('#openCheckout').onclick = openCheckout;
 }
 
 /* زيادة/تقليل كمية صنف — يدعم الزوار والمسجلين */
 async function setQty(productId, delta) {
-  /* زائر: نحدّث السلة المحلية */
+  // زائر: نحدّث السلة المحلية
   if (!session) {
     const items = guestCartLoad(R.rest.id);
     const existing = items.find((i) => i.product_id === productId);
@@ -802,7 +721,7 @@ async function setQty(productId, delta) {
     drawMenu();
     return;
   }
-  /* مسجل: نحدّث DB */
+  // مسجل: نحدّث DB
   try {
     const cart = await getCart(R.rest.id, true);
     const existing = cart.items.find((i) => i.product_id === productId);
@@ -820,19 +739,20 @@ async function setQty(productId, delta) {
 
 /* ================================================================
    قسم 16: شيت تأكيد الطلب (Checkout)
-   - الزائر يقدر يشوف السلة والفورم من غير تسجيل دخول
-   - تسجيل الدخول مطلوب فقط عند الضغط على "أكد الطلب"
-   - بعد الدخول: نزامن السلة، نرجع للمطعم، ونعيد فتح الشيت بالبيانات
    ================================================================ */
-function openCheckout(prefill) {
+function openCheckout() {
+  // زائر → نطلب منه تسجيل الدخول ونحفظ نيته
+  if (!session) {
+    sessionStorage.setItem(PENDING_CHECKOUT_KEY, R.rest.slug);
+    return goLogin();
+  }
   const lines = cartLines();
   if (!lines.length) return;
-
   const sub = lines.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
   const fee = Number(R.rest.delivery_fee || 0);
   const m = R.methods;
   const hasAny = m.cash || m.paymob;
-  const firstMethod = prefill?.method || (m.cash ? 'cash' : 'paymob');
+  const firstMethod = m.cash ? 'cash' : 'paymob';
 
   openSheet(`
     <h2>تأكيد الطلب</h2>
@@ -844,13 +764,13 @@ function openCheckout(prefill) {
     </div>
     <form id="coForm" novalidate>
       <label for="cn">الاسم</label>
-      <input id="cn" required value="${esc(prefill?.name || profile?.full_name || '')}" autocomplete="name">
+      <input id="cn" required value="${esc(profile?.full_name || '')}" autocomplete="name">
       <label for="cp">رقم الموبايل</label>
-      <input id="cp" inputmode="tel" required value="${esc(prefill?.phone || profile?.phone || '')}" autocomplete="tel">
+      <input id="cp" inputmode="tel" required value="${esc(profile?.phone || '')}" autocomplete="tel">
       <label for="ca">عنوان التوصيل بالتفصيل</label>
-      <textarea id="ca" rows="2" required autocomplete="street-address">${esc(prefill?.addr || '')}</textarea>
+      <textarea id="ca" rows="2" required autocomplete="street-address"></textarea>
       <label for="cc">كود الخصم (اختياري)</label>
-      <input id="cc" value="${esc(prefill?.coupon || R.cart?.coupon_code || '')}" autocomplete="off">
+      <input id="cc" value="${esc(R.cart?.coupon_code || '')}" autocomplete="off">
       <fieldset>
         <legend>طريقة الدفع</legend>
         ${hasAny ? `
@@ -858,7 +778,6 @@ function openCheckout(prefill) {
           ${m.paymob ? `<label class="opt"><input type="radio" name="pm" value="paymob" ${firstMethod === 'paymob' ? 'checked' : ''}><span>فيزا أو محفظة<small>دفع آمن عبر Paymob</small></span></label>` : ''}
         ` : '<p class="err">المطعم مش بيستقبل طلبات دلوقتي</p>'}
       </fieldset>
-      ${!session ? `<p class="meta" style="margin-top:10px;text-align:center">هنسألك تسجل دخول بس لما تدوس «أكد الطلب»</p>` : ''}
       <p class="err" id="coErr" role="alert"></p>
       <button class="btn primary" id="placeBtn" type="submit" ${hasAny ? '' : 'disabled'}>أكد الطلب</button>
     </form>
@@ -866,14 +785,12 @@ function openCheckout(prefill) {
     const form = sheetEl.querySelector('#coForm');
     const err = sheetEl.querySelector('#coErr');
     const btn = sheetEl.querySelector('#placeBtn');
-
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       err.textContent = '';
-
-      const name   = sheetEl.querySelector('#cn').value.trim();
-      const phone  = sheetEl.querySelector('#cp').value.replace(/[\s-]/g, '');
-      const addr   = sheetEl.querySelector('#ca').value.trim();
+      const name = sheetEl.querySelector('#cn').value.trim();
+      const phone = sheetEl.querySelector('#cp').value.replace(/[\s-]/g, '');
+      const addr = sheetEl.querySelector('#ca').value.trim();
       const coupon = sheetEl.querySelector('#cc').value.trim();
       const method = sheetEl.querySelector('input[name="pm"]:checked')?.value;
 
@@ -882,17 +799,6 @@ function openCheckout(prefill) {
       if (addr.length < 5) { err.textContent = 'اكتب عنوان التوصيل بالتفصيل'; return; }
       if (!method) { err.textContent = 'اختار طريقة الدفع'; return; }
 
-      /* ← هنا بس: لو زائر، نحفظ بياناته ونروح للدخول */
-      if (!session) {
-        sessionStorage.setItem(PENDING_CHECKOUT_KEY, R.rest.slug);
-        sessionStorage.setItem(PENDING_ORDER_KEY, JSON.stringify({
-          slug: R.rest.slug, name, phone, addr, coupon, method,
-        }));
-        closeSheet();
-        return goLogin();
-      }
-
-      /* مستخدم مسجل → تأكيد الطلب عبر DB */
       btn.disabled = true;
       btn.textContent = 'بنأكد طلبك…';
       try {
@@ -1027,8 +933,7 @@ async function viewAccount() {
 
 /* ================================================================
    قسم 19: صفحة الدخول / التسجيل
-   - بعد الدخول: نزامن سلة الزائر مع DB ونرجع لصفحة المطعم
-   - لو في طلب معلّق (PENDING_ORDER_KEY) viewRestaurant هتفتح الشيت تلقائيًا
+   (بعد الدخول: نزامن سلة الزائر ونرجع لصفحة المطعم إن وجدت)
    ================================================================ */
 function viewLogin() {
   ++rid;
@@ -1061,9 +966,7 @@ function viewLogin() {
       const password = $('#apw').value;
       btn.disabled = true;
 
-      /* بعد الدخول: نزامن سلة الزائر مع DB، ثم نرجّعه لصفحة المطعم
-         (لو في طلب معلّق، بياناته محفوظة في PENDING_ORDER_KEY
-          و viewRestaurant هتفتح الشيت تلقائيًا) */
+      // دالة مساعدة: بعد الدخول نزامن السلة ونرجع لصفحة المطعم أو للرئيسية
       const afterAuth = async () => {
         const pendingSlug = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
         await syncGuestCart();
@@ -1141,7 +1044,7 @@ function registerSW() {
   await loadProfile();
 
   sb.auth.onAuthStateChange((event, s) => {
-    /* نأجل الاستدعاءات لبرّه الـ callback عشان نتفادى تعارض داخلي في المكتبة */
+    // نأجل الاستدعاءات لبرّه الـ callback عشان نتفادى تعارض داخلي في المكتبة
     setTimeout(async () => {
       session = s;
       await loadProfile();
