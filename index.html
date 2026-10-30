@@ -422,7 +422,7 @@ button:focus-visible,.btn-sahab:focus-visible,.chip-sahab:focus-visible{outline:
         <div class="landing-track-sahab" id="landing-track"></div>
         <div class="landing-dots-sahab" id="landing-dots"></div>
         <div class="landing-cta-sahab">
-          <button id="enter-sahab-btn" type="button" class="btn-sahab w-100 fs-5" onclick="enterSahab()">
+          <button id="enter-sahab-btn" type="button" class="btn-sahab w-100 fs-5" onclick="location.hash='#/home'">
             ادخل وتصفح سحاب 🍽️
           </button>
         </div>
@@ -1685,65 +1685,9 @@ async function renderPoints() {
     if (location.hash === '#/nearby') renderNearby();
   });
 
-  // إصلاح مباشر لزر الدخول: لا ينتظر تحميل Supabase ولا يعتمد على hashchange.
-  // يتم إظهار شاشة التصفح أولاً، ثم تحميل البيانات في الخلفية.
-  window.enterSahab = function() {
-    const button = document.getElementById('enter-sahab-btn');
-    const landing = document.querySelector('[data-screen="landing"]');
-    const home = document.querySelector('[data-screen="home"]');
-    if (!home) {
-      console.error('Sahab: home screen element was not found.');
-      toast('صفحة التصفح غير موجودة في الملف');
-      return;
-    }
+  // زر الدخول يعتمد على تغيير المسار إلى #/home من HTML مباشرة.
+  // مستمع hashchange الموجود بالأعلى يتولى إظهار شاشة التصفح دون انتظار Supabase.
 
-    if (button) {
-      button.disabled = true;
-      button.textContent = 'جاري فتح سحاب...';
-    }
-
-    try {
-      // الانتقال المرئي يتم فوراً، حتى لو تعطل اتصال قاعدة البيانات.
-      if (landing) landing.classList.remove('is-active');
-      home.classList.add('is-active');
-      document.getElementById('app-header')?.classList.remove('d-none');
-      document.getElementById('bottom-nav')?.classList.remove('d-none');
-      document.getElementById('side-nav')?.classList.remove('d-none');
-      document.getElementById('app-main')?.scrollTo({top: 0, behavior: 'instant'});
-      history.replaceState(null, '', location.pathname + location.search + '#/home');
-      try { renderHome(); } catch (renderError) {
-        console.error('Sahab home render failed:', renderError);
-        toast('تم فتح الصفحة، لكن تعذر عرض بعض البيانات');
-      }
-      try { updateStickyCartBar(true); } catch (e) { console.warn(e); }
-      document.querySelectorAll('[data-nav]').forEach(item => {
-        item.classList.toggle('is-active', item.dataset.nav === 'home');
-      });
-    } catch (error) {
-      console.error('Sahab entry failed:', error);
-      toast('تعذر فتح صفحة التصفح: ' + String(error?.message || error));
-    } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent = 'ادخل وتصفح سحاب 🍽️';
-      }
-    }
-
-    // تحميل البيانات بعد فتح الشاشة، دون تعطيل الزر أو التنقل.
-    if (supabase && (!STORES.length || !PRODUCTS.length)) {
-      loadAllData().then(ok => {
-        if (ok && document.querySelector('[data-screen="home"]')?.classList.contains('is-active')) {
-          try { renderHome(); } catch (e) { console.error('Sahab refresh failed:', e); }
-        }
-      }).catch(error => console.error('Sahab background data load failed:', error));
-    }
-  };
-
-  // ربط مستمع صريح للزر كمسار احتياطي بجانب onclick الموجود في HTML.
-  document.getElementById('enter-sahab-btn')?.addEventListener('click', function(event) {
-    event.preventDefault();
-    // الدالة العالمية أعلاه تتولى الانتقال؛ هذا المستمع يمنع إرسال أي نموذج.
-  });
 })();
 </script>
 </body>
