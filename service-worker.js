@@ -6,7 +6,7 @@
    - تجاهل كامل لـ Supabase و CDN      → بيانات دائمًا live
    ============================================================ */
 
-const CACHE_VERSION = 'sahab-v1.0.0';
+const CACHE_VERSION = 'sahab-v1.0.1';
 const CORE_ASSETS = [
   './',
   './index.html',
