@@ -280,6 +280,22 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .swal2-container{pointer-events:none}
 .swal2-container .swal2-popup{pointer-events:auto}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+/* بلوك العروض وسلايدر الإعلانات */
+.sh-offers{margin-top:10px}
+.sh-offer-rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 0 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.sh-offer-rail::-webkit-scrollbar{display:none}
+.offer-card{flex:0 0 min(70%,260px);scroll-snap-align:start;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;text-decoration:none;color:inherit;min-width:0}
+.offer-card-img{display:block;position:relative;aspect-ratio:16/9;background:var(--bg);overflow:hidden}
+.offer-card-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.offer-card-fb{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:28px;color:var(--ink-2)}
+.offer-card-body{display:flex;flex-direction:column;gap:2px;padding:10px 12px;min-width:0;overflow-wrap:anywhere}
+.offer-card-t{font-family:"Reem Kufi",sans-serif;font-size:15px;font-weight:700;line-height:1.3}
+.offer-card:focus-visible{outline:3px solid var(--saffron);outline-offset:3px}
+.sh-ad-slider{overflow:hidden;touch-action:pan-y}
+.sh-ad-slider .swiper-slide{height:auto}
+.sh-ad-slider .swiper-slide > .ad{margin:var(--gap-sm) 0 0}
+.sh-ad-slider .swiper-pagination{position:relative;bottom:auto;margin-top:4px}
+@media (prefers-reduced-motion: reduce){.sh-offer-rail{scroll-behavior:auto}}
 </style>
 </head>
 <body>
@@ -340,6 +356,9 @@ function mountHomeSwiper() {
     homeSwiper = new window.Swiper(el, {
       slidesPerView: 'auto', spaceBetween: 12, grabCursor: true,
       rtl: document.documentElement.dir === 'rtl', watchOverflow: true,
+      rewind: true, speed: reduceMotion() ? 0 : 450,
+      // تشغيل تلقائي كل 5 ثوانٍ؛ بيقف مؤقتاً مع اللمس/الماوس ويرجع بعد التفاعل، ومقفول مع تقليل الحركة
+      autoplay: reduceMotion() ? false : { delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true },
     });
   } catch (e) { console.error('[swiper]', e); homeSwiper = null; }
 }
@@ -472,7 +491,7 @@ async function loadDiscoverySections() {
 }
 async function loadBlocks() {
   const { data, error } = await sb.from('restaurant_blocks')
-    .select('id, title, subtitle, display_order, badge:badges(name, display_text, background_color, text_color), block_restaurant_overrides(restaurant_id, display_order, is_eligible, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at, badge:badges(name, display_text, background_color, text_color))')
+    .select('id, title, subtitle, display_order, badge:badges(name, display_text, background_color, text_color), block_restaurant_overrides(restaurant_id, display_order, is_eligible, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at, badge:badges(name, display_text, background_color, text_color)), block_offer_items(id, display_order, is_active, starts_at, ends_at, restaurant_offers(id, title, description, image_url, status, starts_at, ends_at, restaurant_id))')
     .eq('is_visible', true).order('display_order');
   if (error) return [];
   return (data || []).map((b) => ({
@@ -481,6 +500,12 @@ async function loadBlocks() {
     members: (b.block_restaurant_overrides || [])
       .filter((o) => o.is_eligible !== false)
       .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0)),
+    // عروض البلوك: block_offer_items → restaurant_offers. RLS بيرجع المعتمدة بس، والفلترة هنا دفاع إضافي
+    offers: (b.block_offer_items || [])
+      .filter((x) => x.is_active !== false && inWindow(x.starts_at, x.ends_at) && x.restaurant_offers)
+      .filter((x) => x.restaurant_offers.status === 'approved' && inWindow(x.restaurant_offers.starts_at, x.restaurant_offers.ends_at))
+      .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0))
+      .map((x) => ({ ...x.restaurant_offers, display_order: x.display_order })),
   }));
 }
 async function loadLayout(pageKey, categoryId = null) {
@@ -541,6 +566,12 @@ async function loadMethods(restaurantId) {
   return data || { cash: false, paymob: false };
 }
 
+// نتيجة تحميل مستقل: لو فشل بنرجع الافتراضي ونسجل الخطأ في الـconsole بدل ما نوقف الصفحة
+function fulfilledOr(res, fallback, label) {
+  if (res.status === 'fulfilled') return res.value;
+  console.error('[' + label + ']', res.reason);
+  return fallback;
+}
 function inWindow(from, to) {
   const now = Date.now();
   return (!from || Date.parse(from) <= now) && (!to || Date.parse(to) >= now);
@@ -567,8 +598,11 @@ function blockBadge(bl, m) {
   if (bl.badge) return pickBadge(bl.badge);
   return null;
 }
+// قيم الألوان بتتفلتر: hex أو rgb/hsl أو اسم لون بسيط بس، أي قيمة تانية بترجع للافتراضي
+const CSS_COLOR_RE = /^(#[0-9a-f]{3,8}|(rgb|hsl)a?\([0-9\s.,%+-]+\)|[a-z]{3,20})$/i;
+const cssColor = (v, fb) => (CSS_COLOR_RE.test(String(v || '').trim()) ? String(v).trim() : fb);
 function badgeHtml(b) {
-  return `<span class="badge" style="background:${esc(b.background_color || '#fff')};color:${esc(b.text_color || '#1A1F1B')}">${esc(b.display_text || b.name)}</span>`;
+  return `<span class="badge" style="background:${cssColor(b.background_color, '#fff')};color:${cssColor(b.text_color, '#1A1F1B')}">${esc(b.display_text || b.name)}</span>`;
 }
 function deliveryText(r) {
   const fee = Number(r.delivery_fee || 0) ? money(r.delivery_fee) : 'توصيل مجاني';
@@ -607,31 +641,47 @@ const safeUrl = (u) => (/^https?:\/\//i.test(u || '') ? u : '');
 
 const PER_COL = 3; // عدد المطاعم رأسياً في كل عمود (الاتفاق الحالي)
 // shown: Set بيسجل كل مطعم اتعرض قبل كده في الصفحة، عشان المطعم يظهر مرة واحدة بس
+// بلوك العروض: كروت عروض معتمدة مرتبطة بمطاعم منشورة (من block_offer_items)، منفصلة عن شريط المطاعم
+function offerCardHtml(o, r) {
+  const img = safeUrl(o.image_url);
+  const fallback = esc((r.name || '?').trim()[0] || '؟');
+  return `<a class="offer-card" href="#/r/${encodeURIComponent(r.slug)}" aria-label="${esc(o.title)} - ${esc(r.name)}">
+    <span class="offer-card-img">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span class="offer-card-fb" aria-hidden="true">${fallback}</span>`}</span>
+    <span class="offer-card-body">
+      <span class="meta">${esc(r.name)}</span>
+      <strong class="offer-card-t">${esc(o.title)}</strong>
+      ${o.description ? `<span class="meta">${esc(o.description)}</span>` : ''}
+    </span>
+  </a>`;
+}
+function offersPartHtml(bl, byId) {
+  // العرض بيتعرض بس لو مطعمه موجود في القائمة الحالية (منشور ومطابق للفلتر)
+  const offers = (bl.offers || []).filter((o) => byId.has(o.restaurant_id));
+  if (!offers.length) return '';
+  return `<div class="sh-offers"><div class="sh-offer-rail">${offers.map((o) => offerCardHtml(o, byId.get(o.restaurant_id))).join('')}</div></div>`;
+}
+
+// blockHtml: بلوك المطاعم (شريط/شبكة) + بلوك العروض التابع له. البلوك الفاضي بيترسم ''
 function blockHtml(bl, byId, shown = null, grid = false) {
   const items = bl.members
     .map((m) => ({ r: byId.get(m.restaurant_id), m }))
     .filter((x) => x.r && !(shown && shown.has(x.r.id)));
-  if (!items.length) return '';
+  const offersHtml = offersPartHtml(bl, byId);
+  if (!items.length && !offersHtml) return '';
   if (shown) items.forEach((x) => shown.add(x.r.id));
-  // شاشة المطاعم: كل مطاعم البلوك ظاهرة في شبكة عمودية (مش شريط أفقي مخفي)
+  const head = `<h2 class="sec">${esc(bl.title)}</h2>
+    ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}`;
   if (grid) {
-    // كل PER_COL مطاعم تحت بعض في عمود، والأعمدة جنب بعض (على الكمبيوتر 3 أعمدة ظاهرين)
+    // شاشة المطاعم: كل PER_COL مطاعم تحت بعض في عمود، والأعمدة جنب بعض
     const gcols = [];
     for (let i = 0; i < items.length; i += PER_COL) gcols.push(items.slice(i, i + PER_COL));
-    return `<section class="block sh-blk" id="blk-${esc(bl.id)}">
-    <h2 class="sec">${esc(bl.title)}</h2>
-    ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
-    <div class="rail sh-rail3">${gcols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>
-  </section>`;
+    const rail = items.length ? `<div class="rail sh-rail3">${gcols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>` : '';
+    return `<section class="block sh-blk" id="blk-${esc(bl.id)}">${head}${rail}${offersHtml}</section>`;
   }
-  // كل عمود فيه PER_COL مطاعم فوق بعض، والأعمدة جنب بعض والريل بيتسحب أفقياً
   const cols = [];
   for (let i = 0; i < items.length; i += PER_COL) cols.push(items.slice(i, i + PER_COL));
-  return `<section class="block" id="blk-${esc(bl.id)}"${aosAttr()}>
-    <h2 class="sec">${esc(bl.title)}</h2>
-    ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
-    <div class="rail">${cols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>
-  </section>`;
+  const rail = items.length ? `<div class="rail">${cols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>` : '';
+  return `<section class="block" id="blk-${esc(bl.id)}"${aosAttr()}>${head}${rail}${offersHtml}</section>`;
 }
 
 function adHtml(ad) {
@@ -687,28 +737,43 @@ function adHtml(ad) {
     aria-label="${esc(title)}">${inner}</a>`;
 }
 
-// كل الإعلانات المؤهلة لنفس الموضع تظهر
-function adsHtml(list) {
-  return (list || []).map(adHtml).join('');
+// الإعلانات في الموضع الواحد: لو أكثر من إعلان بتتعرض كسلايدر أفقي (Swiper) باللمس والماوس
+let adSliders = [];
+let rotTimer = null; // محفوظ عشان route() يفضل شغال (التبديل بقى بـSwiper)
+function destroyAdSliders() {
+  for (const s of adSliders) { try { s.destroy(true, true); } catch (_) {} }
+  adSliders = [];
 }
-// إعلان واحد ظاهر وبيتبدل مع باقي الإعلانات (التبديل بيتعمل بـstartRotation)
+function adsHtml(list) {
+  const arr = list || [];
+  if (!arr.length) return '';
+  if (arr.length < 2 || !window.Swiper) return arr.map(adHtml).join('');
+  return `<div class="swiper sh-ad-slider" aria-roledescription="carousel" aria-label="إعلانات">
+    <div class="swiper-wrapper">${arr.map((a) => `<div class="swiper-slide">${adHtml(a)}</div>`).join('')}</div>
+    <div class="swiper-pagination"></div>
+  </div>`;
+}
+// الشريط العلوي للمطاعم: سلايدر لو Swiper متاح، ولو لأ بيعرض أول إعلان بس
 function rotHtml(list) {
   const arr = list || [];
-  return arr.map((a, i) => `<div class="sh-rot-item${i === 0 ? ' is-on' : ''}">${adHtml(a)}</div>`).join('');
+  if (!arr.length) return '';
+  return window.Swiper ? adsHtml(arr) : adHtml(arr[0]);
 }
-let rotTimer = null;
-function startRotation(root) {
-  clearInterval(rotTimer);
-  rotTimer = null;
-  const items = root ? [...root.querySelectorAll('.sh-rot-item')] : [];
-  if (items.length < 2) return;
-  let i = 0;
-  rotTimer = setInterval(() => {
-    items[i].classList.remove('is-on');
-    i = (i + 1) % items.length;
-    items[i].classList.add('is-on');
-  }, 4500);
+function mountAdSliders(root) {
+  if (!root || !window.Swiper) return;
+  root.querySelectorAll('.sh-ad-slider').forEach((el) => {
+    try {
+      adSliders.push(new window.Swiper(el, {
+        slidesPerView: 1, spaceBetween: 8, grabCursor: true, watchOverflow: true,
+        speed: reduceMotion() ? 0 : 450,
+        rtl: document.documentElement.dir === 'rtl',
+        autoplay: reduceMotion() ? false : { delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true },
+        pagination: { el: el.querySelector('.swiper-pagination'), clickable: true },
+      }));
+    } catch (e) { console.error('[ad-slider]', e); }
+  });
 }
+function startRotation(root) { mountAdSliders(root); }
 
 /* ===== تسجيل الظهور والنقر (CPM / CPC) ===== */
 let viewSeq = 0; // رقم كل عرض للصفحة، عشان الظهور يتسجل مرة واحدة لكل زيارة
@@ -883,6 +948,7 @@ function route() {
   clearInterval(pollTimer);
   clearInterval(rotTimer);
   destroyHomeSwiper();
+  destroyAdSliders();
   closeSheet();
   cartbar.classList.add('hidden');
   const raw = location.hash.replace(/^#\/?/, '');
@@ -937,10 +1003,13 @@ async function viewHome() {
   const my = ++rid;
   viewSeq++;
   app.innerHTML = topbar() + '<p class="meta">جاري التحميل…</p>';
-  const [rests, offers, blocks, layout, ads, sections] = await Promise.all([
+  // كل مصدر مستقل: فشل أي واحد ما يوقفش الباقي
+  const settledHome = await Promise.allSettled([
     loadRestaurants(), loadBanners(), loadBlocks(), loadLayout('home'), loadAds(), loadDiscoverySections(),
   ]);
   if (my !== rid) return;
+  const [rests, offers, blocks, layout, ads, sections] = settledHome.map((x, i) =>
+    fulfilledOr(x, [[], [], [], [], new Map(), []][i], 'home'));
 
   const byId = new Map(rests.map((r) => [r.id, r]));
   const used = new Set(); // كل حملة تظهر مرة واحدة في الرئيسية
@@ -971,6 +1040,7 @@ async function viewHome() {
   `;
   observeAds(app);
   mountHomeSwiper();
+  mountAdSliders(app);
   aosRefresh();
 }
 
@@ -1054,10 +1124,12 @@ async function viewRestaurants(query) {
     </div>
     <div id="list" class="row g-3"><div class="col-12"><p class="meta">جاري التحميل…</p></div></div>`;
 
-  const [rests, cats, blocks, restLayout, ads] = await Promise.all([
+  const settledRest = await Promise.allSettled([
     loadRestaurants(), loadCategories(), loadBlocks(), loadLayout('restaurants'), loadAds(),
   ]);
   if (my !== rid) return;
+  const [rests, cats, blocks, restLayout, ads] = settledRest.map((x, i) =>
+    fulfilledOr(x, [[], [], [], [], new Map()][i], 'restaurants'));
 
   // التصنيف من الرابط لازم يكون نشط وموجود؛ غير كده نرجع لـ«الكل»
   const catBySlug = new Map(cats.map((c) => [c.slug, c]));
@@ -1101,6 +1173,7 @@ async function viewRestaurants(query) {
 
   const render = () => {
     if (!$('#list')) return; // الصفحة اتغيرت
+    destroyAdSliders(); // السلايدرات القديمة بتتعمل قبل إعادة الرسم
     const term = $('#s').value.trim().toLowerCase();
     const list = rests.filter((r) => matches(r, term));
     const used = new Set(); // كل حملة تظهر مرة واحدة في الصفحة
@@ -1130,8 +1203,9 @@ async function viewRestaurants(query) {
       : 'مفيش مطاعم متاحة دلوقتي';
     $('#list').innerHTML = list.length ? sequenceHtml(items, list, blocksById, adsView, used) : `<div class="col-12">${emptyHtml(emptyTxt)}</div>`;
     observeAds($('#top-ads'));
-    startRotation($('#top-ads'));
     observeAds($('#list'));
+    mountAdSliders($('#top-ads'));
+    mountAdSliders($('#list'));
     aosRefresh();
   };
 
