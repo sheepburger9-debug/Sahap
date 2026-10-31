@@ -321,6 +321,21 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .sh-ad-slider:not(.swiper-initialized) .swiper-slide{flex:0 0 86%;max-width:86%;scroll-snap-align:start}
 .sh-ad-slider:not(.swiper-initialized) .swiper-pagination{display:none}
 @media (min-width:768px){.sh-ad-slider:not(.swiper-initialized) .swiper-slide{flex-basis:min(48%,420px);max-width:min(48%,420px)}}
+/* شاشات السلة */
+.cs-screen{padding-bottom:150px}
+.cs-lines{margin-top:8px}
+.cs-line .qty button{min-width:36px;min-height:36px}
+.cs-sum{margin-top:16px;padding:12px 0;border-top:1px solid var(--line,#e5e9e2)}
+.cs-bottom{position:fixed;bottom:0;inset-inline:0;max-width:496px;margin:0 auto;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:#fff;border-top:1px solid var(--line,#e5e9e2);display:flex;gap:10px;z-index:8}
+.cs-bottom > *{flex:1;text-align:center;text-decoration:none}
+.cs-ad{margin:16px 0}
+.cs-rail{margin-top:10px}
+.cs-prod{flex:0 0 150px;scroll-snap-align:start;background:#fff;border:1px solid var(--line,#e5e9e2);border-radius:var(--r,14px);padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cs-prod strong{overflow-wrap:anywhere;font-size:14px}
+.cs-prod-img{display:grid;place-items:center;height:72px;border-radius:10px;background:var(--bg,#f4f6f2);font-size:32px;overflow:hidden}
+.cs-prod-img img{width:100%;height:100%;object-fit:cover}
+.co-page{padding-bottom:24px}
+
 </style>
 </head>
 <body>
@@ -925,17 +940,30 @@ function layoutHtml(layout, blocks, byId, ads, skipCodes = new Set(), used = nul
 function emptyHtml(txt) { return `<p class="empty">${esc(txt)}</p>`; }
 // السلات النشطة للعميل: كل مطعم له سلته، والزرار في الهيدر بيعرض مجموع العناصر
 let cartSummary = [];
+// ملخص السلات في الهيدر. لو الاستعلام فشل بنحتفظ بآخر ملخص معروف بدل ما نعرض سلة فاضية بالغلط
 async function refreshCartSummary() {
-  if (!session) { cartSummary = []; return; }
-  const { data } = await sb.from('carts')
-    .select('id, restaurant_id, restaurants(name, slug), cart_items(quantity)')
-    .eq('customer_id', session.user.id).eq('status', 'active');
-  cartSummary = (data || []).map((c) => ({
-    id: c.id,
-    name: c.restaurants?.name || 'مطعم',
-    slug: c.restaurants?.slug || '',
-    count: (c.cart_items || []).reduce((s, i) => s + Number(i.quantity || 0), 0),
-  })).filter((c) => c.count > 0);
+  if (!session) {
+    // بدون تسجيل: الملخص من سلات الجهاز
+    cartSummary = Object.entries(guestLoad()).map(([rid, g]) => ({
+      id: rid, name: g.name || 'مطعم', slug: g.slug || '',
+      count: Object.values(g.items || {}).reduce((s, q) => s + Number(q || 0), 0),
+    })).filter((c) => c.count > 0);
+    return;
+  }
+  try {
+    const { data, error } = await sb.from('carts')
+      .select('id, restaurant_id, restaurants(name, slug), cart_items(quantity)')
+      .eq('customer_id', session.user.id).eq('status', 'active');
+    if (error) throw error;
+    cartSummary = (data || []).map((c) => ({
+      id: c.id,
+      name: c.restaurants?.name || 'مطعم',
+      slug: c.restaurants?.slug || '',
+      count: (c.cart_items || []).reduce((s, i) => s + Number(i.quantity || 0), 0),
+    })).filter((c) => c.count > 0);
+  } catch (e) {
+    console.error('[cart-summary]', e);
+  }
 }
 function cartBtnHtml() {
   const n = cartSummary.reduce((s, c) => s + c.count, 0);
@@ -944,15 +972,7 @@ function cartBtnHtml() {
 function updateCartBtns() {
   document.querySelectorAll('.cartbtn').forEach((b) => { b.outerHTML = cartBtnHtml(); });
 }
-function openCartSheet() {
-  if (!session) return goLogin();
-  const onThis = location.hash.indexOf('#/r/') === 0 && R && cartSummary.some((c) => c.slug === R.rest.slug);
-  const rows = cartSummary.length
-    ? cartSummary.map((c) => `<a class="opt" href="#/r/${esc(c.slug)}"><span class="grow">${esc(c.name)}<small>${c.count} عنصر</small></span></a>`).join('')
-    : '<p class="meta" style="margin-top:12px">السلة فاضية دلوقتي</p>';
-  openSheet(`<h2>سلتك</h2>${rows}${onThis ? '<button class="btn primary" id="cartCheckout" type="button" style="margin-top:12px">راجع الطلب</button>' : ''}`,
-    (sheetEl) => { sheetEl.querySelector('#cartCheckout')?.addEventListener('click', openCheckout); });
-}
+function openCartSheet() { location.hash = '#/cart'; }
 
 function topbar(title) {
   // الشريط السفلي بيظهر في الرئيسية بس، فصفحات تانية فيها رابط للرئيسية في الشريط العلوي
@@ -969,6 +989,9 @@ const ROUTES = [
   [/^home$/, viewHome, false, 'home'],
   [/^restaurants$/, viewRestaurants, false, 'restaurants'],
   [/^r\/([^/]+)$/, viewRestaurant, false, 'restaurants'],
+  [/^cart$/, viewCartList, false, ''],
+  [/^cart\/([^/]+)$/, viewCart, false, ''],
+  [/^checkout\/([^/]+)$/, viewCheckout, false, ''],
   [/^s\/([^/]+)$/, viewGroup, false, ''],
   [/^orders$/, viewOrders, true, 'orders'],
   [/^account$/, viewAccount, true, 'account'],
@@ -985,6 +1008,12 @@ function route() {
   cartbar.classList.add('hidden');
   const raw = location.hash.replace(/^#\/?/, '');
   const path = raw.split('?')[0];
+  const ret = sessionStorage.getItem(RET_KEY);
+  if (session && ret && (path === '' || path === 'home' || path === 'login')) {
+    sessionStorage.removeItem(RET_KEY);
+    location.hash = ret;
+    return;
+  }
   refreshCartSummary().then(updateCartBtns);
   document.body.dataset.page = (path === '' || path === 'home') ? 'home' : (/^r\//.test(path) ? 'restaurant' : 'inner');
   const query = new URLSearchParams(raw.split('?')[1] || '');
@@ -996,7 +1025,7 @@ function route() {
     if (needsAuth && !session) { goLogin(); return; }
     if (tab) document.querySelector(`.tabbar a[data-tab="${tab}"]`)?.setAttribute('aria-current', 'page');
     if (fn === viewRestaurants) fn(query);
-    else if (fn === viewRestaurant || fn === viewGroup) fn([m[0], decodeURIComponent(m[1])]);
+    else if (fn === viewRestaurant || fn === viewGroup || fn === viewCart || fn === viewCheckout) fn([m[0], decodeURIComponent(m[1])]);
     else fn();
     return;
   }
@@ -1261,18 +1290,53 @@ async function viewRestaurants(query) {
 }
 
 /* ============ صفحة المطعم والسلة ============ */
+const CART_READ_FAIL = 'تعذّر تحميل السلة، حاول تاني';
+const CART_WRITE_FAIL = 'تعذّر تحديث السلة، حاول تاني';
+const CART_MAX_QTY = 99;
+function cartError(msg, cause) { const e = new Error(msg); e.cause = cause; return e; }
+
+// قراءة السلة: أي خطأ في الاستعلام بيترمي (مش بيتحول لسلة فاضية).
+// السلة بتتعمل بس لو مفيش سلة نشطة فعلاً وطلبنا إنشاءها.
 async function getCart(restaurantId, create) {
+  if (!session) throw cartError('سجّل دخولك الأول');
   const uid = session.user.id;
-  let { data: cart } = await sb.from('carts').select('id, coupon_code')
+  const findActive = () => sb.from('carts').select('id, coupon_code')
     .eq('customer_id', uid).eq('restaurant_id', restaurantId).eq('status', 'active').maybeSingle();
+
+  const sel = await findActive();
+  if (sel.error) throw cartError(CART_READ_FAIL, sel.error);
+  let cart = sel.data;
+
   if (!cart && create) {
-    const ins = await sb.from('carts').insert({ customer_id: uid, restaurant_id: restaurantId }).select('id, coupon_code').single();
-    if (ins.error) throw ins.error;
-    cart = ins.data;
+    const ins = await sb.from('carts').insert({ customer_id: uid, restaurant_id: restaurantId })
+      .select('id, coupon_code').single();
+    if (ins.error) {
+      // 23505 = سلة نشطة اتعملت في نفس اللحظة من تبويب تاني: نقرأها بدل ما نفشل
+      if (ins.error.code !== '23505') throw cartError(CART_WRITE_FAIL, ins.error);
+      const again = await findActive();
+      if (again.error) throw cartError(CART_READ_FAIL, again.error);
+      cart = again.data;
+    } else {
+      cart = ins.data;
+    }
+    if (!cart) throw cartError(CART_READ_FAIL);
   }
   if (!cart) return null;
-  const { data: items } = await sb.from('cart_items').select('id, product_id, quantity').eq('cart_id', cart.id);
-  return { id: cart.id, coupon_code: cart.coupon_code, items: items || [] };
+
+  const items = await sb.from('cart_items').select('id, product_id, quantity').eq('cart_id', cart.id);
+  if (items.error) throw cartError(CART_READ_FAIL, items.error);
+  return { id: cart.id, coupon_code: cart.coupon_code, items: items.data || [] };
+}
+
+// تحميل السلة لصفحة المطعم: الفشل مش بيوقف الصفحة، بس بيتعلّم إن الكميات مش موثوقة
+async function loadCartSafe(restaurantId) {
+  if (!session) return { cart: guestCartFor(restaurantId), failed: false };
+  try {
+    return { cart: await getCart(restaurantId, false), failed: false };
+  } catch (e) {
+    console.error('[cart-load]', e);
+    return { cart: null, failed: true };
+  }
 }
 
 async function viewRestaurant([, slug]) {
@@ -1285,13 +1349,13 @@ async function viewRestaurant([, slug]) {
   if (my !== rid) return;
   if (!r) { app.innerHTML = backbar('') + emptyHtml('المطعم ده مش متاح دلوقتي'); return; }
 
-  const [menuCats, products, offers, reviews, methods, cart] = await Promise.all([
+  const [menuCats, products, offers, reviews, methods, cartRes] = await Promise.all([
     sb.from('menu_categories').select('id, name, display_order').eq('restaurant_id', r.id).eq('is_active', true).order('display_order'),
     sb.from('products').select('id, name, description, price, emoji, category_id, display_order, product_images(image_url, display_order)').eq('restaurant_id', r.id).eq('is_available', true).order('display_order'),
     sb.from('restaurant_offers').select('id, title, description').eq('restaurant_id', r.id),
     sb.from('restaurant_reviews').select('rating, review_text, created_at').eq('restaurant_id', r.id).order('created_at', { ascending: false }).limit(5),
     loadMethods(r.id),
-    session ? getCart(r.id, false) : Promise.resolve(null),
+    loadCartSafe(r.id),
   ]);
   if (my !== rid) return;
 
@@ -1303,8 +1367,10 @@ async function viewRestaurant([, slug]) {
     offers: offers.data || [],
     reviews: reviews.data || [],
     methods,
-    cart,
+    cart: cartRes.cart,
+    cartFailed: cartRes.failed,
   };
+  if (cartRes.failed) toast(CART_READ_FAIL);
 
   const badges = badgesOf(r).map(badgeHtml).join(' ');
   const payNames = [methods.cash && 'كاش', methods.paymob && 'فيزا / محفظة'].filter(Boolean).join(' · ');
@@ -1363,125 +1429,494 @@ function drawMenu() {
   const loose = R.products.filter((p) => !p.category_id || !known.has(p.category_id));
   if (loose.length) groups.push({ id: 'other', name: 'أطباق أخرى', items: loose });
 
-  el.innerHTML = groups.length
+  const cartNotice = R.cartFailed ? '<p class="err" role="alert">تعذّر تحميل السلة الحالية، والكميات ممكن تكون مش محدثة. حدّث الصفحة.</p>' : '';
+  el.innerHTML = cartNotice + (groups.length
     ? groups.map((g) => `<section id="sec-${esc(g.id)}"><h2 class="sec">${esc(g.name)}</h2>${g.items.map(productHtml).join('')}</section>`).join('')
-    : emptyHtml('المنيو فاضي دلوقتي');
+    : emptyHtml('المنيو فاضي دلوقتي'));
   drawCartBar();
 }
 
-function cartLines() {
-  if (!R?.cart) return [];
-  return R.cart.items
-    .filter((i) => R.prodMap.has(i.product_id))
-    .map((i) => ({ ...i, product: R.prodMap.get(i.product_id) }));
+// السلة بتتعرض من قراءة طازجة من الخادم، والمنتجات من المنيو الحالي
+function cartLines(cart) {
+  if (!cart || !R) return [];
+  return cart.items.map((i) => ({ ...i, product: R.prodMap.get(i.product_id) }));
 }
 
 // السلة بقت في الهيدر (زرار السلة)، فالشريط اللي تحت اتشال
 function drawCartBar() {}
 
+// كل عمليات السلة بتتنفذ واحدة ورا التانية: ده بيمنع تضارب الكميات وإنشاء سلتين لنفس المطعم
+let cartQueue = Promise.resolve();
+function runCartOp(fn) {
+  const run = cartQueue.then(fn, fn);
+  cartQueue = run.catch(() => {});
+  return run;
+}
+
+// المنتجات اللي عليها عملية شغالة دلوقتي: الضغطة المكررة عليها بتتجاهل
+const pendingQty = new Set();
+function setQtyBusy(productId, busy) {
+  document.querySelectorAll('[data-act][data-id]').forEach((b) => {
+    if (b.dataset.id === productId) b.disabled = busy;
+  });
+}
+
+// تغيير كمية منتج: قراءة طازجة، تحقق من الحدود، تنفيذ، التحقق من عدد الصفوف، وإعادة تحميل السلة
+async function applyQtyChange(productId, delta) {
+  const cart = await getCart(R.rest.id, delta > 0);
+  if (!cart) return; // مفيش سلة ومفيش إضافة = مفيش تغيير
+  const existing = cart.items.find((i) => i.product_id === productId);
+  const current = Number(existing?.quantity || 0);
+  if (delta > 0 && current >= CART_MAX_QTY) throw cartError(`الحد الأقصى ${CART_MAX_QTY} قطعة من المنتج ده`);
+  const next = current + delta;
+  if (next < 0) return;
+
+  if (existing) {
+    const q = next <= 0
+      ? sb.from('cart_items').delete().eq('id', existing.id).select('id')
+      : sb.from('cart_items').update({ quantity: next }).eq('id', existing.id).select('id');
+    const { data, error } = await q;
+    if (error) throw cartError(CART_WRITE_FAIL, error);
+    // صفر صفوف = السلة اتقفلت من الخادم (الدفع) أو الـRLS منعت العملية: منقولش إنها نجحت
+    if (!data?.length) throw cartError('السلة اتغيرت أو اتقفلت، حدّث الصفحة');
+  } else if (next > 0) {
+    const { data, error } = await sb.from('cart_items')
+      .insert({ cart_id: cart.id, product_id: productId, quantity: 1 }).select('id');
+    if (error) throw cartError(CART_WRITE_FAIL, error);
+    if (!data?.length) throw cartError('السلة اتغيرت أو اتقفلت، حدّث الصفحة');
+  }
+
+  // الواجهة بتتحدّث بس بعد ما السلة تتقري من الخادم بعد التعديل
+  R.cart = await getCart(R.rest.id, false);
+  R.cartFailed = false;
+  redrawCurrent();
+}
+
 async function setQty(productId, delta) {
-  if (!session) return goLogin();
+  if (!R?.rest) return;
+  if (delta !== 1 && delta !== -1) return;
+  // الإضافة لمنتج مش في المنيو الحالي ممنوعة؛ الإنقاص مسموح حتى لو المنتج اختفى
+  if (delta > 0 && !R.prodMap?.has(productId)) return;
+  if (pendingQty.has(productId)) return; // ضغطة مكررة على نفس المنتج
+  pendingQty.add(productId);
+  setQtyBusy(productId, true);
   try {
-    const cart = await getCart(R.rest.id, true);
-    const existing = cart.items.find((i) => i.product_id === productId);
-    const next = (existing?.quantity || 0) + delta;
-    if (existing && next <= 0) await sb.from('cart_items').delete().eq('id', existing.id);
-    else if (existing) await sb.from('cart_items').update({ quantity: Math.min(next, 99) }).eq('id', existing.id);
-    else if (next > 0) await sb.from('cart_items').insert({ cart_id: cart.id, product_id: productId, quantity: 1 });
-    R.cart = await getCart(R.rest.id, false);
-    drawMenu();
-    refreshCartSummary().then(updateCartBtns);
+    if (!session) {
+      guestSetQty(R.rest, productId, delta);
+      R.cart = guestCartFor(R.rest.id);
+      R.cartFailed = false;
+      redrawCurrent();
+    } else {
+      await runCartOp(() => applyQtyChange(productId, delta));
+    }
   } catch (e) {
-    toast(e.message || 'تعذّر تحديث السلة');
+    console.error('[setQty]', e);
+    toast(arMsg(e, CART_WRITE_FAIL));
+  } finally {
+    pendingQty.delete(productId);
+    setQtyBusy(productId, false);
   }
 }
 
-function openCheckout() {
-  if (!session) return goLogin();
-  const lines = cartLines();
-  if (!lines.length) return;
-  const sub = lines.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
+// رسالة مفهومة للعميل: رسائل الخادم بالعربي بتظهر كما هي، والباقي رسالة عامة
+function arMsg(ex, fallback) {
+  const m = String(ex?.message || '');
+  return /[\u0600-\u06FF]/.test(m) ? m : fallback;
+}
+
+/* ============ السلة بدون تسجيل + شاشات السلة والتأكيد ============ */
+const RET_KEY = 'sahap_return';   // الصفحة اللي العميل كان عايزها قبل تسجيل الدخول
+const GUEST_KEY = 'sahap_guest_carts'; // سلات الجهاز: { [restaurantId]: { name, slug, items: { [productId]: qty } } }
+
+function guestLoad() {
+  try { return JSON.parse(localStorage.getItem(GUEST_KEY) || '{}') || {}; } catch { return {}; }
+}
+function guestSave(all) {
+  try { localStorage.setItem(GUEST_KEY, JSON.stringify(all)); return true; }
+  catch (e) { console.error('[guest-cart]', e); return false; }
+}
+function guestCartFor(restaurantId) {
+  const g = guestLoad()[restaurantId];
+  const items = Object.entries(g?.items || {})
+    .map(([product_id, q]) => ({ product_id, quantity: Number(q) }))
+    .filter((i) => i.quantity > 0);
+  return { id: null, guest: true, coupon_code: null, items };
+}
+// تعديل كمية على سلة الجهاز: نفس الحدود (1 - 99) والحفظ بيتأكد منه
+function guestSetQty(restaurant, productId, delta) {
+  const all = guestLoad();
+  const g = all[restaurant.id] || { items: {} };
+  const current = Number(g.items[productId] || 0);
+  if (delta > 0 && current >= CART_MAX_QTY) throw cartError(`الحد الأقصى ${CART_MAX_QTY} قطعة من المنتج ده`);
+  const next = current + delta;
+  if (next <= 0) delete g.items[productId]; else g.items[productId] = next;
+  g.name = restaurant.name; g.slug = restaurant.slug;
+  if (Object.keys(g.items).length) all[restaurant.id] = g; else delete all[restaurant.id];
+  if (!guestSave(all)) throw cartError('تعذّر حفظ السلة على الجهاز، جرّب تاني');
+}
+
+// نقل سلة الجهاز لحساب العميل بعد تسجيل الدخول. السلة بتتشال من الجهاز بس لما النقل ينجح
+let mergePromise = null;
+function mergeGuestCarts() {
+  if (!session) return Promise.resolve();
+  if (!mergePromise) mergePromise = doMergeGuestCarts().finally(() => { mergePromise = null; });
+  return mergePromise;
+}
+async function doMergeGuestCarts() {
+  const all = guestLoad();
+  for (const rid of Object.keys(all)) {
+    const entries = Object.entries(all[rid].items || {})
+      .map(([pid, q]) => [pid, Number(q)]).filter(([, q]) => q > 0);
+    if (!entries.length) { delete all[rid]; continue; }
+    try {
+      await runCartOp(async () => {
+        const cart = await getCart(rid, true);
+        for (const [pid, q] of entries) {
+          const existing = cart.items.find((i) => i.product_id === pid);
+          const qty = Math.min(CART_MAX_QTY, Number(existing?.quantity || 0) + q);
+          const op = existing
+            ? sb.from('cart_items').update({ quantity: qty }).eq('id', existing.id).select('id')
+            : sb.from('cart_items').insert({ cart_id: cart.id, product_id: pid, quantity: qty }).select('id');
+          const { data, error } = await op;
+          if (error || !data?.length) throw cartError(CART_WRITE_FAIL, error);
+        }
+      });
+      delete all[rid];
+    } catch (e) {
+      console.error('[merge-guest-cart]', e); // بنسيب السلة في الجهاز عشان نحاول تاني
+    }
+  }
+  guestSave(all);
+}
+
+// أي تغيير في الكمية بيحدّث الشاشة المفتوحة (المنيو أو سلة المشتريات) والهيدر
+function redrawCurrent() {
+  if (document.getElementById('menu')) drawMenu();
+  if (document.getElementById('cartScreen')) drawCartScreen();
+  refreshCartSummary().then(updateCartBtns);
+}
+
+// سعر بعد الخصم للعرض فقط؛ الخادم بيحسب الإجمالي النهائي
+async function loadDiscounts(products) {
+  const map = new Map();
+  const ids = products.map((p) => p.id);
+  if (!ids.length) return map;
+  const { data, error } = await sb.from('product_discounts')
+    .select('product_id, discount_type, discount_value, starts_at, ends_at, is_active').in('product_id', ids);
+  if (error) { console.error('[discounts]', error); return map; }
+  const now = Date.now();
+  const priceOf = new Map(products.map((p) => [p.id, Number(p.price)]));
+  for (const d of data || []) {
+    if (!d.is_active) continue;
+    if (d.starts_at && new Date(d.starts_at).getTime() > now) continue;
+    if (d.ends_at && new Date(d.ends_at).getTime() <= now) continue;
+    const price = priceOf.get(d.product_id) ?? 0;
+    const v = Number(d.discount_value || 0);
+    const newPrice = d.discount_type === 'percentage' ? price * (1 - v / 100) : Math.max(0, price - v);
+    const cur = map.get(d.product_id);
+    if (!cur || newPrice < cur.newPrice) map.set(d.product_id, { newPrice: Math.round(newPrice * 100) / 100 });
+  }
+  return map;
+}
+function unitPrice(p, discounts) {
+  const d = discounts?.get(p.id);
+  return d ? d.newPrice : Number(p.price);
+}
+
+function cartTopbar(title, backHref) {
+  return `<header class="topbar"><a class="chip" href="${esc(backHref)}">رجوع</a><h1 class="ttl" style="font-size:18px">${esc(title)}</h1><div class="topbar-end"></div></header>`;
+}
+
+/* ---- شاشة قائمة السلات (هيدر الزرار) ---- */
+async function viewCartList() {
+  await refreshCartSummary();
+  const rows = cartSummary.map((c) =>
+    `<a class="opt" href="#/cart/${esc(c.slug)}"><span class="grow">${esc(c.name)}<small>${c.count} عنصر</small></span></a>`).join('');
+  app.innerHTML = cartTopbar('السلة', '#/home') +
+    (rows ? `<h2 class="sec">سلاتك</h2>${rows}` : emptyHtml('السلة فاضية دلوقتي')) +
+    `<p style="margin-top:16px"><a class="btn" href="#/restaurants">تصفح المطاعم</a></p>`;
+  updateCartBtns();
+}
+
+/* ---- إعلان "اقتراحات السلة" + منتجاته المربوطة ---- */
+async function loadCartAd(restaurantId) {
+  const inv = await sb.rpc('get_public_ad_inventory');
+  if (inv.error) { console.error('[cart-ad]', inv.error); return { ad: null, productIds: [] }; }
+  const placement = (inv.data || []).find((p) => p.placement_code === 'cart_suggestions');
+  const camp = (placement?.campaigns || []).find((c) => c.restaurant_id === restaurantId);
+  if (!camp) return { ad: null, productIds: [] };
+  const links = await sb.from('ad_campaign_products')
+    .select('product_id, display_order').eq('campaign_id', camp.campaign_id).order('display_order');
+  if (links.error) { console.error('[cart-ad-products]', links.error); return { ad: camp, productIds: [] }; }
+  return { ad: { ...camp, placement_code: placement.placement_code }, productIds: (links.data || []).map((l) => l.product_id) };
+}
+function cartAdHtml() {
+  if (!R?.ad) return '';
+  const prods = R.adProducts || [];
+  const rail = prods.length
+    ? `<div class="sh-offer-rail cs-rail">${prods.map((p) => {
+        const img = [...(p.product_images || [])].sort((a, b) => a.display_order - b.display_order)[0]?.image_url;
+        const safe = safeUrl(img);
+        return `<div class="cs-prod">
+          <span class="cs-prod-img">${safe ? `<img src="${esc(safe)}" alt="" loading="lazy">` : esc(p.emoji || '•')}</span>
+          <strong>${esc(p.name)}</strong>
+          <span class="meta">${money(unitPrice(p, R.discounts))}</span>
+          <button class="addbtn" type="button" data-act="inc" data-id="${esc(p.id)}">أضف</button>
+        </div>`;
+      }).join('')}</div>`
+    : '';
+  return `<section class="cs-ad" aria-label="اقتراحات من المطعم">${adHtml(R.ad)}${rail}</section>`;
+}
+
+/* ---- شاشة 1: سلة المشتريات ---- */
+async function viewCart([, slug]) {
+  const my = ++rid;
+  app.innerHTML = cartTopbar('سلة المشتريات', '#/cart') + '<p class="meta">جاري التحميل…</p>';
+  const { data: r } = await sb.from('restaurants')
+    .select('id, name, slug, delivery_fee, is_open').eq('slug', slug).maybeSingle();
+  if (my !== rid) return;
+  if (!r) { app.innerHTML = cartTopbar('السلة', '#/cart') + emptyHtml('المطعم ده مش متاح دلوقتي'); return; }
+
+  await mergeGuestCarts();
+  const [prods, cartRes, ad] = await Promise.all([
+    sb.from('products').select('id, name, description, price, emoji, product_images(image_url, display_order)')
+      .eq('restaurant_id', r.id).eq('is_available', true),
+    loadCartSafe(r.id),
+    loadCartAd(r.id),
+  ]);
+  if (my !== rid) return;
+  if (prods.error) {
+    console.error('[cart-products]', prods.error);
+    app.innerHTML = cartTopbar('سلة المشتريات', '#/cart') + '<p class="err" role="alert">تعذّر تحميل منتجات المطعم. حدّث الصفحة.</p>';
+    return;
+  }
+  const products = prods.data || [];
+  const prodMap = new Map(products.map((p) => [p.id, p]));
+  R = {
+    rest: r, products, prodMap, menuCats: [], offers: [], reviews: [], methods: { cash: false, paymob: false },
+    cart: cartRes.cart, cartFailed: cartRes.failed,
+    discounts: await loadDiscounts(products),
+    ad: ad.ad,
+    adProducts: ad.productIds.map((id) => prodMap.get(id)).filter(Boolean),
+  };
+  app.innerHTML = cartTopbar(r.name, '#/cart') + '<div id="cartScreen" class="cs-screen"></div>';
+  drawCartScreen();
+}
+
+function drawCartScreen() {
+  const el = document.getElementById('cartScreen');
+  if (!el || !R?.rest) return;
+  const failed = R.cartFailed
+    ? '<p class="err" role="alert">تعذّر تحميل السلة الحالية، والكميات ممكن تكون مش محدثة. حدّث الصفحة.</p>' : '';
+  const lines = cartLines(R.cart);
+  if (!lines.length && R.cartFailed) {
+    el.innerHTML = failed + '<p style="margin-top:12px"><a class="btn" href="#/cart/' + esc(R.rest.slug) + '">حاول تاني</a></p>';
+    return;
+  }
+  if (!lines.length) {
+    el.innerHTML = failed + emptyHtml('السلة فاضية دلوقتي') +
+      `<p style="margin-top:12px"><a class="btn" href="#/r/${esc(R.rest.slug)}">أضف منتجات من ${esc(R.rest.name)}</a></p>`;
+    return;
+  }
+  const rows = lines.map((i) => {
+    const p = i.product;
+    if (!p) {
+      return `<article class="product cs-line"><div class="grow"><strong>منتج مش متاح دلوقتي</strong>
+        <p class="meta">شيله من السلة عشان تكمل الطلب</p>
+        <span class="qty"><button data-act="dec" data-id="${esc(i.product_id)}" aria-label="احذف المنتج">🗑</button><span aria-live="polite">${i.quantity}</span></span></div></article>`;
+    }
+    const unit = unitPrice(p, R.discounts);
+    const hasDisc = unit < Number(p.price);
+    const img = safeUrl([...(p.product_images || [])].sort((a, b) => a.display_order - b.display_order)[0]?.image_url);
+    return `<article class="product cs-line">
+      ${img ? `<img class="thumb" src="${esc(img)}" alt="" loading="lazy">` : `<span class="thumb" aria-hidden="true">${esc(p.emoji || '•')}</span>`}
+      <div class="grow"><strong>${esc(p.name)}</strong>
+        <div class="pricerow"><span class="price">${money(unit * i.quantity)}</span>${hasDisc ? `<s class="meta">${money(Number(p.price) * i.quantity)}</s>` : ''}
+          <span class="qty"><button data-act="dec" data-id="${esc(p.id)}" aria-label="${i.quantity === 1 ? 'احذف' : 'قلل'} ${esc(p.name)}">${i.quantity === 1 ? '🗑' : '−'}</button><span aria-live="polite">${i.quantity}</span><button data-act="inc" data-id="${esc(p.id)}" aria-label="زوّد ${esc(p.name)}">+</button></span>
+        </div>
+      </div>
+    </article>`;
+  }).join('');
+
+  const priced = lines.filter((i) => i.product);
+  const sub = priced.reduce((s, i) => s + unitPrice(i.product, R.discounts) * i.quantity, 0);
+  const full = priced.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
   const fee = Number(R.rest.delivery_fee || 0);
-  const m = R.methods;
+  const hasMissing = lines.some((i) => !i.product);
+  el.innerHTML = `${failed}
+    <div class="cs-lines">${rows}</div>
+    ${cartAdHtml()}
+    <div class="cs-sum">
+      <div class="sum"><span>المجموع الفرعي</span><b>${money(sub)}</b></div>
+      ${full > sub ? `<div class="sum"><span>خصم المنتجات</span><b>- ${money(full - sub)}</b></div>` : ''}
+      <div class="sum"><span>رسوم التوصيل</span><b>${fee ? money(fee) : 'مجاني'}</b></div>
+      <div class="sum total"><span>الإجمالي التقديري</span><b>${money(sub + fee)}</b></div>
+      <p class="meta" style="margin-top:6px">ده إجمالي تقديري. الإجمالي النهائي بيتحدد عند التأكيد بعد الكوبون والعروض.</p>
+    </div>
+    <div class="cs-bottom">
+      ${hasMissing
+        ? '<button class="btn primary" type="button" disabled>تابع للدفع</button>'
+        : `<a class="btn primary" href="#/checkout/${esc(R.rest.slug)}">تابع للدفع</a>`}
+      <a class="btn" href="#/r/${esc(R.rest.slug)}">أضف المزيد</a>
+    </div>`;
+  observeAds(el);
+}
+
+/* ---- شاشة 2: تنفيذ الطلب (لازم تسجيل دخول) ---- */
+async function viewCheckout([, slug]) {
+  const my = ++rid;
+  if (!session) {
+    sessionStorage.setItem(RET_KEY, `#/checkout/${slug}`);
+    goLogin();
+    return;
+  }
+  app.innerHTML = cartTopbar('تنفيذ الطلب', `#/cart/${encodeURIComponent(slug)}`) + '<p class="meta">جاري التحميل…</p>';
+  await mergeGuestCarts();
+  const { data: r } = await sb.from('restaurants')
+    .select('id, name, slug, delivery_fee, is_open').eq('slug', slug).maybeSingle();
+  if (my !== rid) return;
+  if (!r) { app.innerHTML = cartTopbar('تنفيذ الطلب', '#/cart') + emptyHtml('المطعم ده مش متاح دلوقتي'); return; }
+
+  const [prods, cartRes, methods] = await Promise.all([
+    sb.from('products').select('id, name, price, emoji, is_available').eq('restaurant_id', r.id),
+    loadCartSafe(r.id),
+    loadMethods(r.id),
+  ]);
+  if (my !== rid) return;
+  const back = `#/cart/${encodeURIComponent(slug)}`;
+  if (prods.error) {
+    app.innerHTML = cartTopbar('تنفيذ الطلب', back) + '<p class="err" role="alert">تعذّر تحميل المنتجات. حاول تاني.</p>';
+    return;
+  }
+  const products = prods.data || [];
+  R = {
+    rest: r, products, prodMap: new Map(products.map((p) => [p.id, p])), menuCats: [], offers: [], reviews: [],
+    methods, cart: cartRes.cart, cartFailed: cartRes.failed, discounts: await loadDiscounts(products),
+  };
+  if (cartRes.failed) {
+    app.innerHTML = cartTopbar('تنفيذ الطلب', back) + `<p class="err" role="alert">تعذّر تحميل السلة. حاول تاني.</p><p><a class="btn" href="#/checkout/${esc(slug)}">حاول تاني</a></p>`;
+    return;
+  }
+  const lines = cartLines(R.cart);
+  if (!lines.length) {
+    app.innerHTML = cartTopbar('تنفيذ الطلب', back) + emptyHtml('السلة فاضية') +
+      `<p><a class="btn" href="#/r/${esc(slug)}">أضف منتجات</a></p>`;
+    return;
+  }
+  if (lines.some((i) => !i.product)) {
+    app.innerHTML = cartTopbar('تنفيذ الطلب', back) + '<p class="err" role="alert">فيه منتجات في السلة مش متاحة دلوقتي. ارجع للسلة وشيلها.</p>';
+    return;
+  }
+  app.innerHTML = cartTopbar('تنفيذ الطلب', back) + checkoutHtml(lines);
+  bindCheckoutForm(app, R.cart);
+}
+
+function checkoutHtml(lines) {
+  const sub = lines.reduce((s, i) => s + unitPrice(i.product, R.discounts) * i.quantity, 0);
+  const fee = Number(R.rest.delivery_fee || 0);
+  const m = R.methods || {};
   const hasAny = m.cash || m.paymob;
   const firstMethod = m.cash ? 'cash' : 'paymob';
+  return `
+    <div class="co-page">
+      <p class="meta">من ${esc(R.rest.name)}</p>
+      <div style="margin-top:12px">
+        ${lines.map((i) => `<div class="sum"><span>${i.quantity} × ${esc(i.product.name)}</span><b>${money(unitPrice(i.product, R.discounts) * i.quantity)}</b></div>`).join('')}
+        <div class="sum"><span>التوصيل</span><b>${fee ? money(fee) : 'مجاني'}</b></div>
+        <div class="sum"><span>خصم الكوبون</span><b>يتحدد عند التأكيد</b></div>
+        <div class="sum total"><span>الإجمالي التقديري</span><b>${money(sub + fee)}</b></div>
+        <p class="meta" style="margin-top:6px">ده إجمالي تقديري. الإجمالي النهائي بيتحدد من السيرفر بعد تطبيق الكوبون والعروض.</p>
+      </div>
+      <form id="coForm" novalidate>
+        <label for="cn">الاسم</label>
+        <input id="cn" required value="${esc(profile?.full_name || '')}" autocomplete="name">
+        <label for="cp">رقم الموبايل</label>
+        <input id="cp" inputmode="tel" required value="${esc(profile?.phone || '')}" autocomplete="tel">
+        <label for="ca">عنوان التوصيل بالتفصيل</label>
+        <textarea id="ca" rows="2" required autocomplete="street-address"></textarea>
+        <label for="cc">كود الخصم (اختياري)</label>
+        <input id="cc" value="${esc(R.cart?.coupon_code || '')}" autocomplete="off">
+        <fieldset>
+          <legend>طريقة الدفع</legend>
+          ${hasAny ? `
+            ${m.cash ? `<label class="opt"><input type="radio" name="pm" value="cash" ${firstMethod === 'cash' ? 'checked' : ''}><span>الدفع عند الاستلام<small>ادفع كاش للمندوب</small></span></label>` : ''}
+            ${m.paymob ? `<label class="opt"><input type="radio" name="pm" value="paymob" ${firstMethod === 'paymob' ? 'checked' : ''}><span>فيزا أو محفظة<small>دفع آمن عبر Paymob</small></span></label>` : ''}
+          ` : '<p class="err">المطعم مش بيستقبل طلبات دلوقتي</p>'}
+        </fieldset>
+        <p class="err" id="coErr" role="alert"></p>
+        <button class="btn primary" id="placeBtn" type="submit" ${hasAny ? '' : 'disabled'}>تنفيذ الطلب</button>
+      </form>
+    </div>`;
+}
 
-  openSheet(`
-    <h2>تأكيد الطلب</h2>
-    <p class="meta">من ${esc(R.rest.name)}</p>
-    <div style="margin-top:12px">
-      ${lines.map((i) => `<div class="sum"><span>${i.quantity} × ${esc(i.product.name)}</span><b>${money(i.product.price * i.quantity)}</b></div>`).join('')}
-      <div class="sum"><span>التوصيل</span><b>${fee ? money(fee) : 'مجاني'}</b></div>
-      <div class="sum total"><span>الإجمالي التقريبي</span><b>${money(sub + fee)}</b></div>
-    </div>
-    <form id="coForm" novalidate>
-      <label for="cn">الاسم</label>
-      <input id="cn" required value="${esc(profile?.full_name || '')}" autocomplete="name">
-      <label for="cp">رقم الموبايل</label>
-      <input id="cp" inputmode="tel" required value="${esc(profile?.phone || '')}" autocomplete="tel">
-      <label for="ca">عنوان التوصيل بالتفصيل</label>
-      <textarea id="ca" rows="2" required autocomplete="street-address"></textarea>
-      <label for="cc">كود الخصم (اختياري)</label>
-      <input id="cc" value="${esc(R.cart?.coupon_code || '')}" autocomplete="off">
-      <fieldset>
-        <legend>طريقة الدفع</legend>
-        ${hasAny ? `
-          ${m.cash ? `<label class="opt"><input type="radio" name="pm" value="cash" ${firstMethod === 'cash' ? 'checked' : ''}><span>الدفع عند الاستلام<small>ادفع كاش للمندوب</small></span></label>` : ''}
-          ${m.paymob ? `<label class="opt"><input type="radio" name="pm" value="paymob" ${firstMethod === 'paymob' ? 'checked' : ''}><span>فيزا أو محفظة<small>دفع آمن عبر Paymob</small></span></label>` : ''}
-        ` : '<p class="err">المطعم مش بيستقبل طلبات دلوقتي</p>'}
-      </fieldset>
-      <p class="err" id="coErr" role="alert"></p>
-      <button class="btn primary" id="placeBtn" type="submit" ${hasAny ? '' : 'disabled'}>أكد الطلب</button>
-    </form>
-  `, (sheetEl) => {
-    const form = sheetEl.querySelector('#coForm');
-    const err = sheetEl.querySelector('#coErr');
-    const btn = sheetEl.querySelector('#placeBtn');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      err.textContent = '';
-      const name = sheetEl.querySelector('#cn').value.trim();
-      const phone = sheetEl.querySelector('#cp').value.replace(/[\s-]/g, '');
-      const addr = sheetEl.querySelector('#ca').value.trim();
-      const coupon = sheetEl.querySelector('#cc').value.trim();
-      const method = sheetEl.querySelector('input[name="pm"]:checked')?.value;
+// تأكيد الطلب: الكوبون لازم يتحفظ الأول، وزرار واحد بيقفل الإرسال المزدوج
+function bindCheckoutForm(root, cart) {
+  const form = root.querySelector('#coForm');
+  const err = root.querySelector('#coErr');
+  const btn = root.querySelector('#placeBtn');
+  let placing = false;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (placing) return;
+    err.textContent = '';
+    const name = root.querySelector('#cn').value.trim();
+    const phone = root.querySelector('#cp').value.replace(/[\s-]/g, '');
+    const addr = root.querySelector('#ca').value.trim();
+    const coupon = root.querySelector('#cc').value.trim();
+    const method = root.querySelector('input[name="pm"]:checked')?.value;
 
-      if (!name) { err.textContent = 'اكتب اسمك'; return; }
-      if (!PHONE_RE.test(phone)) { err.textContent = 'اكتب رقم موبايل مصري صحيح'; return; }
-      if (addr.length < 5) { err.textContent = 'اكتب عنوان التوصيل بالتفصيل'; return; }
-      if (!method) { err.textContent = 'اختار طريقة الدفع'; return; }
+    if (!name) { err.textContent = 'اكتب اسمك'; return; }
+    if (!PHONE_RE.test(phone)) { err.textContent = 'اكتب رقم موبايل مصري صحيح'; return; }
+    if (addr.length < 5) { err.textContent = 'اكتب عنوان التوصيل بالتفصيل'; return; }
+    if (!method) { err.textContent = 'اختار طريقة الدفع'; return; }
 
-      btn.disabled = true;
-      btn.textContent = 'بنأكد طلبك…';
-      try {
-        await sb.from('carts').update({ coupon_code: coupon || null }).eq('id', R.cart.id);
-        const { data: orderId, error } = await sb.rpc('place_order', {
-          p_cart_id: R.cart.id,
-          p_shipping_address: addr,
-          p_customer_phone: phone,
-          p_customer_name: name,
-          p_payment_method: method,
-        });
-        if (error) throw error;
+    placing = true;
+    btn.disabled = true;
+    btn.textContent = 'بنأكد طلبك…';
+    try {
+      const { data: saved, error: cErr } = await sb.from('carts')
+        .update({ coupon_code: coupon || null }).eq('id', cart.id).select('id, coupon_code');
+      if (cErr) throw cartError('تعذّر حفظ الكوبون، حاول تاني', cErr);
+      if (!saved?.length) throw cartError('السلة اتغيرت أو اتقفلت، حدّث الصفحة');
 
-        if (method === 'paymob') {
-          const { data, error: fnErr } = await sb.functions.invoke('paymob-initiate', { body: { order_id: orderId } });
-          if (fnErr || !data?.iframe_url) throw new Error(await invokeError(fnErr, 'تعذّر بدء الدفع'));
-          location.href = data.iframe_url;
+      const { data: orderId, error } = await sb.rpc('place_order', {
+        p_cart_id: cart.id,
+        p_shipping_address: addr,
+        p_customer_phone: phone,
+        p_customer_name: name,
+        p_payment_method: method,
+      });
+      if (error) throw error;
+      if (!orderId) throw cartError('الطلب ما اتسجلش، حاول تاني');
+
+      // الطلب اتسجل فعلاً: أي فشل بعد كده مش معناه إن الطلب فشل
+      R.cart = null;
+      refreshCartSummary().then(updateCartBtns);
+
+      if (method === 'paymob') {
+        const { data, error: fnErr } = await sb.functions.invoke('paymob-initiate', { body: { order_id: orderId } });
+        if (fnErr || !data?.iframe_url) {
+          toast('اتسجل طلبك، بس تعذّر فتح صفحة الدفع. ادفعه من صفحة طلباتي');
+          location.hash = '#/orders';
           return;
         }
-        closeSheet();
-        R.cart = null;
-        refreshCartSummary().then(updateCartBtns);
-        toast('استلمنا طلبك ✓');
-        location.hash = '#/orders';
-      } catch (ex) {
-        err.textContent = ex.message || 'حصلت مشكلة، حاول تاني';
-        btn.disabled = false;
-        btn.textContent = 'أكد الطلب';
+        location.href = data.iframe_url;
+        return;
       }
-    });
+      toast('استلمنا طلبك ✓');
+      location.hash = '#/orders';
+    } catch (ex) {
+      console.error('[place-order]', ex);
+      placing = false;
+      err.textContent = arMsg(ex, 'حصلت مشكلة في الاتصال، حاول تاني');
+      btn.disabled = false;
+      btn.textContent = 'تنفيذ الطلب';
+    }
   });
+}
+
+function openCheckout() {
+  if (R?.rest) location.hash = `#/checkout/${R.rest.slug}`;
 }
 
 /* ============ طلباتي ============ */
@@ -1661,12 +2096,14 @@ function registerSW() {
   const { data } = await sb.auth.getSession();
   session = data.session;
   await loadProfile();
+  await mergeGuestCarts();
 
   sb.auth.onAuthStateChange((event, s) => {
     // نأجل الاستدعاءات لبرّه الـ callback عشان نتفادى تعارض داخلي في المكتبة
     setTimeout(async () => {
       session = s;
       await loadProfile();
+      if (event === 'SIGNED_IN') await mergeGuestCarts();
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') route();
     }, 0);
   });
