@@ -18,9 +18,11 @@
   --saffron:#F2A511; --saffron-ink:#2A1C00;
   --tomato:#B8402A; --olive:#3E5B3A;
   --r:14px; --col-w:75%;
+  /* نظام المسافات الموحد: يكبر مع الشاشة */
+  --gap-sm:12px; --gap-md:clamp(14px,3.5vw,22px); --gap-lg:clamp(22px,6vw,32px);
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;font-size:15px;line-height:1.6;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:hidden;max-width:100%;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;font-size:15px;line-height:1.6;-webkit-tap-highlight-color:transparent}
 h1,h2,h3{font-family:"Reem Kufi",system-ui,sans-serif;margin:0;line-height:1.25}
 p{margin:0}
 button{font:inherit;cursor:pointer;border:0;background:none;color:inherit;padding:0}
@@ -29,17 +31,20 @@ input,textarea{font:inherit;width:100%;padding:12px 14px;border:1px solid var(--
 input:focus,textarea:focus{outline:2px solid var(--saffron);outline-offset:0;border-color:transparent}
 :focus-visible{outline:3px solid var(--saffron);outline-offset:2px}
 label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 6px}
-.wrap{max-width:520px;margin:0 auto;padding:0 16px 120px}
+.wrap{max-width:520px;margin:0 auto;padding:0 16px 24px}
+body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:110px}
 .hidden{display:none!important}
 .grow{flex:1;min-width:0}
 .meta{font-size:13px;color:var(--ink-2)}
 .err{color:var(--tomato);font-size:14px;min-height:0;margin-top:10px}
-.sec{font-size:19px;margin:22px 0 10px}
+.sec{font-size:19px;margin:var(--gap-lg) 0 var(--gap-sm)}
 .sub{margin:-6px 0 10px}
 
-.topbar{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 10px;min-height:60px}
+.topbar{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 6px;min-height:0}
 .ttl{font-size:26px;font-weight:700}
-.brand{font-family:"Reem Kufi",sans-serif;font-size:28px;font-weight:700;letter-spacing:0}
+.brand{font-family:"Reem Kufi",sans-serif;font-size:24px;font-weight:700;letter-spacing:0;line-height:1.2;display:inline-block;white-space:nowrap;flex-shrink:0}
+.homelink{flex:none;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink)}
+.homelink svg,.tabbar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:#fff;border-radius:999px;padding:13px 20px;font-weight:600;width:100%;text-decoration:none}
 .btn.primary{background:var(--saffron);color:var(--saffron-ink)}
@@ -61,6 +66,19 @@ label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 6px}
 .banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3}
 .banner > *{position:relative}
 .banner .bt{font-family:"Reem Kufi",sans-serif;font-size:24px;font-weight:700;line-height:1.2}
+/* كروت الأقسام التسويقية أعلى الرئيسية: مربعة 1:1 ومستقلة عن كروت المطاعم */
+.mkt-strip{display:flex;gap:var(--gap-sm);overflow-x:auto;margin:0 -16px var(--gap-lg);padding:4px 16px 8px;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.mkt-strip::-webkit-scrollbar{display:none}
+.mkt-card{position:relative;flex:0 0 min(44vw,188px);aspect-ratio:1/1;overflow:hidden;border:0;border-radius:18px;background:linear-gradient(135deg,#3E5B3A,#1A1F1B);color:#fff;display:flex;flex-direction:column;justify-content:flex-end;text-align:start;box-shadow:0 6px 16px rgba(26,31,27,.14);scroll-snap-align:start;transition:transform .2s ease}
+.mkt-card:active{transform:scale(.98)}
+.mkt-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.mkt-card::after{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(to top,rgba(20,24,20,.85) 0%,rgba(20,24,20,.35) 45%,rgba(20,24,20,0) 70%)}
+.mkt-card-fb{position:absolute;inset:0;display:grid;place-items:center;font-family:"Reem Kufi",sans-serif;font-size:64px;color:rgba(255,255,255,.22)}
+.mkt-card{text-decoration:none}
+.mkt-card-n{display:block;font-size:15px;font-weight:700;line-height:1.3}
+.mkt-card-o{display:block;font-size:12px;font-weight:500;opacity:.9;margin-top:2px;line-height:1.35}
+.mkt-card-t{position:relative;z-index:1;padding:12px 14px;font-family:"Reem Kufi",sans-serif;font-size:17px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+.block{margin:0 0 var(--gap-lg);scroll-margin-top:72px}
 
 .block .rail{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
 .col{flex:0 0 86%;min-width:0;scroll-snap-align:start;display:flex;flex-direction:column;gap:12px}
@@ -81,9 +99,12 @@ label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 6px}
 .rcard-fav svg{width:16px;height:16px;fill:#5B645D}
 .rcard-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:12px 14px}
 .rcard .rname{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcard-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:26px}
+.rcard-top .badge{margin:0;min-width:0;max-width:calc(100% - 34px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;font-size:12px;padding:3px 10px;line-height:1.4}
+.rcard-top .rcard-fav{position:static;flex:none;width:26px;height:26px}
 .rcard-line{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rcard-line .star{color:var(--saffron)}
-.ad{display:block;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:14px 0}
+.ad{display:block;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:var(--gap-md) 0}
 .ad img{display:block;width:100%;height:auto;max-height:200px;object-fit:cover}
 .ad-body{padding:12px 14px;display:flex;flex-direction:column;gap:2px}
 .ad-tag{font-size:11px;color:var(--ink-2)}
@@ -148,7 +169,7 @@ img.thumb{display:block}
 .rhead{font-size:26px;margin:14px 0 4px}
 .facts{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:14px;color:var(--ink-2)}
 .offerbox{background:#fff;border-radius:var(--r);padding:14px;margin-top:14px;border-inline-start:4px solid var(--saffron)}
-.menucats{position:sticky;top:60px;z-index:4;background:var(--bg);padding-bottom:4px}
+.menucats{position:sticky;top:44px;z-index:4;background:var(--bg);padding-bottom:4px}
 
 .product{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);align-items:flex-start}
 .price{font-weight:700;color:var(--olive)}
@@ -161,11 +182,16 @@ img.thumb{display:block}
 .review{padding:12px 0;border-bottom:1px solid var(--line)}
 .stars{color:var(--saffron);letter-spacing:1px}
 
-.cartbar{position:fixed;bottom:76px;inset-inline:12px;max-width:496px;margin:0 auto;background:var(--ink);color:#fff;border-radius:16px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:9;box-shadow:0 10px 30px rgba(20,28,22,.25)}
+.cartbar{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));inset-inline:12px;max-width:496px;margin:0 auto;background:var(--ink);color:#fff;border-radius:16px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:9;box-shadow:0 10px 30px rgba(20,28,22,.25)}
 
-.tabbar{position:fixed;bottom:0;inset-inline:0;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:6px 4px max(8px,env(safe-area-inset-bottom));z-index:10}
-.tabbar a{text-align:center;color:var(--ink-2);text-decoration:none;font-size:13px;padding:8px 4px;border-radius:10px}
-.tabbar a[aria-current="page"]{color:var(--ink);font-weight:700;background:var(--bg)}
+.topbar-end{display:flex;align-items:center;gap:8px;flex:none}
+.cartbtn{position:relative;flex:none;width:40px;height:40px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center}
+.cartbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cartcount{position:absolute;top:-4px;inset-inline-start:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--saffron);color:var(--saffron-ink);font-size:11px;font-weight:700;display:grid;place-items:center;line-height:1}
+.tabbar{display:none;position:fixed;bottom:max(12px,env(safe-area-inset-bottom));inset-inline:12px;max-width:496px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:22px;grid-template-columns:repeat(4,1fr);gap:4px;padding:6px;box-shadow:0 8px 24px rgba(20,28,22,.12);z-index:10}
+body[data-page="home"] .tabbar{display:grid}
+.tabbar a{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;color:var(--ink-2);text-decoration:none;font-size:12px;line-height:1.3;padding:8px 2px;border-radius:16px;transition:background-color .2s ease,color .2s ease}
+.tabbar a[aria-current="page"]{color:var(--ink);font-weight:700;background:#FFF3D6}
 
 .backdrop{position:fixed;inset:0;background:rgba(14,20,15,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--bg);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:18px 16px max(22px,env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
@@ -195,6 +221,11 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .empty{text-align:center;padding:48px 16px;color:var(--ink-2)}
 .center{text-align:center}
 
+@media (orientation: landscape){
+  .wrap{padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
+  .topbar{padding-inline:0}
+  .tabbar,.cartbar,.toast{inset-inline-start:max(12px,env(safe-area-inset-left));inset-inline-end:max(12px,env(safe-area-inset-right))}
+}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -204,10 +235,10 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 <div id="cartbar" class="cartbar hidden" role="region" aria-label="السلة"></div>
 
 <nav class="tabbar" aria-label="التنقل">
-  <a href="#/home" data-tab="home">الرئيسية</a>
-  <a href="#/restaurants" data-tab="restaurants">المطاعم</a>
-  <a href="#/orders" data-tab="orders">طلباتي</a>
-  <a href="#/account" data-tab="account">حسابي</a>
+  <a href="#/home" data-tab="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>الرئيسية</span></a>
+  <a href="#/restaurants" data-tab="restaurants"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v8a4 4 0 0 0 8 0V3M8 3v18M18 21V3c-2 1-3 3.5-3 6.5 0 2.5 1 4 3 4.5"/></svg><span>المطاعم</span></a>
+  <a href="#/orders" data-tab="orders"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span>طلباتي</span></a>
+  <a href="#/account" data-tab="account"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>حسابي</span></a>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -407,8 +438,9 @@ function restRowHtml(r, customBadge) {
   // أيقونة المفضلة شكلية حالياً: مفيش جدول مفضلة في قاعدة البيانات لسه
   const heart = `<span class="rcard-fav" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.7 4.5 6.6 4.5c2.2 0 3.7 1.2 5.4 3 1.7-1.8 3.2-3 5.4-3 3.9 0 5.7 3.9 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg></span>`;
   return `<a class="rcard" href="#/r/${esc(r.slug)}" aria-label="${esc(r.name)}">
-    <span class="rcard-img">${mainImg ? `<img src="${esc(mainImg)}" alt="" loading="lazy">` : `<span class="rcard-fb" aria-hidden="true">${fallback}</span>`}${logoOverlay}${heart}${badge ? badgeHtml(badge) : ''}</span>
+    <span class="rcard-img">${mainImg ? `<img src="${esc(mainImg)}" alt="" loading="lazy">` : `<span class="rcard-fb" aria-hidden="true">${fallback}</span>`}${logoOverlay}</span>
     <span class="rcard-body">
+      <span class="rcard-top">${badge ? badgeHtml(badge) : ''}${heart}</span>
       <strong class="rname">${esc(r.name)}</strong>
       <span class="rcard-line"><span class="star">★</span> ${Number(r.rating || 0).toFixed(1)} · ${deliveryText(r)}</span>
     </span></a>`;
@@ -422,7 +454,7 @@ function blockHtml(bl, byId) {
   // كل عمود فيه PER_COL مطاعم فوق بعض، والأعمدة جنب بعض والريل بيتسحب أفقياً
   const cols = [];
   for (let i = 0; i < items.length; i += PER_COL) cols.push(items.slice(i, i + PER_COL));
-  return `<section class="block">
+  return `<section class="block" id="blk-${esc(bl.id)}">
     <h2 class="sec">${esc(bl.title)}</h2>
     ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
     <div class="rail">${cols.map((c) => `<div class="col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>
@@ -584,7 +616,7 @@ document.addEventListener('click', (e) => {
 
 // ترتيب الصفحة من homepage_layout_items (الإعلانات بتتعرض في موضعها)
 // skipCodes: مواضع بتتعرض في مكان محدد بره الترتيب
-function layoutHtml(layout, blocks, byId, ads, skipCodes = new Set()) {
+function layoutHtml(layout, blocks, byId, ads, skipCodes = new Set(), used = null) {
   const blockById = new Map(blocks.map((b) => [b.id, b]));
   // التخطيط هو المصدر الوحيد: البلوك اللي مش في التخطيط ما يتعرضش أبداً
   const items = layout;
@@ -596,18 +628,51 @@ function layoutHtml(layout, blocks, byId, ads, skipCodes = new Set()) {
     if (it.item_type === 'ad_banner') {
       const code = it.ad_placements && it.ad_placements.code;
       if (!code || skipCodes.has(code)) return '';
-      return adsHtml(ads.get(code));
+      return adsHtml(used ? pickAds(ads, code, used) : ads.get(code));
     }
     return '';
   }).join('');
 }
 
 function emptyHtml(txt) { return `<p class="empty">${esc(txt)}</p>`; }
+// السلات النشطة للعميل: كل مطعم له سلته، والزرار في الهيدر بيعرض مجموع العناصر
+let cartSummary = [];
+async function refreshCartSummary() {
+  if (!session) { cartSummary = []; return; }
+  const { data } = await sb.from('carts')
+    .select('id, restaurant_id, restaurants(name, slug), cart_items(quantity)')
+    .eq('customer_id', session.user.id).eq('status', 'active');
+  cartSummary = (data || []).map((c) => ({
+    id: c.id,
+    name: c.restaurants?.name || 'مطعم',
+    slug: c.restaurants?.slug || '',
+    count: (c.cart_items || []).reduce((s, i) => s + Number(i.quantity || 0), 0),
+  })).filter((c) => c.count > 0);
+}
+function cartBtnHtml() {
+  const n = cartSummary.reduce((s, c) => s + c.count, 0);
+  return `<button class="cartbtn" type="button" data-act="cart" aria-label="السلة${n ? ` (${n} عنصر)` : ''}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L21 8H6.2"/><circle cx="9.5" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg>${n ? `<span class="cartcount">${n}</span>` : ''}</button>`;
+}
+function updateCartBtns() {
+  document.querySelectorAll('.cartbtn').forEach((b) => { b.outerHTML = cartBtnHtml(); });
+}
+function openCartSheet() {
+  if (!session) return goLogin();
+  const onThis = location.hash.indexOf('#/r/') === 0 && R && cartSummary.some((c) => c.slug === R.rest.slug);
+  const rows = cartSummary.length
+    ? cartSummary.map((c) => `<a class="opt" href="#/r/${esc(c.slug)}"><span class="grow">${esc(c.name)}<small>${c.count} عنصر</small></span></a>`).join('')
+    : '<p class="meta" style="margin-top:12px">السلة فاضية دلوقتي</p>';
+  openSheet(`<h2>سلتك</h2>${rows}${onThis ? '<button class="btn primary" id="cartCheckout" type="button" style="margin-top:12px">راجع الطلب</button>' : ''}`,
+    (sheetEl) => { sheetEl.querySelector('#cartCheckout')?.addEventListener('click', openCheckout); });
+}
+
 function topbar(title) {
-  return `<header class="topbar"><h1 class="ttl">${title ? esc(title) : '<span class="brand">سحاب</span>'}</h1></header>`;
+  // الشريط السفلي بيظهر في الرئيسية بس، فصفحات تانية فيها رابط للرئيسية في الشريط العلوي
+  const home = title ? `<a class="homelink" href="#/home" aria-label="الرئيسية"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></a>` : '';
+  return `<header class="topbar"><h1 class="ttl">${title ? esc(title) : '<span class="brand">سحاب</span>'}</h1><div class="topbar-end">${home}${cartBtnHtml()}</div></header>`;
 }
 function backbar(title) {
-  return `<header class="topbar"><a class="chip" href="#/restaurants">رجوع للمطاعم</a><h1 class="ttl" style="font-size:18px">${esc(title || '')}</h1></header>`;
+  return `<header class="topbar"><a class="chip" href="#/restaurants">رجوع للمطاعم</a><h1 class="ttl" style="font-size:18px">${esc(title || '')}</h1><div class="topbar-end">${cartBtnHtml()}</div></header>`;
 }
 
 /* ============ الراوتر ============ */
@@ -616,6 +681,7 @@ const ROUTES = [
   [/^home$/, viewHome, false, 'home'],
   [/^restaurants$/, viewRestaurants, false, 'restaurants'],
   [/^r\/([^/]+)$/, viewRestaurant, false, 'restaurants'],
+  [/^g\/([^/]+)$/, viewGroup, false, ''],
   [/^orders$/, viewOrders, true, 'orders'],
   [/^account$/, viewAccount, true, 'account'],
   [/^login$/, viewLogin, false, ''],
@@ -627,6 +693,8 @@ function route() {
   cartbar.classList.add('hidden');
   const raw = location.hash.replace(/^#\/?/, '');
   const path = raw.split('?')[0];
+  refreshCartSummary().then(updateCartBtns);
+  document.body.dataset.page = (path === '' || path === 'home') ? 'home' : (/^r\//.test(path) ? 'restaurant' : 'inner');
   const query = new URLSearchParams(raw.split('?')[1] || '');
   document.querySelectorAll('.tabbar a').forEach((a) => a.removeAttribute('aria-current'));
 
@@ -636,7 +704,7 @@ function route() {
     if (needsAuth && !session) { goLogin(); return; }
     if (tab) document.querySelector(`.tabbar a[data-tab="${tab}"]`)?.setAttribute('aria-current', 'page');
     if (fn === viewRestaurants) fn(query);
-    else if (fn === viewRestaurant) fn([m[0], decodeURIComponent(m[1])]);
+    else if (fn === viewRestaurant || fn === viewGroup) fn([m[0], decodeURIComponent(m[1])]);
     else fn();
     return;
   }
@@ -655,6 +723,24 @@ function homeStripHtml() {
     </nav>`;
 }
 
+// كروت الأقسام (مربعة 1:1): كل كارت قسم عليه مجموعة مطاعم بعروض خاصة (زي يوم البرجر أو خصم 40%)
+// والضغط عليه بيفتح شاشة القسم بكل مطاعمه، مش مطعم واحد
+function mktStripHtml(layout, blocks, byId) {
+  const blockById = new Map(blocks.map((b) => [b.id, b]));
+  const cards = layout.filter((it) => it.item_type === 'restaurant_block').map((it) => {
+    const bl = blockById.get(it.block_id);
+    if (!bl || !bl.members.some((m) => byId.has(m.restaurant_id))) return '';
+    const first = bl.members.map((m) => byId.get(m.restaurant_id)).find(Boolean);
+    const img = safeUrl(first?.cover_image_url) || safeUrl(first?.logo_url);
+    const letter = esc((bl.title || '?').trim()[0] || '؟');
+    return `<a class="mkt-card" href="#/g/${esc(bl.id)}" aria-label="${esc(bl.title)}">
+      ${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span class="mkt-card-fb" aria-hidden="true">${letter}</span>`}
+      <span class="mkt-card-t"><strong class="mkt-card-n">${esc(bl.title)}</strong>${bl.subtitle ? `<span class="mkt-card-o">${esc(bl.subtitle)}</span>` : ''}</span>
+    </a>`;
+  }).join('');
+  return cards ? `<section class="mkt-strip" aria-label="أقسام المطاعم">${cards}</section>` : '';
+}
+
 async function viewHome() {
   const my = ++rid;
   viewSeq++;
@@ -665,6 +751,8 @@ async function viewHome() {
   if (my !== rid) return;
 
   const byId = new Map(rests.map((r) => [r.id, r]));
+  const used = new Set(); // كل حملة تظهر مرة واحدة في الرئيسية
+  // الرئيسية مخصصة للإعلانات واللافتات والبلوكات بس؛ المطاعم الفردية في شاشة المطاعم
   const bannerHtml = offers.map((o) => {
     const r = byId.get(o.restaurant_id);
     if (!r) return '';
@@ -680,11 +768,10 @@ async function viewHome() {
     ${topbar()}
     ${homeStripHtml()}
     ${bannerHtml ? `<section class="banners" aria-label="عروض">${bannerHtml}</section>` : ''}
-    ${adsHtml(ads.get('home_banner'))}
-    ${layoutHtml(layout, blocks, byId, ads, new Set(['home_middle']))}
-    ${adsHtml(ads.get('home_middle'))}
-    <h2 class="sec">كل المطاعم</h2>
-    ${rests.map((r) => restRowHtml(r)).join('') || emptyHtml('مفيش مطاعم متاحة دلوقتي')}
+    ${mktStripHtml(layout, blocks, byId)}
+    ${adsHtml(pickAds(ads, 'home_banner', used))}
+    ${layoutHtml(layout, blocks, byId, ads, new Set(['home_middle']), used)}
+    ${adsHtml(pickAds(ads, 'home_middle', used))}
   `;
   observeAds(app);
 }
@@ -694,9 +781,32 @@ async function viewHome() {
 // الإعلانات: «الكل» ← restaurants_top / restaurants_between_*
 //            تصنيف محدد ← category_top / category_between_*
 // توزيع اللافتات داخل القائمة بالتساوي حسب ترتيب التخطيط (display_order)، ومن غير أرقام ثابتة
-function spreadSlots(items, len) {
-  const sorted = [...items].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
-  return sorted.map((it, i) => [it.ad_placements.code, Math.floor(((i + 1) * len) / (sorted.length + 1))]);
+// توزيع المطاعم بين البلوكات واللافتات حسب ترتيب التخطيط: عنصر ثم مجموعة مطاعم،
+// من غير ما يتجمع بلوكين أو لافتتين جنب بعض. القائمة بتعرض كل المطاعم المطابقة (زي تصنيف الكل).
+function sequenceHtml(items, list, blocksById, ads, used) {
+  const byId = new Map(list.map((r) => [r.id, r]));
+  const parts = [];
+  for (const it of items) {
+    if (it.item_type === 'restaurant_block') {
+      const bl = blocksById.get(it.block_id);
+      if (!bl) continue;
+      const html = blockHtml(bl, byId);
+      if (!html) continue;
+      parts.push(html);
+    } else if (it.item_type === 'ad_banner') {
+      const code = it.ad_placements?.code;
+      const html = code ? adsHtml(pickAds(ads, code, used)) : '';
+      if (html) parts.push(html);
+    }
+  }
+  const rest = list;
+  const n = parts.length;
+  const cut = (i) => Math.floor((i * rest.length) / (n + 1));
+  const rows = (from, to) => rest.slice(from, to).map((r) => restRowHtml(r)).join('');
+  if (!n) return rows(0, rest.length);
+  let out = '';
+  for (let i = 0; i < n; i++) out += parts[i] + rows(cut(i), cut(i + 1));
+  return out + rows(cut(n), rest.length);
 }
 
 // يرجّع الإعلانات المؤهلة للموضع، ويستبعد أي حملة ظهرت قبل كده في نفس الصفحة
@@ -709,6 +819,21 @@ function pickAds(ads, code, used) {
   });
 }
 
+// شاشة القسم: كل المطاعم اللي في البلوك بعروضها الخاصة
+async function viewGroup([, id]) {
+  const my = ++rid;
+  app.innerHTML = topbar('') + '<p class="meta">جاري التحميل…</p>';
+  const [rests, blocks] = await Promise.all([loadRestaurants(), loadBlocks()]);
+  if (my !== rid) return;
+  const bl = blocks.find((b) => String(b.id) === id);
+  if (!bl) { app.innerHTML = topbar('') + emptyHtml('القسم ده مش متاح دلوقتي'); return; }
+  const byId = new Map(rests.map((r) => [r.id, r]));
+  const items = bl.members.map((m) => ({ r: byId.get(m.restaurant_id), m })).filter((x) => x.r);
+  app.innerHTML = topbar(bl.title || 'القسم') + `
+    ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
+    ${items.length ? items.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('') : emptyHtml('مفيش مطاعم في القسم ده دلوقتي')}`;
+}
+
 async function viewRestaurants(query) {
   const my = ++rid;
   viewSeq++;
@@ -716,7 +841,6 @@ async function viewRestaurants(query) {
     <div id="top-ads"></div>
     <input class="search" id="s" type="search" placeholder="ابحث باسم المطعم" aria-label="ابحث عن مطعم">
     <nav class="chips" id="cats" aria-label="تصفية حسب التصنيف"></nav>
-    <div id="top"></div>
     <div id="list"><p class="meta">جاري التحميل…</p></div>`;
 
   const [rests, cats, blocks, restLayout, ads] = await Promise.all([
@@ -768,45 +892,27 @@ async function viewRestaurants(query) {
     if (!$('#list')) return; // الصفحة اتغيرت
     const term = $('#s').value.trim().toLowerCase();
     const list = rests.filter((r) => matches(r, term));
-    const byId = new Map(list.map((r) => [r.id, r]));
     const used = new Set(); // كل حملة تظهر مرة واحدة في الصفحة
-    let slots;
+    let items;
 
     if (active) {
       const cat = catBySlug.get(active);
       // لو التخطيط مش محمّل للتصنيف ده بالظبط ما نعرضش أي لافتة (ولا لافتات تصنيف تاني)
       const lay = cat && catLayouts.has(cat.id) ? catLayouts.get(cat.id) : [];
       const hasTop = lay.some((it) => it.ad_placements?.code === 'category_top');
-      const blocksHere = lay.filter((it) => it.item_type === 'restaurant_block');
-      const mids = lay.filter((it) => it.item_type === 'ad_banner' && it.ad_placements.code !== 'category_top');
       $('#top-ads').innerHTML = hasTop ? adsHtml(pickAds(ads, 'category_top', used)) : '';
-      $('#top').innerHTML = layoutHtml(blocksHere, blocks, byId, ads);
-      slots = spreadSlots(mids, list.length);
+      items = lay.filter((it) => it.ad_placements?.code !== 'category_top');
     } else {
-      const restBetween = restPage.filter((it) => it.item_type === 'ad_banner' && /^restaurants_between_/.test(it.ad_placements?.code || ''));
-      const skip = new Set(['restaurants_top', ...restBetween.map((it) => it.ad_placements.code)]);
       $('#top-ads').innerHTML = adsHtml(pickAds(ads, 'restaurants_top', used));
-      $('#top').innerHTML = layoutHtml(restPage, restPage.length ? blocks : [], byId, ads, skip);
-      slots = spreadSlots(restBetween, list.length);
+      items = restPage.filter((it) => it.ad_placements?.code !== 'restaurants_top');
     }
 
-    const listHtml = () => {
-      let out = '';
-      list.forEach((r, i) => {
-        out += restRowHtml(r);
-        for (const [code, after] of slots) {
-          if (i + 1 === after) out += adsHtml(pickAds(ads, code, used));
-        }
-      });
-      return out;
-    };
-
+    const blocksById = new Map(blocks.map((b) => [b.id, b]));
     const emptyTxt = term ? 'مفيش مطعم يطابق بحثك'
       : active ? 'مفيش مطاعم في التصنيف ده دلوقتي'
       : 'مفيش مطاعم متاحة دلوقتي';
-    $('#list').innerHTML = list.length ? listHtml() : emptyHtml(emptyTxt);
+    $('#list').innerHTML = list.length ? sequenceHtml(items, list, blocksById, ads, used) : emptyHtml(emptyTxt);
     observeAds($('#top-ads'));
-    observeAds($('#top'));
     observeAds($('#list'));
   };
 
@@ -943,16 +1049,8 @@ function cartLines() {
     .map((i) => ({ ...i, product: R.prodMap.get(i.product_id) }));
 }
 
-function drawCartBar() {
-  const lines = cartLines();
-  const count = lines.reduce((s, i) => s + i.quantity, 0);
-  if (!count || location.hash.indexOf('#/r/') !== 0) { cartbar.classList.add('hidden'); cartbar.innerHTML = ''; return; }
-  const sub = lines.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
-  cartbar.classList.remove('hidden');
-  cartbar.innerHTML = `<span>${count} عنصر · ${money(sub)}</span>
-    <button class="btn primary auto" id="openCheckout">راجع الطلب</button>`;
-  $('#openCheckout').onclick = openCheckout;
-}
+// السلة بقت في الهيدر (زرار السلة)، فالشريط اللي تحت اتشال
+function drawCartBar() {}
 
 async function setQty(productId, delta) {
   if (!session) return goLogin();
@@ -965,6 +1063,7 @@ async function setQty(productId, delta) {
     else if (next > 0) await sb.from('cart_items').insert({ cart_id: cart.id, product_id: productId, quantity: 1 });
     R.cart = await getCart(R.rest.id, false);
     drawMenu();
+    refreshCartSummary().then(updateCartBtns);
   } catch (e) {
     toast(e.message || 'تعذّر تحديث السلة');
   }
@@ -1046,6 +1145,7 @@ function openCheckout() {
         }
         closeSheet();
         R.cart = null;
+        refreshCartSummary().then(updateCartBtns);
         toast('استلمنا طلبك ✓');
         location.hash = '#/orders';
       } catch (ex) {
@@ -1218,6 +1318,7 @@ app.addEventListener('click', (e) => {
   if (act === 'dec') return setQty(b.dataset.id, -1);
   if (act === 'pay') return payOrder(b.dataset.order, b);
   if (act === 'logout') return logout();
+  if (act === 'cart') return openCartSheet();
   if (act === 'scroll') return document.getElementById(b.dataset.target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
