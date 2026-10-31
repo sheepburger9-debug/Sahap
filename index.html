@@ -296,6 +296,31 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .sh-ad-slider .swiper-slide > .ad{margin:var(--gap-sm) 0 0}
 .sh-ad-slider .swiper-pagination{position:relative;bottom:auto;margin-top:4px}
 @media (prefers-reduced-motion: reduce){.sh-offer-rail{scroll-behavior:auto}}
+/* الإعلان المميز (مستقل عن كارت المطعم): خلفية داكنة، صورة، شعار واسم المطعم */
+.ad-feat-wrap{margin:var(--gap-md) 0;min-width:0}
+.ad--featured{position:relative;display:flex;flex-direction:column;margin:0;padding:0;border:0;border-radius:var(--r);overflow:hidden;background:var(--olive);color:#EEF2EA;box-shadow:0 8px 22px rgba(26,31,27,.18);text-decoration:none;min-width:0}
+.ad--featured:focus-visible{outline:3px solid var(--saffron);outline-offset:3px}
+.ad-feat-media{position:relative;display:block;aspect-ratio:16/8;background:#2b3429;overflow:hidden}
+.ad-feat-media:empty{display:none}
+.ad-feat-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-height:none}
+.ad-feat-body{position:relative;display:flex;flex-direction:column;gap:6px;padding:14px 16px 16px;min-width:0}
+.ad-feat-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.ad-feat-logo{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--saffron);background:#fff;flex:0 0 36px}
+.ad-feat-name{font-weight:700;font-size:14px;min-width:0;overflow-wrap:anywhere}
+.ad--featured .ad-tag{background:var(--saffron);color:var(--saffron-ink);font-weight:700;font-size:12px;padding:2px 10px;border-radius:999px}
+.ad--featured .ad-title{font-family:"Reem Kufi",sans-serif;font-size:18px;line-height:1.25;color:#fff;overflow-wrap:anywhere}
+.ad--featured .meta{color:#D9E1D2;overflow-wrap:anywhere}
+/* سلايدر الإعلانات: لو Swiper مش متفعّل، العناصر تفضل ظاهرة في شريط أفقي بالسحب */
+.sh-ad-slider{overflow:hidden;touch-action:pan-y;width:100%;min-width:0}
+.sh-ad-slider .swiper-slide{height:auto;min-width:0}
+.sh-ad-slider .swiper-slide > .ad{margin:var(--gap-sm) 0 0}
+.sh-ad-slider .swiper-pagination{position:relative;bottom:auto;margin-top:4px}
+.sh-ad-slider:not(.swiper-initialized){display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
+.sh-ad-slider:not(.swiper-initialized)::-webkit-scrollbar{display:none}
+.sh-ad-slider:not(.swiper-initialized) .swiper-wrapper{display:contents}
+.sh-ad-slider:not(.swiper-initialized) .swiper-slide{flex:0 0 86%;max-width:86%;scroll-snap-align:start}
+.sh-ad-slider:not(.swiper-initialized) .swiper-pagination{display:none}
+@media (min-width:768px){.sh-ad-slider:not(.swiper-initialized) .swiper-slide{flex-basis:min(48%,420px);max-width:min(48%,420px)}}
 </style>
 </head>
 <body>
@@ -684,84 +709,90 @@ function blockHtml(bl, byId, shown = null, grid = false) {
   return `<section class="block" id="blk-${esc(bl.id)}"${aosAttr()}>${head}${rail}${offersHtml}</section>`;
 }
 
+// المطاعم المنشورة بمعرفها: بنستخدمها لشعار المطعم في الإعلان المميز (من نفس البيانات المحمّلة، بدون استعلام إضافي)
+let restIndex = new Map();
+// لفّ الإعلان بعنصر رابط داخلي/خارجي، أو div لو مفيش رابط
+function wrapAd(cls, dataAttrs, url, internal, title, inner) {
+  if (!url) return `<div class="${cls}" ${dataAttrs}>${inner}</div>`;
+  if (internal) return `<a class="${cls}" ${dataAttrs} href="${esc(url)}" aria-label="${esc(title)}">${inner}</a>`;
+  return `<a class="${cls}" ${dataAttrs} href="${esc(url)}" target="_blank" rel="noopener sponsored" aria-label="${esc(title)}">${inner}</a>`;
+}
+// الإعلان المميز: خلفية داكنة مستقلة عن كارت المطعم، فيها صورة الإعلان واسم المطعم وشعاره والشارة المميزة.
+// منتجات المطعم مش معروضة هنا: مفيش علاقة في قاعدة البيانات بين ad_campaigns وproducts، فلا تُخترع.
+function adFeaturedHtml(ad, url, internal, dataAttrs, title) {
+  const img = safeUrl(ad.creative_image_url);
+  const rest = restIndex.get(ad.restaurant_id);
+  const logo = safeUrl(rest?.logo_url);
+  const name = ad.restaurant_name || rest?.name || '';
+  const inner = `
+    <span class="ad-feat-media">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : ''}</span>
+    <span class="ad-feat-body">
+      <span class="ad-feat-top">
+        ${logo ? `<img class="ad-feat-logo" src="${esc(logo)}" alt="" loading="lazy">` : ''}
+        ${name ? `<span class="ad-feat-name">${esc(name)}</span>` : ''}
+        <span class="ad-tag">مطعم مميز</span>
+      </span>
+      <strong class="ad-title">${esc(title)}</strong>
+      ${ad.creative_text ? `<span class="meta">${esc(ad.creative_text)}</span>` : ''}
+    </span>`;
+  return `<div class="ad-feat-wrap">${wrapAd('ad ad--featured', dataAttrs, url, internal, title, inner)}</div>`;
+}
+const AD_FORMATS = ['hero', 'horizontal', 'square', 'vertical', 'featured'];
 function adHtml(ad) {
   if (!ad) return '';
-
-  const formats = ['hero', 'horizontal', 'square', 'vertical', 'featured'];
   const rawFormat = String(ad.creative_format || 'hero').toLowerCase();
-  const format = formats.includes(rawFormat) ? rawFormat : 'hero';
-
+  const format = AD_FORMATS.includes(rawFormat) ? rawFormat : 'hero';
   const img = safeUrl(ad.creative_image_url);
   const restaurantSlug = String(ad.restaurant_slug || '').trim();
-
   // روابط المطاعم داخل الموقع يجب أن تفتح صفحة المطعم داخليًا.
-  const internalUrl = restaurantSlug
-    ? `#/r/${encodeURIComponent(restaurantSlug)}`
-    : '';
-
+  const internalUrl = restaurantSlug ? `#/r/${encodeURIComponent(restaurantSlug)}` : '';
   const externalUrl = safeUrl(ad.target_url);
   const url = internalUrl || externalUrl;
-
   const title = ad.creative_title || ad.restaurant_name || 'اكتشف المطعم';
   const dataAttrs = `data-campaign-id="${esc(ad.campaign_id || '')}" data-placement="${esc(ad.placement_code || '')}"`;
-
-  const tag = format === 'featured'
-    ? '<span class="ad-tag">مطعم مميز</span>'
-    : '<span class="ad-tag">إعلان</span>';
-
+  if (format === 'featured') return adFeaturedHtml(ad, url, !!internalUrl, dataAttrs, title);
   const inner = `
     ${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : ''}
     <div class="ad-body">
-      ${tag}
+      <span class="ad-tag">إعلان</span>
       <strong class="ad-title">${esc(title)}</strong>
-      ${ad.creative_text
-        ? `<p class="meta">${esc(ad.creative_text)}</p>`
-        : ''}
-      ${restaurantSlug
-        ? '<span class="meta">افتح صفحة المطعم</span>'
-        : ''}
-    </div>
-  `;
-
-  if (!url) {
-    return `<div class="ad ad--${format}" ${dataAttrs}>${inner}</div>`;
-  }
-
-  if (internalUrl) {
-    return `<a class="ad ad--${format}" ${dataAttrs} href="${esc(url)}"
-      aria-label="${esc(title)}">${inner}</a>`;
-  }
-
-  return `<a class="ad ad--${format}" ${dataAttrs} href="${esc(url)}"
-    target="_blank" rel="noopener sponsored"
-    aria-label="${esc(title)}">${inner}</a>`;
+      ${ad.creative_text ? `<p class="meta">${esc(ad.creative_text)}</p>` : ''}
+      ${restaurantSlug ? '<span class="meta">افتح صفحة المطعم</span>' : ''}
+    </div>`;
+  return wrapAd(`ad ad--${format}`, dataAttrs, url, !!internalUrl, title, inner);
 }
 
-// الإعلانات في الموضع الواحد: لو أكثر من إعلان بتتعرض كسلايدر أفقي (Swiper) باللمس والماوس
+// الإعلانات في الموضع الواحد: أكثر من إعلان = سلايدر أفقي. لو Swiper اتحمّل بيتفعّل، ولو لأ
+// نفس العناصر بتفضل ظاهرة في شريط أفقي بـscroll-snap (CSS في ملف الصفحة)، ومفيش إعلان بيختفي
 let adSliders = [];
-let rotTimer = null; // محفوظ عشان route() يفضل شغال (التبديل بقى بـSwiper)
+let rotTimer = null; // محفوظ عشان route() يفضل شغال
+// الـtimers اللي بتستنى تسجيل الظهور بتتلغي مع إعادة الرسم أو مغادرة الصفحة
+function clearAdTimers(root = document) {
+  root.querySelectorAll('.ad[data-campaign-id]').forEach((el) => {
+    if (el.__timer) { clearTimeout(el.__timer); el.__timer = null; }
+  });
+}
 function destroyAdSliders() {
+  clearAdTimers(app);
   for (const s of adSliders) { try { s.destroy(true, true); } catch (_) {} }
   adSliders = [];
 }
 function adsHtml(list) {
   const arr = list || [];
   if (!arr.length) return '';
-  if (arr.length < 2 || !window.Swiper) return arr.map(adHtml).join('');
+  if (arr.length < 2) return adHtml(arr[0]);
   return `<div class="swiper sh-ad-slider" aria-roledescription="carousel" aria-label="إعلانات">
     <div class="swiper-wrapper">${arr.map((a) => `<div class="swiper-slide">${adHtml(a)}</div>`).join('')}</div>
     <div class="swiper-pagination"></div>
   </div>`;
 }
-// الشريط العلوي للمطاعم: سلايدر لو Swiper متاح، ولو لأ بيعرض أول إعلان بس
-function rotHtml(list) {
-  const arr = list || [];
-  if (!arr.length) return '';
-  return window.Swiper ? adsHtml(arr) : adHtml(arr[0]);
-}
+// الشريط العلوي للمطاعم: نفس السلايدر (كل الإعلانات المؤهلة للموضع)
+function rotHtml(list) { return adsHtml(list); }
 function mountAdSliders(root) {
   if (!root || !window.Swiper) return;
   root.querySelectorAll('.sh-ad-slider').forEach((el) => {
+    if (el.__sliderMounted) return; // ما نعملش نسخة تانية من نفس السلايدر
+    el.__sliderMounted = true;
     try {
       adSliders.push(new window.Swiper(el, {
         slidesPerView: 1, spaceBetween: 8, grabCursor: true, watchOverflow: true,
@@ -949,6 +980,7 @@ function route() {
   clearInterval(rotTimer);
   destroyHomeSwiper();
   destroyAdSliders();
+  if (impressionIO) impressionIO.disconnect(); // المراقبة القديمة ما تكملش بعد مغادرة الصفحة
   closeSheet();
   cartbar.classList.add('hidden');
   const raw = location.hash.replace(/^#\/?/, '');
@@ -1012,6 +1044,7 @@ async function viewHome() {
     fulfilledOr(x, [[], [], [], [], new Map(), []][i], 'home'));
 
   const byId = new Map(rests.map((r) => [r.id, r]));
+  restIndex = byId;
   const used = new Set(); // كل حملة تظهر مرة واحدة في الرئيسية
   // المواضع اللي في التخطيط بتتعرض في مكانها، والموضع اللي مش فيه بيتعرض في الرجوع الافتراضي
   const inLayout = new Set(layout.filter((it) => it.item_type === 'ad_banner').map((it) => it.ad_placements?.code));
@@ -1130,6 +1163,7 @@ async function viewRestaurants(query) {
   if (my !== rid) return;
   const [rests, cats, blocks, restLayout, ads] = settledRest.map((x, i) =>
     fulfilledOr(x, [[], [], [], [], new Map()][i], 'restaurants'));
+  restIndex = new Map(rests.map((r) => [r.id, r]));
 
   // التصنيف من الرابط لازم يكون نشط وموجود؛ غير كده نرجع لـ«الكل»
   const catBySlug = new Map(cats.map((c) => [c.slug, c]));
