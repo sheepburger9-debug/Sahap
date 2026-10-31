@@ -37,16 +37,16 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 .grow{flex:1;min-width:0}
 .meta{font-size:13px;color:var(--ink-2)}
 .err{color:var(--tomato);font-size:14px;min-height:0;margin-top:10px}
-.sec{font-size:19px;margin:var(--gap-lg) 0 var(--gap-sm)}
+.sec{font-size:17px;margin:var(--gap-lg) 0 var(--gap-sm)}
 .sub{margin:-6px 0 10px}
 
 .topbar{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 6px;min-height:0}
-.ttl{font-size:26px;font-weight:700}
+.ttl{font-size:22px;font-weight:700}
 .brand{font-family:"Reem Kufi",sans-serif;font-size:24px;font-weight:700;letter-spacing:0;line-height:1.2;display:inline-block;white-space:nowrap;flex-shrink:0}
 .homelink{flex:none;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink)}
 .homelink svg,.tabbar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:#fff;border-radius:999px;padding:13px 20px;font-weight:600;width:100%;text-decoration:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:#fff;border-radius:999px;padding:11px 18px;font-weight:600;width:100%;font-size:14px;text-decoration:none}
 .btn.primary{background:var(--saffron);color:var(--saffron-ink)}
 .btn.ghost{background:transparent;border:1px solid var(--ink);color:var(--ink)}
 .btn.auto{width:auto}
@@ -62,26 +62,26 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 
 .banners{display:flex;gap:12px;overflow-x:auto;margin:6px -16px 0;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
 .banners::-webkit-scrollbar{display:none}
-.banner{flex:0 0 88%;scroll-snap-align:start;position:relative;overflow:hidden;min-height:176px;border-radius:20px;background:var(--saffron);color:var(--saffron-ink);padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-decoration:none}
+.banner{flex:0 0 84%;scroll-snap-align:start;position:relative;overflow:hidden;min-height:140px;border-radius:20px;background:var(--saffron);color:var(--saffron-ink);padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-decoration:none}
 .banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3}
 .banner > *{position:relative}
-.banner .bt{font-family:"Reem Kufi",sans-serif;font-size:24px;font-weight:700;line-height:1.2}
+.banner .bt{font-family:"Reem Kufi",sans-serif;font-size:19px;font-weight:700;line-height:1.2}
 /* كروت الأقسام التسويقية أعلى الرئيسية: مربعة 1:1 ومستقلة عن كروت المطاعم */
 .mkt-strip{display:flex;gap:var(--gap-sm);overflow-x:auto;margin:0 -16px var(--gap-lg);padding:4px 16px 8px;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .mkt-strip::-webkit-scrollbar{display:none}
-.mkt-card{position:relative;flex:0 0 min(44vw,188px);aspect-ratio:1/1;overflow:hidden;border:0;border-radius:18px;background:linear-gradient(135deg,#3E5B3A,#1A1F1B);color:#fff;display:flex;flex-direction:column;justify-content:flex-end;text-align:start;box-shadow:0 6px 16px rgba(26,31,27,.14);scroll-snap-align:start;transition:transform .2s ease}
+.mkt-card{position:relative;flex:0 0 min(38vw,150px);aspect-ratio:1/1;overflow:hidden;border:0;border-radius:18px;background:linear-gradient(135deg,#3E5B3A,#1A1F1B);color:#fff;display:flex;flex-direction:column;justify-content:flex-end;text-align:start;box-shadow:0 6px 16px rgba(26,31,27,.14);scroll-snap-align:start;transition:transform .2s ease}
 .mkt-card:active{transform:scale(.98)}
 .mkt-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
 .mkt-card::after{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(to top,rgba(20,24,20,.85) 0%,rgba(20,24,20,.35) 45%,rgba(20,24,20,0) 70%)}
 .mkt-card-fb{position:absolute;inset:0;display:grid;place-items:center;font-family:"Reem Kufi",sans-serif;font-size:64px;color:rgba(255,255,255,.22)}
 .mkt-card{text-decoration:none}
-.mkt-card-n{display:block;font-size:15px;font-weight:700;line-height:1.3}
+.mkt-card-n{display:block;font-size:14px;font-weight:700;line-height:1.3}
 .mkt-card-o{display:block;font-size:12px;font-weight:500;opacity:.9;margin-top:2px;line-height:1.35}
-.mkt-card-t{position:relative;z-index:1;padding:12px 14px;font-family:"Reem Kufi",sans-serif;font-size:17px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+.mkt-card-t{position:relative;z-index:1;padding:10px 12px;font-family:"Reem Kufi",sans-serif;font-size:15px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
 .block{margin:0 0 var(--gap-lg);scroll-margin-top:72px}
 
 .block .rail{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
-.col{flex:0 0 86%;min-width:0;scroll-snap-align:start;display:flex;flex-direction:column;gap:12px}
+.col{flex:0 0 84%;min-width:0;scroll-snap-align:start;display:flex;flex-direction:column;gap:12px}
 .col .rcard{margin:0}
 .block .rail::-webkit-scrollbar{display:none}
 .mini{flex:0 0 150px;text-decoration:none;display:flex;flex-direction:column;gap:4px}
@@ -89,8 +89,8 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 .cover img{width:100%;height:100%;object-fit:cover}
 .mini strong{font-size:15px}
 /* كارت المطعم: نص على الشمال، والصورة في مربع على اليمين، والعرض فوق الصورة */
-.rcard{display:flex;align-items:stretch;min-height:104px;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;text-decoration:none;color:inherit;margin:0 0 12px}
-.rcard-img{position:relative;flex:0 0 40%;min-height:104px;border-inline-start:1px solid var(--line);background:#fff;overflow:hidden;display:grid;place-items:center}
+.rcard{display:flex;align-items:stretch;min-height:88px;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;text-decoration:none;color:inherit;margin:0 0 12px}
+.rcard-img{position:relative;flex:0 0 36%;min-height:88px;border-inline-start:1px solid var(--line);background:#fff;overflow:hidden;display:grid;place-items:center}
 .rcard-img img{display:block;width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
 .rcard-fb{font-family:"Reem Kufi",sans-serif;font-size:32px;color:var(--olive)}
 .rcard-img .badge{position:absolute;bottom:6px;left:6px;margin:0;font-weight:700;font-size:12px;padding:3px 10px;z-index:1}
@@ -98,7 +98,7 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 .rcard-fav{position:absolute;top:6px;left:6px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.9);display:grid;place-items:center;z-index:1;box-shadow:0 1px 4px rgba(0,0,0,.18)}
 .rcard-fav svg{width:16px;height:16px;fill:#5B645D}
 .rcard-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:12px 14px}
-.rcard .rname{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcard .rname{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rcard-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:26px}
 .rcard-top .badge{margin:0;min-width:0;max-width:calc(100% - 34px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;font-size:12px;padding:3px 10px;line-height:1.4}
 .rcard-top .rcard-fav{position:static;flex:none;width:26px;height:26px}
@@ -108,16 +108,16 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 .ad img{display:block;width:100%;height:auto;max-height:200px;object-fit:cover}
 .ad-body{padding:12px 14px;display:flex;flex-direction:column;gap:2px}
 .ad-tag{font-size:11px;color:var(--ink-2)}
-.ad-title{font-family:"Reem Kufi",sans-serif;font-size:17px;font-weight:700}
+.ad-title{font-family:"Reem Kufi",sans-serif;font-size:16px;font-weight:700}
 /* ===== أنواع اللافتات الخمسة ===== */
 .ad,.ad *{max-width:100%;overflow-wrap:anywhere}
 .ad:focus-visible{outline:3px solid var(--saffron);outline-offset:3px}
 
 /* hero: بانر رئيسي عريض */
-.ad--hero{position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:176px;border:0;background:var(--ink);color:#EEF2EA}
+.ad--hero{position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:132px;border:0;background:var(--ink);color:#EEF2EA}
 .ad--hero img{position:absolute;inset:0;width:100%;height:100%;max-height:none;object-fit:cover;opacity:.45}
 .ad--hero .ad-body{position:relative;padding:20px;display:flex;flex-direction:column;gap:4px}
-.ad--hero .ad-title{font-size:24px;line-height:1.2;color:#fff}
+.ad--hero .ad-title{font-size:19px;line-height:1.2;color:#fff}
 .ad--hero .meta,.ad--hero .ad-tag{color:#D9E1D2}
 
 /* horizontal: صورة جانبية والنص بجانبها */
@@ -126,39 +126,39 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 .ad--horizontal .ad-body{flex:1;min-width:0;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;gap:2px}
 
 /* square: لافتة مربعة 1:1 */
-.ad--square{position:relative;display:flex;flex-direction:column;justify-content:flex-end;aspect-ratio:1/1;width:100%;max-width:360px;margin-inline:auto;border:0;background:var(--olive);color:#EEF2EA}
+.ad--square{position:relative;display:flex;flex-direction:column;justify-content:flex-end;aspect-ratio:1/1;width:100%;max-width:240px;margin-inline:auto;border:0;background:var(--olive);color:#EEF2EA}
 .ad--square img{position:absolute;inset:0;width:100%;height:100%;max-height:none;object-fit:cover;opacity:.55}
 .ad--square .ad-body{position:relative;padding:18px;display:flex;flex-direction:column;gap:4px;background:linear-gradient(transparent,rgba(26,31,27,.85))}
-.ad--square .ad-title{font-size:20px;line-height:1.25;color:#fff}
+.ad--square .ad-title{font-size:16px;line-height:1.25;color:#fff}
 .ad--square .meta,.ad--square .ad-tag{color:#D9E1D2}
 
 /* vertical: لافتة طولية للمساحات الضيقة */
-.ad--vertical{position:relative;display:flex;flex-direction:column;justify-content:flex-end;aspect-ratio:2/3;width:100%;max-width:240px;margin-inline:auto;border:0;background:var(--saffron);color:var(--saffron-ink)}
+.ad--vertical{position:relative;display:flex;flex-direction:column;justify-content:flex-end;aspect-ratio:2/3;width:100%;max-width:170px;margin-inline:auto;border:0;background:var(--saffron);color:var(--saffron-ink)}
 .ad--vertical img{position:absolute;inset:0;width:100%;height:100%;max-height:none;object-fit:cover;opacity:.5}
 .ad--vertical .ad-body{position:relative;padding:14px;display:flex;flex-direction:column;gap:4px;background:linear-gradient(transparent,rgba(42,28,0,.75))}
-.ad--vertical .ad-title{font-size:18px;line-height:1.25;color:#fff}
+.ad--vertical .ad-title{font-size:15px;line-height:1.25;color:#fff}
 .ad--vertical .meta,.ad--vertical .ad-tag{color:#FFF3D6}
 
 /* featured: لافتة مميزة بإطار واضح وشارة «مطعم مميز» */
 .ad--featured{border:2px solid var(--saffron);background:#FFFBF0;color:var(--ink);box-shadow:0 6px 18px rgba(242,165,17,.22)}
-.ad--featured img{width:100%;height:140px;max-height:none;object-fit:cover}
+.ad--featured img{width:100%;height:110px;max-height:none;object-fit:cover}
 .ad--featured .ad-body{padding:14px 16px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .ad--featured .ad-tag{background:var(--saffron);color:var(--saffron-ink);font-weight:700;font-size:12px;padding:3px 10px;border-radius:999px}
-.ad--featured .ad-title{font-size:18px}
+.ad--featured .ad-title{font-size:16px}
 
 /* تجاوب الشاشات الصغيرة والكبيرة */
 @media (max-width:360px){
-  .ad--hero{min-height:150px}
-  .ad--hero .ad-title{font-size:20px}
+  .ad--hero{min-height:120px}
+  .ad--hero .ad-title{font-size:17px}
   .ad--horizontal img{width:88px;flex-basis:88px}
-  .ad--square .ad-title{font-size:18px}
+  .ad--square .ad-title{font-size:15px}
 }
 @media (min-width:600px){
   .ad--hero{min-height:200px}
 }
 
 .row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
-.rname{font-size:16px;font-weight:600}
+.rname{font-size:15px;font-weight:600}
 .thumb{width:72px;height:72px;flex:none;border-radius:12px;background:#D9E1D2;object-fit:cover;display:grid;place-items:center;font-size:28px;color:var(--olive);font-family:"Reem Kufi",sans-serif}
 img.thumb{display:block}
 .badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;margin-top:4px}
@@ -225,6 +225,24 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
   .wrap{padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
   .topbar{padding-inline:0}
   .tabbar,.cartbar,.toast{inset-inline-start:max(12px,env(safe-area-inset-left));inset-inline-end:max(12px,env(safe-area-inset-right))}
+}
+/* تابلت: 600px فأكثر */
+@media (min-width:600px){
+  .wrap{max-width:760px}
+  .mkt-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible;margin:0 0 var(--gap-lg);padding:0}
+  .mkt-card{flex:none;width:100%}
+  .col{flex:0 0 min(84%,300px)}
+  #list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  #list .rcard{margin:0}
+  #list > .ad,#list > .block,#list > .empty{grid-column:1/-1}
+  .banner{flex:0 0 min(60%,360px)}
+}
+/* ديسكتوب: 1024px فأكثر */
+@media (min-width:1024px){
+  .wrap{max-width:1120px}
+  .mkt-strip{grid-template-columns:repeat(5,minmax(0,1fr))}
+  #list{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .col{flex:0 0 min(84%,320px)}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
@@ -337,6 +355,44 @@ async function loadBanners() {
     .eq('is_active', true).order('display_order');
   return (data || []).map((x) => x.restaurant_offers).filter(Boolean);
 }
+// أقسام الرئيسية التسويقية: جدول مستقل عن البلوكات، مع احترام التواريخ والتفعيل على مستوى القسم والعضوية
+async function loadDiscoverySections() {
+  const { data, error } = await sb.from('home_discovery_sections')
+    .select(`
+      id,
+      slug,
+      title,
+      subtitle,
+      image_url,
+      display_order,
+      starts_at,
+      ends_at,
+      home_discovery_section_restaurants (
+        id,
+        restaurant_id,
+        display_order,
+        is_active,
+        starts_at,
+        ends_at,
+        restaurants (
+          id,
+          name,
+          slug
+        )
+      )
+    `)
+    .eq('is_active', true)
+    .order('display_order');
+  if (error) { console.warn('[discovery]', error.message); return []; }
+  return (data || [])
+    .filter((s) => inWindow(s.starts_at, s.ends_at))
+    .map((s) => ({
+      ...s,
+      members: (s.home_discovery_section_restaurants || [])
+        .filter((m) => m.is_active !== false && inWindow(m.starts_at, m.ends_at))
+        .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
+    }));
+}
 async function loadBlocks() {
   const { data, error } = await sb.from('restaurant_blocks')
     .select('id, title, subtitle, display_order, badge:badges(name, display_text, background_color, text_color), block_restaurant_overrides(restaurant_id, display_order, is_eligible, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at, badge:badges(name, display_text, background_color, text_color))')
@@ -368,7 +424,32 @@ async function loadLayout(pageKey, categoryId = null) {
 }
 
 // الإعلانات المؤهلة فقط، من دالة على السيرفر تُرجع حقول العرض بس (بدون ميزانية أو أسعار)
+// تحويل الجرد العام (placement + campaigns) لنفس شكل الحملة اللي الواجهة بتعرضه
+function adsFromInventory(rows) {
+  const map = new Map();
+  for (const p of rows) {
+    const code = p.placement_code;
+    if (!code) continue;
+    const list = (p.campaigns || []).map((c) => ({
+      placement_code: code,
+      campaign_id: c.campaign_id,
+      creative_title: c.creative_title || c.title,
+      creative_text: c.creative_text,
+      creative_format: c.creative_format,
+      creative_image_url: c.image_url || c.creative_image_url,
+      target_url: c.target_url,
+      restaurant_id: c.restaurant_id,
+      restaurant_name: c.restaurant_name,
+      restaurant_slug: c.restaurant_slug,
+    }));
+    if (list.length) map.set(code, list);
+  }
+  return map;
+}
 async function loadAds() {
+  const inv = await sb.rpc('get_public_ad_inventory');
+  if (!inv.error && Array.isArray(inv.data)) return adsFromInventory(inv.data);
+  // الرجوع للدالة القديمة لو الجرد مش متاح
   const { data, error } = await sb.rpc('get_eligible_ads');
   if (error || !data) return new Map();
   const map = new Map();
@@ -681,7 +762,7 @@ const ROUTES = [
   [/^home$/, viewHome, false, 'home'],
   [/^restaurants$/, viewRestaurants, false, 'restaurants'],
   [/^r\/([^/]+)$/, viewRestaurant, false, 'restaurants'],
-  [/^g\/([^/]+)$/, viewGroup, false, ''],
+  [/^s\/([^/]+)$/, viewGroup, false, ''],
   [/^orders$/, viewOrders, true, 'orders'],
   [/^account$/, viewAccount, true, 'account'],
   [/^login$/, viewLogin, false, ''],
@@ -723,35 +804,35 @@ function homeStripHtml() {
     </nav>`;
 }
 
-// كروت الأقسام (مربعة 1:1): كل كارت قسم عليه مجموعة مطاعم بعروض خاصة (زي يوم البرجر أو خصم 40%)
-// والضغط عليه بيفتح شاشة القسم بكل مطاعمه، مش مطعم واحد
-function mktStripHtml(layout, blocks, byId) {
-  const blockById = new Map(blocks.map((b) => [b.id, b]));
-  const cards = layout.filter((it) => it.item_type === 'restaurant_block').map((it) => {
-    const bl = blockById.get(it.block_id);
-    if (!bl || !bl.members.some((m) => byId.has(m.restaurant_id))) return '';
-    const first = bl.members.map((m) => byId.get(m.restaurant_id)).find(Boolean);
-    const img = safeUrl(first?.cover_image_url) || safeUrl(first?.logo_url);
-    const letter = esc((bl.title || '?').trim()[0] || '؟');
-    return `<a class="mkt-card" href="#/g/${esc(bl.id)}" aria-label="${esc(bl.title)}">
+// كروت الأقسام التسويقية (مربعة 1:1) من home_discovery_sections فقط، ولا تستخدم البلوكات
+// الضغط على الكارت بيفتح شاشة القسم بكل مطاعمه
+function mktStripHtml(sections, byId) {
+  const cards = sections.map((sec) => {
+    const first = sec.members.map((m) => byId.get(m.restaurant_id)).find(Boolean);
+    if (!first) return ''; // قسم مفيهوش مطاعم منشورة
+    const img = safeUrl(sec.image_url) || safeUrl(first.cover_image_url) || safeUrl(first.logo_url);
+    const letter = esc((sec.title || '?').trim()[0] || '؟');
+    return `<a class="mkt-card" href="#/s/${esc(sec.id)}" aria-label="${esc(sec.title)}">
       ${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span class="mkt-card-fb" aria-hidden="true">${letter}</span>`}
-      <span class="mkt-card-t"><strong class="mkt-card-n">${esc(bl.title)}</strong>${bl.subtitle ? `<span class="mkt-card-o">${esc(bl.subtitle)}</span>` : ''}</span>
+      <span class="mkt-card-t"><strong class="mkt-card-n">${esc(sec.title)}</strong>${sec.subtitle ? `<span class="mkt-card-o">${esc(sec.subtitle)}</span>` : ''}</span>
     </a>`;
   }).join('');
-  return cards ? `<section class="mkt-strip" aria-label="أقسام المطاعم">${cards}</section>` : '';
+  return cards ? `<section class="mkt-strip" aria-label="أقسام مميزة">${cards}</section>` : '';
 }
 
 async function viewHome() {
   const my = ++rid;
   viewSeq++;
   app.innerHTML = topbar() + '<p class="meta">جاري التحميل…</p>';
-  const [rests, offers, blocks, layout, ads] = await Promise.all([
-    loadRestaurants(), loadBanners(), loadBlocks(), loadLayout('home'), loadAds(),
+  const [rests, offers, blocks, layout, ads, sections] = await Promise.all([
+    loadRestaurants(), loadBanners(), loadBlocks(), loadLayout('home'), loadAds(), loadDiscoverySections(),
   ]);
   if (my !== rid) return;
 
   const byId = new Map(rests.map((r) => [r.id, r]));
   const used = new Set(); // كل حملة تظهر مرة واحدة في الرئيسية
+  // المواضع اللي في التخطيط بتتعرض في مكانها، والموضع اللي مش فيه بيتعرض في الرجوع الافتراضي
+  const inLayout = new Set(layout.filter((it) => it.item_type === 'ad_banner').map((it) => it.ad_placements?.code));
   // الرئيسية مخصصة للإعلانات واللافتات والبلوكات بس؛ المطاعم الفردية في شاشة المطاعم
   const bannerHtml = offers.map((o) => {
     const r = byId.get(o.restaurant_id);
@@ -768,10 +849,10 @@ async function viewHome() {
     ${topbar()}
     ${homeStripHtml()}
     ${bannerHtml ? `<section class="banners" aria-label="عروض">${bannerHtml}</section>` : ''}
-    ${mktStripHtml(layout, blocks, byId)}
-    ${adsHtml(pickAds(ads, 'home_banner', used))}
-    ${layoutHtml(layout, blocks, byId, ads, new Set(['home_middle']), used)}
-    ${adsHtml(pickAds(ads, 'home_middle', used))}
+    ${mktStripHtml(sections, byId)}
+    ${inLayout.has('home_banner') ? '' : adsHtml(pickAds(ads, 'home_banner', used))}
+    ${layoutHtml(layout, blocks, byId, ads, new Set(), used)}
+    ${inLayout.has('home_middle') ? '' : adsHtml(pickAds(ads, 'home_middle', used))}
   `;
   observeAds(app);
 }
@@ -819,19 +900,19 @@ function pickAds(ads, code, used) {
   });
 }
 
-// شاشة القسم: كل المطاعم اللي في البلوك بعروضها الخاصة
+// شاشة القسم: كل المطاعم المنشورة في القسم بعروضها
 async function viewGroup([, id]) {
   const my = ++rid;
   app.innerHTML = topbar('') + '<p class="meta">جاري التحميل…</p>';
-  const [rests, blocks] = await Promise.all([loadRestaurants(), loadBlocks()]);
+  const [rests, sections] = await Promise.all([loadRestaurants(), loadDiscoverySections()]);
   if (my !== rid) return;
-  const bl = blocks.find((b) => String(b.id) === id);
-  if (!bl) { app.innerHTML = topbar('') + emptyHtml('القسم ده مش متاح دلوقتي'); return; }
+  const sec = sections.find((x) => String(x.id) === id);
+  if (!sec) { app.innerHTML = topbar('') + emptyHtml('القسم ده مش متاح دلوقتي'); return; }
   const byId = new Map(rests.map((r) => [r.id, r]));
-  const items = bl.members.map((m) => ({ r: byId.get(m.restaurant_id), m })).filter((x) => x.r);
-  app.innerHTML = topbar(bl.title || 'القسم') + `
-    ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
-    ${items.length ? items.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('') : emptyHtml('مفيش مطاعم في القسم ده دلوقتي')}`;
+  const items = sec.members.map((m) => byId.get(m.restaurant_id)).filter(Boolean);
+  app.innerHTML = topbar(sec.title || 'القسم') + `
+    ${sec.subtitle ? `<p class="meta sub">${esc(sec.subtitle)}</p>` : ''}
+    ${items.length ? items.map((r) => restRowHtml(r)).join('') : emptyHtml('مفيش مطاعم في القسم ده دلوقتي')}`;
 }
 
 async function viewRestaurants(query) {
