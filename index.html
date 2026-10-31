@@ -8,6 +8,11 @@
 <title>سحاب</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23F2A511'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='%231A1F1B'%3Eس%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.rtl.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@14.3.0/swiper-bundle.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css">
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@600;700&display=swap" rel="stylesheet">
@@ -22,7 +27,7 @@
   --gap-sm:12px; --gap-md:clamp(14px,3.5vw,22px); --gap-lg:clamp(22px,6vw,32px);
 }
 *{box-sizing:border-box}
-html,body{margin:0;overflow-x:hidden;max-width:100%;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;font-size:15px;line-height:1.6;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:clip;max-width:100%;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;font-size:15px;line-height:1.6;-webkit-tap-highlight-color:transparent}
 h1,h2,h3{font-family:"Reem Kufi",system-ui,sans-serif;margin:0;line-height:1.25}
 p{margin:0}
 button{font:inherit;cursor:pointer;border:0;background:none;color:inherit;padding:0}
@@ -45,7 +50,12 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 .brand{font-family:"Reem Kufi",sans-serif;font-size:24px;font-weight:700;letter-spacing:0;line-height:1.2;display:inline-block;white-space:nowrap;flex-shrink:0}
 .homelink{flex:none;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink)}
 .homelink svg,.tabbar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tabbar i{font-size:18px;height:20px;line-height:20px;display:block}
 
+/* ألوان أزرار سحاب عبر متغيرات Bootstrap (عشان hover ما يكسرش الألوان) */
+.btn{--bs-btn-color:#fff;--bs-btn-bg:var(--ink);--bs-btn-border-color:transparent;--bs-btn-hover-color:#fff;--bs-btn-hover-bg:#2c332d;--bs-btn-hover-border-color:transparent;--bs-btn-active-color:#fff;--bs-btn-active-bg:#2c332d;--bs-btn-active-border-color:transparent;--bs-btn-disabled-color:#fff;--bs-btn-disabled-bg:var(--ink);--bs-btn-disabled-border-color:transparent;--bs-btn-focus-shadow-rgb:242,165,17}
+.btn.primary{--bs-btn-color:var(--saffron-ink);--bs-btn-bg:var(--saffron);--bs-btn-hover-color:var(--saffron-ink);--bs-btn-hover-bg:#f7b832;--bs-btn-active-color:var(--saffron-ink);--bs-btn-active-bg:#f7b832;--bs-btn-disabled-color:var(--saffron-ink);--bs-btn-disabled-bg:var(--saffron)}
+.btn.ghost{--bs-btn-color:var(--ink);--bs-btn-bg:transparent;--bs-btn-border-color:var(--ink);--bs-btn-hover-color:var(--ink);--bs-btn-hover-bg:transparent;--bs-btn-hover-border-color:var(--ink);--bs-btn-active-color:var(--ink);--bs-btn-active-bg:transparent;--bs-btn-active-border-color:var(--ink);--bs-btn-disabled-color:var(--ink);--bs-btn-disabled-bg:transparent;--bs-btn-disabled-border-color:var(--ink)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:#fff;border-radius:999px;padding:11px 18px;font-weight:600;width:100%;font-size:14px;text-decoration:none}
 .btn.primary{background:var(--saffron);color:var(--saffron-ink)}
 .btn.ghost{background:transparent;border:1px solid var(--ink);color:var(--ink)}
@@ -55,13 +65,37 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 
 .chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
+/* تصنيفات شاشة المطاعم: شريط أفقي قابل للسحب، ثابت فوق وانت بتنزل */
+#sticky-head{position:sticky;top:54px;z-index:4;background:var(--bg);padding-bottom:6px}
+#cats{flex-wrap:nowrap;overflow-x:auto;padding-bottom:0;background:none}
+.sh-rot-item{display:none}
+.sh-rot-item.is-on{display:block}
+.sh-rot-item > .ad{height:168px;min-height:0;aspect-ratio:auto;max-width:none;margin:0 0 6px;border:0}
+@media (min-width:600px){.sh-rot-item > .ad{height:196px}}
+/* بلوكات شاشة المطاعم: قسم بخلفية مميزة، كل عمود 3 مطاعم تحت بعض، والأعمدة جنب بعض */
+.sh-blk{background:#FBF1D6;border:1px solid #EBD9A4;border-radius:18px;padding:12px 0 8px}
+.sh-blk > .sec{margin:0 12px 8px;font-size:16px}
+.sh-blk > .sub{margin:-4px 12px 8px}
+.sh-blk .sh-rail3{margin:0;padding:0 12px 4px;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory}
+.sh-blk .sh-rail3 .sh-col{flex:0 0 78%;width:78%;gap:8px}
+.sh-blk .rcard{min-height:72px;border-radius:14px;margin:0}
+.sh-blk .rcard-img{flex-basis:30%;min-height:72px}
+.sh-blk .rcard-body{padding:8px 10px;gap:4px}
+.sh-blk .rname{font-size:14px}
+.sh-blk .rcard-line{font-size:12px}
+.sh-blk .rcard-img .rcard-logo{width:36px;height:36px}
+@media (min-width:768px){.sh-blk .sh-rail3 .sh-col{flex:0 0 calc((100% - 16px) / 3);width:auto}}
+.sh-rot-item > .ad img{height:100%}
+#cats .chip{white-space:nowrap}
 .chip{white-space:nowrap;padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:14px;text-decoration:none;color:var(--ink)}
 .chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
 
 .search{margin:4px 0 6px}
 
-.banners{display:flex;gap:12px;overflow-x:auto;margin:6px -16px 0;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.banners,.sh-banners{display:flex;gap:12px;overflow-x:auto;margin:6px -16px 0;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
 .banners::-webkit-scrollbar{display:none}
+.sh-banners{display:block;overflow:hidden}
+.sh-banners .swiper-wrapper{display:flex}
 .banner{flex:0 0 84%;scroll-snap-align:start;position:relative;overflow:hidden;min-height:140px;border-radius:20px;background:var(--saffron);color:var(--saffron-ink);padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-decoration:none}
 .banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3}
 .banner > *{position:relative}
@@ -81,8 +115,8 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 .block{margin:0 0 var(--gap-lg);scroll-margin-top:72px}
 
 .block .rail{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
-.col{flex:0 0 84%;min-width:0;scroll-snap-align:start;display:flex;flex-direction:column;gap:12px}
-.col .rcard{margin:0}
+.sh-col{flex:0 0 84%;min-width:0;scroll-snap-align:start;display:flex;flex-direction:column;gap:12px}
+.sh-col .rcard{margin:0}
 .block .rail::-webkit-scrollbar{display:none}
 .mini{flex:0 0 150px;text-decoration:none;display:flex;flex-direction:column;gap:4px}
 .cover{height:96px;border-radius:12px;background:#D9E1D2;overflow:hidden;display:grid;place-items:center;font-family:"Reem Kufi",sans-serif;font-size:32px;color:var(--olive)}
@@ -126,7 +160,7 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 .ad--horizontal .ad-body{flex:1;min-width:0;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;gap:2px}
 
 /* square: لافتة مربعة 1:1 */
-.ad--square{position:relative;display:flex;flex-direction:column;justify-content:flex-end;aspect-ratio:1/1;width:100%;max-width:240px;margin-inline:auto;border:0;background:var(--olive);color:#EEF2EA}
+.ad--square{position:relative;display:flex;flex-direction:column;justify-content:flex-end;aspect-ratio:2/1;width:100%;max-width:none;margin-inline:0;border:0;background:var(--olive);color:#EEF2EA}
 .ad--square img{position:absolute;inset:0;width:100%;height:100%;max-height:none;object-fit:cover;opacity:.55}
 .ad--square .ad-body{position:relative;padding:18px;display:flex;flex-direction:column;gap:4px;background:linear-gradient(transparent,rgba(26,31,27,.85))}
 .ad--square .ad-title{font-size:16px;line-height:1.25;color:#fff}
@@ -155,9 +189,10 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 }
 @media (min-width:600px){
   .ad--hero{min-height:200px}
+  .ad--square{aspect-ratio:3/1}
 }
 
-.row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+.sh-row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
 .rname{font-size:15px;font-weight:600}
 .thumb{width:72px;height:72px;flex:none;border-radius:12px;background:#D9E1D2;object-fit:cover;display:grid;place-items:center;font-size:28px;color:var(--olive);font-family:"Reem Kufi",sans-serif}
 img.thumb{display:block}
@@ -217,33 +252,33 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .acct form{background:#fff;border-radius:18px;padding:16px;margin-top:10px}
 .acct .btn{margin-top:16px}
 
-.toast{position:fixed;top:12px;inset-inline:12px;max-width:496px;margin:0 auto;background:var(--ink);color:#fff;padding:12px 16px;border-radius:12px;z-index:40;font-size:14px}
+.sh-toast{position:fixed;top:12px;inset-inline:12px;max-width:496px;margin:0 auto;background:var(--ink);color:#fff;padding:12px 16px;border-radius:12px;z-index:40;font-size:14px}
 .empty{text-align:center;padding:48px 16px;color:var(--ink-2)}
 .center{text-align:center}
 
 @media (orientation: landscape){
   .wrap{padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
   .topbar{padding-inline:0}
-  .tabbar,.cartbar,.toast{inset-inline-start:max(12px,env(safe-area-inset-left));inset-inline-end:max(12px,env(safe-area-inset-right))}
+  .tabbar,.cartbar,.sh-toast{inset-inline-start:max(12px,env(safe-area-inset-left));inset-inline-end:max(12px,env(safe-area-inset-right))}
 }
 /* تابلت: 600px فأكثر */
 @media (min-width:600px){
   .wrap{max-width:760px}
   .mkt-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible;margin:0 0 var(--gap-lg);padding:0}
   .mkt-card{flex:none;width:100%}
-  .col{flex:0 0 min(84%,300px)}
-  #list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .sh-col{flex:0 0 min(84%,300px)}
   #list .rcard{margin:0}
-  #list > .ad,#list > .block,#list > .empty{grid-column:1/-1}
   .banner{flex:0 0 min(60%,360px)}
 }
 /* ديسكتوب: 1024px فأكثر */
 @media (min-width:1024px){
   .wrap{max-width:1120px}
   .mkt-strip{grid-template-columns:repeat(5,minmax(0,1fr))}
-  #list{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .col{flex:0 0 min(84%,320px)}
+  .sh-col{flex:0 0 min(84%,320px)}
 }
+/* منطقة تنبيهات SweetAlert2 ما تمنعش الضغط على الصفحة اللي تحتها */
+.swal2-container{pointer-events:none}
+.swal2-container .swal2-popup{pointer-events:auto}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -253,12 +288,15 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 <div id="cartbar" class="cartbar hidden" role="region" aria-label="السلة"></div>
 
 <nav class="tabbar" aria-label="التنقل">
-  <a href="#/home" data-tab="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>الرئيسية</span></a>
-  <a href="#/restaurants" data-tab="restaurants"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v8a4 4 0 0 0 8 0V3M8 3v18M18 21V3c-2 1-3 3.5-3 6.5 0 2.5 1 4 3 4.5"/></svg><span>المطاعم</span></a>
-  <a href="#/orders" data-tab="orders"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span>طلباتي</span></a>
-  <a href="#/account" data-tab="account"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>حسابي</span></a>
+  <a href="#/home" data-tab="home"><i class="fa-solid fa-house" aria-hidden="true"></i><span>الرئيسية</span></a>
+  <a href="#/restaurants" data-tab="restaurants"><i class="fa-solid fa-utensils" aria-hidden="true"></i><span>المطاعم</span></a>
+  <a href="#/orders" data-tab="orders"><i class="fa-solid fa-receipt" aria-hidden="true"></i><span>طلباتي</span></a>
+  <a href="#/account" data-tab="account"><i class="fa-solid fa-user" aria-hidden="true"></i><span>حسابي</span></a>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/swiper@14.3.0/swiper-bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 /* ============ الإعداد ============ */
@@ -286,9 +324,48 @@ let rid = 0;          // رقم العرض الحالي، عشان نتجاهل 
 let pollTimer = null;
 let R = null;         // حالة صفحة المطعم الحالية
 
+// واجهة موحدة للرسائل: SweetAlert2 لو اتحمّل، ولو لأي سبب لأ يرجع لرسالة بسيطة
+// سلايدر سوايبر: بيتعمل بعد رسم الصفحة وبيتدمر قبل أي صفحة جديدة، ومفيهوش تكرار للإعلانات
+let homeSwiper = null;
+function destroyHomeSwiper() {
+  if (!homeSwiper) return;
+  try { homeSwiper.destroy(true, true); } catch (_) {}
+  homeSwiper = null;
+}
+function mountHomeSwiper() {
+  destroyHomeSwiper();
+  const el = app.querySelector('.sh-banners');
+  if (!el || !window.Swiper) return;
+  try {
+    homeSwiper = new window.Swiper(el, {
+      slidesPerView: 'auto', spaceBetween: 12, grabCursor: true,
+      rtl: document.documentElement.dir === 'rtl', watchOverflow: true,
+    });
+  } catch (e) { console.error('[swiper]', e); homeSwiper = null; }
+}
+// AOS: الأنيميشن بيتطبق بس لو المكتبة اتحملت وكمان المستخدم مش طالب تقليل الحركة
+const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function aosAttr() { return window.AOS && !reduceMotion() ? ' data-aos="fade-up"' : ''; }
+function aosRefresh() {
+  if (!window.AOS || reduceMotion()) return;
+  try {
+    if (!window.__aosInit) { window.AOS.init({ once: true, duration: 450, offset: 40 }); window.__aosInit = true; }
+    else window.AOS.refresh();
+  } catch (e) { console.error('[aos]', e); }
+}
+
 function toast(msg) {
+  try {
+    if (window.Swal) {
+      window.Swal.fire({
+        toast: true, position: 'top', text: String(msg ?? ''), showConfirmButton: false,
+        timer: 3200, timerProgressBar: false, background: '#1A1F1B', color: '#fff',
+      });
+      return;
+    }
+  } catch (e) { console.error('[toast]', e); }
   const t = document.createElement('div');
-  t.className = 'toast';
+  t.className = 'sh-toast';
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3200);
@@ -529,16 +606,31 @@ function restRowHtml(r, customBadge) {
 const safeUrl = (u) => (/^https?:\/\//i.test(u || '') ? u : '');
 
 const PER_COL = 3; // عدد المطاعم رأسياً في كل عمود (الاتفاق الحالي)
-function blockHtml(bl, byId) {
-  const items = bl.members.map((m) => ({ r: byId.get(m.restaurant_id), m })).filter((x) => x.r);
+// shown: Set بيسجل كل مطعم اتعرض قبل كده في الصفحة، عشان المطعم يظهر مرة واحدة بس
+function blockHtml(bl, byId, shown = null, grid = false) {
+  const items = bl.members
+    .map((m) => ({ r: byId.get(m.restaurant_id), m }))
+    .filter((x) => x.r && !(shown && shown.has(x.r.id)));
   if (!items.length) return '';
+  if (shown) items.forEach((x) => shown.add(x.r.id));
+  // شاشة المطاعم: كل مطاعم البلوك ظاهرة في شبكة عمودية (مش شريط أفقي مخفي)
+  if (grid) {
+    // كل PER_COL مطاعم تحت بعض في عمود، والأعمدة جنب بعض (على الكمبيوتر 3 أعمدة ظاهرين)
+    const gcols = [];
+    for (let i = 0; i < items.length; i += PER_COL) gcols.push(items.slice(i, i + PER_COL));
+    return `<section class="block sh-blk" id="blk-${esc(bl.id)}">
+    <h2 class="sec">${esc(bl.title)}</h2>
+    ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
+    <div class="rail sh-rail3">${gcols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>
+  </section>`;
+  }
   // كل عمود فيه PER_COL مطاعم فوق بعض، والأعمدة جنب بعض والريل بيتسحب أفقياً
   const cols = [];
   for (let i = 0; i < items.length; i += PER_COL) cols.push(items.slice(i, i + PER_COL));
-  return `<section class="block" id="blk-${esc(bl.id)}">
+  return `<section class="block" id="blk-${esc(bl.id)}"${aosAttr()}>
     <h2 class="sec">${esc(bl.title)}</h2>
     ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}
-    <div class="rail">${cols.map((c) => `<div class="col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>
+    <div class="rail">${cols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>
   </section>`;
 }
 
@@ -598,6 +690,24 @@ function adHtml(ad) {
 // كل الإعلانات المؤهلة لنفس الموضع تظهر
 function adsHtml(list) {
   return (list || []).map(adHtml).join('');
+}
+// إعلان واحد ظاهر وبيتبدل مع باقي الإعلانات (التبديل بيتعمل بـstartRotation)
+function rotHtml(list) {
+  const arr = list || [];
+  return arr.map((a, i) => `<div class="sh-rot-item${i === 0 ? ' is-on' : ''}">${adHtml(a)}</div>`).join('');
+}
+let rotTimer = null;
+function startRotation(root) {
+  clearInterval(rotTimer);
+  rotTimer = null;
+  const items = root ? [...root.querySelectorAll('.sh-rot-item')] : [];
+  if (items.length < 2) return;
+  let i = 0;
+  rotTimer = setInterval(() => {
+    items[i].classList.remove('is-on');
+    i = (i + 1) % items.length;
+    items[i].classList.add('is-on');
+  }, 4500);
 }
 
 /* ===== تسجيل الظهور والنقر (CPM / CPC) ===== */
@@ -701,10 +811,11 @@ function layoutHtml(layout, blocks, byId, ads, skipCodes = new Set(), used = nul
   const blockById = new Map(blocks.map((b) => [b.id, b]));
   // التخطيط هو المصدر الوحيد: البلوك اللي مش في التخطيط ما يتعرضش أبداً
   const items = layout;
+  const shown = new Set(); // مطعم واحد في بلوك واحد بس على الصفحة
   return items.map((it) => {
     if (it.item_type === 'restaurant_block') {
       const bl = blockById.get(it.block_id);
-      return bl ? blockHtml(bl, byId) : '';
+      return bl ? blockHtml(bl, byId, shown) : '';
     }
     if (it.item_type === 'ad_banner') {
       const code = it.ad_placements && it.ad_placements.code;
@@ -770,6 +881,8 @@ const ROUTES = [
 
 function route() {
   clearInterval(pollTimer);
+  clearInterval(rotTimer);
+  destroyHomeSwiper();
   closeSheet();
   cartbar.classList.add('hidden');
   const raw = location.hash.replace(/^#\/?/, '');
@@ -817,7 +930,7 @@ function mktStripHtml(sections, byId) {
       <span class="mkt-card-t"><strong class="mkt-card-n">${esc(sec.title)}</strong>${sec.subtitle ? `<span class="mkt-card-o">${esc(sec.subtitle)}</span>` : ''}</span>
     </a>`;
   }).join('');
-  return cards ? `<section class="mkt-strip" aria-label="أقسام مميزة">${cards}</section>` : '';
+  return cards ? `<section class="mkt-strip" aria-label="أقسام مميزة"${aosAttr()}>${cards}</section>` : '';
 }
 
 async function viewHome() {
@@ -837,7 +950,7 @@ async function viewHome() {
   const bannerHtml = offers.map((o) => {
     const r = byId.get(o.restaurant_id);
     if (!r) return '';
-    return `<a class="banner" href="#/r/${esc(r.slug)}">
+    return `<a class="banner${window.Swiper ? ' swiper-slide' : ''}" href="#/r/${esc(r.slug)}">
       ${o.image_url ? `<img src="${esc(o.image_url)}" alt="" loading="lazy">` : ''}
       <span class="meta" style="color:inherit">${esc(r.name)}</span>
       <span class="bt">${esc(o.title)}</span>
@@ -848,13 +961,17 @@ async function viewHome() {
   app.innerHTML = `
     ${topbar()}
     ${homeStripHtml()}
-    ${bannerHtml ? `<section class="banners" aria-label="عروض">${bannerHtml}</section>` : ''}
+    ${bannerHtml ? (window.Swiper
+      ? `<section class="swiper sh-banners" aria-label="عروض"><div class="swiper-wrapper">${bannerHtml}</div></section>`
+      : `<section class="banners" aria-label="عروض">${bannerHtml}</section>`) : ''}
     ${mktStripHtml(sections, byId)}
     ${inLayout.has('home_banner') ? '' : adsHtml(pickAds(ads, 'home_banner', used))}
     ${layoutHtml(layout, blocks, byId, ads, new Set(), used)}
     ${inLayout.has('home_middle') ? '' : adsHtml(pickAds(ads, 'home_middle', used))}
   `;
   observeAds(app);
+  mountHomeSwiper();
+  aosRefresh();
 }
 
 /* ============ قائمة المطاعم والتصنيفات ============ */
@@ -867,23 +984,25 @@ async function viewHome() {
 function sequenceHtml(items, list, blocksById, ads, used) {
   const byId = new Map(list.map((r) => [r.id, r]));
   const parts = [];
+  const shown = new Set(); // المطاعم اللي ظهرت في بلوك، مش هتتكرر في القائمة العادية
   for (const it of items) {
     if (it.item_type === 'restaurant_block') {
       const bl = blocksById.get(it.block_id);
       if (!bl) continue;
-      const html = blockHtml(bl, byId);
+      const html = blockHtml(bl, byId, shown, true);
       if (!html) continue;
-      parts.push(html);
+      parts.push(`<div class="col-12">${html}</div>`);
     } else if (it.item_type === 'ad_banner') {
       const code = it.ad_placements?.code;
       const html = code ? adsHtml(pickAds(ads, code, used)) : '';
-      if (html) parts.push(html);
+      if (html) parts.push(`<div class="col-12">${html}</div>`);
     }
   }
+  // القائمة بتعرض كل المطاعم المطابقة (حتى اللي ظاهرة في بلوك فوق)، والتصنيف ما بيأثرش على «الكل»
   const rest = list;
   const n = parts.length;
   const cut = (i) => Math.floor((i * rest.length) / (n + 1));
-  const rows = (from, to) => rest.slice(from, to).map((r) => restRowHtml(r)).join('');
+  const rows = (from, to) => rest.slice(from, to).map((r) => `<div class="col-12 col-md-6 col-lg-4">${restRowHtml(r)}</div>`).join('');
   if (!n) return rows(0, rest.length);
   let out = '';
   for (let i = 0; i < n; i++) out += parts[i] + rows(cut(i), cut(i + 1));
@@ -891,6 +1010,15 @@ function sequenceHtml(items, list, blocksById, ads, used) {
 }
 
 // يرجّع الإعلانات المؤهلة للموضع، ويستبعد أي حملة ظهرت قبل كده في نفس الصفحة
+// إعلانات التصنيف: بس الحملات اللي مطعمها موجود في التصنيف ده
+function scopeAds(map, restIds) {
+  const out = new Map();
+  for (const [code, list] of map) {
+    const f = list.filter((a) => restIds.has(a.restaurant_id));
+    if (f.length) out.set(code, f);
+  }
+  return out;
+}
 function pickAds(ads, code, used) {
   return (ads.get(code) || []).filter((a) => {
     const key = a.campaign_id || a;
@@ -919,10 +1047,12 @@ async function viewRestaurants(query) {
   const my = ++rid;
   viewSeq++;
   app.innerHTML = `${topbar('المطاعم')}
-    <div id="top-ads"></div>
     <input class="search" id="s" type="search" placeholder="ابحث باسم المطعم" aria-label="ابحث عن مطعم">
-    <nav class="chips" id="cats" aria-label="تصفية حسب التصنيف"></nav>
-    <div id="list"><p class="meta">جاري التحميل…</p></div>`;
+    <div id="sticky-head">
+      <div id="top-ads"></div>
+      <nav class="chips" id="cats" aria-label="تصفية حسب التصنيف"></nav>
+    </div>
+    <div id="list" class="row g-3"><div class="col-12"><p class="meta">جاري التحميل…</p></div></div>`;
 
   const [rests, cats, blocks, restLayout, ads] = await Promise.all([
     loadRestaurants(), loadCategories(), loadBlocks(), loadLayout('restaurants'), loadAds(),
@@ -965,7 +1095,7 @@ async function viewRestaurants(query) {
     (!term || (r.name || '').toLowerCase().includes(term));
 
   const drawChips = () => {
-    $('#cats').innerHTML = `<button class="chip" data-c="" aria-pressed="${active === ''}">الكل</button>` +
+    $('#cats').innerHTML = !cats.length ? '' : `<button class="chip" data-c="" aria-pressed="${active === ''}">الكل</button>` +
       cats.map((c) => `<button class="chip" data-c="${esc(c.slug)}" aria-pressed="${active === c.slug}">${esc(c.name)}</button>`).join('');
   };
 
@@ -975,16 +1105,22 @@ async function viewRestaurants(query) {
     const list = rests.filter((r) => matches(r, term));
     const used = new Set(); // كل حملة تظهر مرة واحدة في الصفحة
     let items;
+    // في التصنيف: إعلاناته هي بس (مطاعم التصنيف). في «الكل»: كل الإعلانات
+    let adsView = ads;
+    if (active) {
+      const ids = new Set(rests.filter((r) => r.restaurant_categories?.slug === active).map((r) => r.id));
+      adsView = scopeAds(ads, ids);
+    }
 
     if (active) {
       const cat = catBySlug.get(active);
       // لو التخطيط مش محمّل للتصنيف ده بالظبط ما نعرضش أي لافتة (ولا لافتات تصنيف تاني)
       const lay = cat && catLayouts.has(cat.id) ? catLayouts.get(cat.id) : [];
       const hasTop = lay.some((it) => it.ad_placements?.code === 'category_top');
-      $('#top-ads').innerHTML = hasTop ? adsHtml(pickAds(ads, 'category_top', used)) : '';
+      $('#top-ads').innerHTML = hasTop ? rotHtml(pickAds(adsView, 'category_top', used)) : '';
       items = lay.filter((it) => it.ad_placements?.code !== 'category_top');
     } else {
-      $('#top-ads').innerHTML = adsHtml(pickAds(ads, 'restaurants_top', used));
+      $('#top-ads').innerHTML = rotHtml(pickAds(ads, 'restaurants_top', used));
       items = restPage.filter((it) => it.ad_placements?.code !== 'restaurants_top');
     }
 
@@ -992,9 +1128,11 @@ async function viewRestaurants(query) {
     const emptyTxt = term ? 'مفيش مطعم يطابق بحثك'
       : active ? 'مفيش مطاعم في التصنيف ده دلوقتي'
       : 'مفيش مطاعم متاحة دلوقتي';
-    $('#list').innerHTML = list.length ? sequenceHtml(items, list, blocksById, ads, used) : emptyHtml(emptyTxt);
+    $('#list').innerHTML = list.length ? sequenceHtml(items, list, blocksById, adsView, used) : `<div class="col-12">${emptyHtml(emptyTxt)}</div>`;
     observeAds($('#top-ads'));
+    startRotation($('#top-ads'));
     observeAds($('#list'));
+    aosRefresh();
   };
 
   drawChips();
@@ -1034,7 +1172,7 @@ async function viewRestaurant([, slug]) {
   app.innerHTML = backbar('') + '<p class="meta">جاري التحميل…</p>';
 
   const { data: r } = await sb.from('restaurants')
-    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, restaurant_categories(name), restaurant_badge_assignments(is_active, badges(name, display_text, background_color, text_color))')
+    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, restaurant_categories(name), restaurant_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, background_color, text_color))')
     .eq('slug', slug).maybeSingle();
   if (my !== rid) return;
   if (!r) { app.innerHTML = backbar('') + emptyHtml('المطعم ده مش متاح دلوقتي'); return; }
