@@ -330,6 +330,11 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .pcard-desc{font-size:12px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pcard-price{margin-top:4px;font-weight:700;font-size:14px;color:var(--olive)}
 .pcard:focus-visible{outline:3px solid var(--saffron);outline-offset:3px}
+/* منتجات البلوك: صف أفقي واحد قابل للسحب والتمرير، والكرت بعرض ثابت ومتجاوب */
+.sh-products-track{display:flex;flex-direction:row;flex-wrap:nowrap;gap:12px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:thin;padding:4px 12px 10px;margin-top:6px;min-width:0}
+.sh-products-track > .pcard{flex:0 0 clamp(145px,42vw,210px);min-width:0;scroll-snap-align:start}
+.sh-products-track::-webkit-scrollbar{height:6px}
+.sh-products-track::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
 .sh-offer-rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 0 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .sh-offer-rail::-webkit-scrollbar{display:none}
 .offer-card{flex:0 0 min(70%,260px);scroll-snap-align:start;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;text-decoration:none;color:inherit;min-width:0}
@@ -814,7 +819,7 @@ async function loadBlocks(pageKey = 'home', categoryId = null) {
   const { data, error } = await sb.from('restaurant_blocks')
     .select('id, title, subtitle, display_order, background_color, text_color, card_style, design_settings, content_mode, content_type, brand_id, restaurant_id, max_items, logo_url, cover_image_url, badge_image_url, starts_at, ends_at, brand:restaurant_brands(name, logo_url, cover_image_url), badge:badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position), block_restaurant_overrides(restaurant_id, display_order, is_eligible, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at, badge:badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position)), block_offer_items(id, display_order, is_active, starts_at, ends_at, restaurant_offers(id, title, description, image_url, status, starts_at, ends_at, restaurant_id))')
     .eq('is_visible', true).order('display_order');
-  if (error) { console.warn('[blocks]', error.message); return []; }
+  if (error) { console.error('[Sahap Blocks Error]', error); return []; }
 
   // اختيار المطاعم وترتيبها وحدها في Supabase؛ نفس الدالة تدعم الديناميكي واليدوي والبراند والمطعم الواحد.
   const rpc = await sb.rpc('get_public_restaurant_block_members', {
@@ -830,6 +835,7 @@ async function loadBlocks(pageKey = 'home', categoryId = null) {
   }
 
   const productMap = await loadBlockProducts((data || []).filter((b) => BLOCK_PRODUCT_TYPES.includes(b.content_type)).map((b) => b.id));
+  console.info('[Sahap Blocks]', { pageKey, categoryId, blocksCount: (data || []).length, membersLoaded: memberMap.size, productBlocks: productMap.size });
 
   return (data || []).map((b) => ({
     ...b,
@@ -1158,7 +1164,7 @@ function blockProductCardHtml(p, r) {
 function blockProductsHtml(bl, byId) {
   const products = blockValidProducts(bl, byId);
   if (!products.length) return '';
-  return `<div class="sh-prod-grid">${products.map((p) => blockProductCardHtml(p, byId.get(p.restaurant_id))).join('')}</div>`;
+  return `<div class="sh-products-track">${products.map((p) => blockProductCardHtml(p, byId.get(p.restaurant_id))).join('')}</div>`;
 }
 function blockRestaurantProductsHtml(bl, byId) {
   // المطعم: المحدد للبلوك، أو المطعم الوحيد بين أعضاء البلوك لو مفيش مطعم محدد. ولو مش واضح يتعرض ''
@@ -1172,7 +1178,7 @@ function blockRestaurantProductsHtml(bl, byId) {
   if (!target || !target.slug) return '';
   const products = blockValidProducts(bl, byId).filter((p) => p.restaurant_id === target.id);
   if (!products.length) return '';
-  return `<div class="sh-prod-group">${restRowHtml(target, blockBadge(bl, memberOf(bl, target.id)))}<div class="sh-prod-grid">${products.map((p) => blockProductCardHtml(p, target)).join('')}</div></div>`;
+  return `<div class="sh-prod-group">${restRowHtml(target, blockBadge(bl, memberOf(bl, target.id)))}<div class="sh-products-track">${products.map((p) => blockProductCardHtml(p, target)).join('')}</div></div>`;
 }
 function blockRestaurantsProductsHtml(bl, byId) {
   // كل مطعم من أعضاء البلوك وتحته منتجاته بس. مطعم من غير منتجات صالحة ما بيتعرضش
@@ -1180,7 +1186,7 @@ function blockRestaurantsProductsHtml(bl, byId) {
   const groups = blockRestaurantItems(bl, byId).map(({ r, m }) => {
     const mine = products.filter((p) => p.restaurant_id === r.id);
     if (!mine.length) return '';
-    return `<div class="sh-prod-group">${restRowHtml(r, blockBadge(bl, m))}<div class="sh-prod-grid">${mine.map((p) => blockProductCardHtml(p, r)).join('')}</div></div>`;
+    return `<div class="sh-prod-group">${restRowHtml(r, blockBadge(bl, m))}<div class="sh-products-track">${mine.map((p) => blockProductCardHtml(p, r)).join('')}</div></div>`;
   }).filter(Boolean);
   return groups.length ? `<div class="sh-prod-wrap">${groups.join('')}</div>` : '';
 }
@@ -1663,8 +1669,9 @@ async function viewHome() {
 // توزيع اللافتات داخل القائمة بالتساوي حسب ترتيب التخطيط (display_order)، ومن غير أرقام ثابتة
 // توزيع المطاعم بين البلوكات واللافتات حسب ترتيب التخطيط: عنصر ثم مجموعة مطاعم،
 // من غير ما يتجمع بلوكين أو لافتتين جنب بعض. القائمة بتعرض كل المطاعم المطابقة (زي تصنيف الكل).
-function sequenceHtml(items, list, blocksById, ads, used) {
-  const byId = new Map(list.map((r) => [r.id, r]));
+function sequenceHtml(items, list, blocksById, ads, used, allRests = list) {
+  // المطاعم بتتحل من القائمة الكاملة المنشورة (مش المفلترة)، عشان البلوك ما يختفيش لو مطعمه برّه الفلتر
+  const byId = new Map(allRests.map((r) => [r.id, r]));
   const tokens = [];
   for (const it of items) {
     if (it.item_type === 'restaurant_block') {
@@ -1819,7 +1826,10 @@ async function viewRestaurants(query) {
     const emptyTxt = term ? 'مفيش مطعم يطابق بحثك'
       : active ? 'مفيش مطاعم في التصنيف ده دلوقتي'
       : 'مفيش مطاعم متاحة دلوقتي';
-    $('#list').innerHTML = list.length ? sequenceHtml(items, list, blocksById, adsView, used) : `<div class="col-12">${emptyHtml(emptyTxt)}</div>`;
+    const listHtml = sequenceHtml(items, list, blocksById, adsView, used, rests);
+    // القائمة الفاضية ما بتمنعش البلوكات الصالحة من الظهور (إلا لو فيه بحث نشط)
+    const hasBlock = !term && listHtml.includes('sh-custom-block');
+    $('#list').innerHTML = (list.length || hasBlock) ? listHtml : `<div class="col-12">${emptyHtml(emptyTxt)}</div>`;
     // عنوان الصفحة بيوضح التصنيف المختار، عشان المستخدم يعرف هو فين
     const titleEl = app.querySelector('.topbar .ttl');
     if (titleEl) titleEl.textContent = active ? (catBySlug.get(active)?.name || 'المطاعم') : 'المطاعم';
