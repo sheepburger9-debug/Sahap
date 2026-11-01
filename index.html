@@ -7,6 +7,7 @@
 <meta name="description" content="سحاب: اطلب أكلك من أقرب المطاعم">
 <title>سحاب</title>
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23F2A511'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='%231A1F1B'%3Eس%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.rtl.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
@@ -36,7 +37,7 @@ input,textarea{font:inherit;width:100%;padding:12px 14px;border:1px solid var(--
 input:focus,textarea:focus{outline:2px solid var(--saffron);outline-offset:0;border-color:transparent}
 :focus-visible{outline:3px solid var(--saffron);outline-offset:2px}
 label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 6px}
-.wrap{max-width:520px;margin:0 auto;padding:0 16px 24px}
+.wrap{max-width:520px;margin:0 auto;padding:0 16px 120px}
 body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:110px}
 .hidden{display:none!important}
 .grow{flex:1;min-width:0}
@@ -45,7 +46,7 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 .sec{font-size:17px;margin:var(--gap-lg) 0 var(--gap-sm)}
 .sub{margin:-6px 0 10px}
 
-.topbar{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 6px;min-height:0}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 6px;min-height:0}
 .ttl{font-size:22px;font-weight:700}
 .brand{font-family:"Reem Kufi",sans-serif;font-size:24px;font-weight:700;letter-spacing:0;line-height:1.2;display:inline-block;white-space:nowrap;flex-shrink:0}
 .homelink{flex:none;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink)}
@@ -229,7 +230,7 @@ body[data-page="home"] .tabbar{display:grid}
 .tabbar a[aria-current="page"]{color:var(--ink);font-weight:700;background:#FFF3D6}
 
 .backdrop{position:fixed;inset:0;background:rgba(14,20,15,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:var(--bg);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:18px 16px max(22px,env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
+.sheet{background:var(--bg);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:18px 16px max(22px,env(safe-area-inset-bottom));max-height:90vh;max-height:90dvh;overflow:auto}
 .sheet h2{font-size:22px;margin-bottom:4px}
 .sum{display:flex;justify-content:space-between;padding:6px 0;font-size:15px}
 .sum.total{border-top:1px solid var(--line);margin-top:6px;padding-top:10px;font-weight:700;font-size:17px}
@@ -249,6 +250,7 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .auth{background:#fff;border-radius:18px;padding:18px;margin-top:8px}
 .points{background:#fff;border-radius:var(--r);padding:16px;margin:10px 0 4px;font-size:16px}
 .points b{font-family:"Reem Kufi",sans-serif;font-size:26px;color:var(--olive)}
+.points.err{color:var(--tomato)}
 .acct form{background:#fff;border-radius:18px;padding:16px;margin-top:10px}
 .acct .btn{margin-top:16px}
 
@@ -336,6 +338,28 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .cs-prod-img img{width:100%;height:100%;object-fit:cover}
 .co-page{padding-bottom:24px}
 
+
+/* ============ شاشة الترحيب (Onboarding) ============ */
+.welcome{min-height:calc(100dvh - 40px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:24px 8px}
+.welcome-logo{width:112px;height:112px;border-radius:28px;background:var(--saffron);color:var(--ink);display:grid;place-items:center;font-family:"Reem Kufi",sans-serif;font-size:58px;box-shadow:0 10px 26px rgba(26,31,27,.18)}
+.welcome h1{margin:6px 0 0;font-size:30px;color:var(--ink)}
+.welcome p{margin:0;color:var(--ink-2);font-size:15px;line-height:1.7;max-width:320px}
+.welcome-btn{margin-top:18px;min-width:220px;min-height:48px;padding:12px 24px;border:0;border-radius:16px;background:var(--ink);color:#fff;font-family:inherit;font-weight:700;font-size:16px;line-height:1.2;cursor:pointer}
+.welcome-btn:focus-visible{outline:3px solid var(--saffron);outline-offset:3px}
+
+/* ============ صفحة المطعم: الشعار وتفاصيل المنتج ============ */
+.rhead-row{display:flex;align-items:center;gap:12px;margin-top:10px}
+.rhead-row .rhead{margin:0;min-width:0}
+.rlogo{width:56px;height:56px;flex:none;border-radius:14px;object-fit:cover;border:1px solid var(--line);background:#fff}
+.prod-open{flex:none;padding:0;border:0;background:none;cursor:pointer;border-radius:12px}
+.prod-name{padding:0;border:0;background:none;text-align:start;cursor:pointer;font:inherit;color:inherit}
+.prod-open:focus-visible,.prod-name:focus-visible{outline:3px solid var(--saffron);outline-offset:2px}
+.psa-img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;background:var(--bg)}
+.psa-fb{display:grid;place-items:center;font-size:56px}
+.psa-name{font-size:20px;margin:12px 0 6px}
+.psa-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.psa-actions{margin-top:14px;display:flex;justify-content:flex-end}
+body::before{content:"";position:fixed;inset:0 0 auto 0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:6;pointer-events:none}
 </style>
 </head>
 <body>
@@ -989,8 +1013,33 @@ function backbar(title) {
   return `<header class="topbar"><a class="chip" href="#/restaurants">رجوع للمطاعم</a><h1 class="ttl" style="font-size:18px">${esc(title || '')}</h1><div class="topbar-end">${cartBtnHtml()}</div></header>`;
 }
 
+
+/* ============ شاشة الترحيب ============ */
+const WELCOME_KEY = 'sahap_seen_welcome';
+function hasSeenWelcome() {
+  try { return localStorage.getItem(WELCOME_KEY) === '1'; } catch { return false; }
+}
+function markWelcomeSeen() {
+  try { localStorage.setItem(WELCOME_KEY, '1'); } catch (_) {}
+}
+function viewWelcome() {
+  app.innerHTML = `
+    <section class="welcome" aria-labelledby="welcome-title">
+      <div class="welcome-logo" aria-hidden="true">س</div>
+      <h1 id="welcome-title">سحاب</h1>
+      <p>اطلب أكلك من أقرب المطاعم، وتابع طلبك لحد ما يوصلك.</p>
+      <button class="welcome-btn" type="button" id="welcome-enter">ادخل وتصفح سحاب</button>
+    </section>`;
+  // الزر بينقل فعلياً للرئيسية، والعلامة بتتسجل عشان الشاشة ماتظهرش تاني
+  $('#welcome-enter').addEventListener('click', () => {
+    markWelcomeSeen();
+    location.hash = '#/home';
+  });
+}
+
 /* ============ الراوتر ============ */
 const ROUTES = [
+  [/^welcome$/, viewWelcome, false, ''],
   [/^$/, viewHome, false, 'home'],
   [/^home$/, viewHome, false, 'home'],
   [/^restaurants$/, viewRestaurants, false, 'restaurants'],
@@ -1088,7 +1137,7 @@ async function viewHome() {
     const r = byId.get(o.restaurant_id);
     if (!r) return '';
     return `<a class="banner${window.Swiper ? ' swiper-slide' : ''}" href="#/r/${esc(r.slug)}">
-      ${o.image_url ? `<img src="${esc(o.image_url)}" alt="" loading="lazy">` : ''}
+      ${safeUrl(o.image_url) ? `<img src="${esc(safeUrl(o.image_url))}" alt="" loading="lazy">` : ''}
       <span class="meta" style="color:inherit">${esc(r.name)}</span>
       <span class="bt">${esc(o.title)}</span>
       ${o.description ? `<span>${esc(o.description)}</span>` : ''}
@@ -1106,6 +1155,10 @@ async function viewHome() {
     ${layoutHtml(layout, blocks, byId, ads, new Set(), used)}
     ${inLayout.has('home_middle') ? '' : adsHtml(pickAds(ads, 'home_middle', used))}
   `;
+  // لو الصفحة فاضية تماماً (مفيش مطاعم ولا لافتات ولا بلوكات) نعرض رسالة بدل شاشة بيضا
+  if (!rests.length && !bannerHtml && !blocks.length && !sections.length) {
+    app.insertAdjacentHTML('beforeend', emptyHtml('مفيش عروض متاحة دلوقتي، جرّب بعد شوية'));
+  }
   observeAds(app);
   mountHomeSwiper();
   mountAdSliders(app);
@@ -1271,6 +1324,9 @@ async function viewRestaurants(query) {
       : active ? 'مفيش مطاعم في التصنيف ده دلوقتي'
       : 'مفيش مطاعم متاحة دلوقتي';
     $('#list').innerHTML = list.length ? sequenceHtml(items, list, blocksById, adsView, used) : `<div class="col-12">${emptyHtml(emptyTxt)}</div>`;
+    // عنوان الصفحة بيوضح التصنيف المختار، عشان المستخدم يعرف هو فين
+    const titleEl = app.querySelector('.topbar .ttl');
+    if (titleEl) titleEl.textContent = active ? (catBySlug.get(active)?.name || 'المطاعم') : 'المطاعم';
     observeAds($('#top-ads'));
     observeAds($('#list'));
     mountAdSliders($('#top-ads'));
@@ -1384,8 +1440,8 @@ async function viewRestaurant([, slug]) {
 
   app.innerHTML = `
     ${backbar(r.name)}
-    <div class="hero">${r.cover_image_url ? `<img src="${esc(r.cover_image_url)}" alt="">` : `<span class="hero-fb" aria-hidden="true">${esc(r.name.trim()[0])}</span>`}</div>
-    <h1 class="rhead">${esc(r.name)}</h1>
+    <div class="hero">${safeUrl(r.cover_image_url) ? `<img src="${esc(safeUrl(r.cover_image_url))}" alt="">` : `<span class="hero-fb" aria-hidden="true">${esc((r.name || '?').trim()[0] || '؟')}</span>`}</div>
+    <div class="rhead-row">${safeUrl(r.logo_url) ? `<img class="rlogo" src="${esc(safeUrl(r.logo_url))}" alt="">` : ''}<h1 class="rhead">${esc(r.name)}</h1></div>
     <div class="facts">
       <span>${stars(r.rating)} ${Number(r.rating || 0).toFixed(1)}</span>
       <span>${esc(r.restaurant_categories?.name || '')}</span>
@@ -1409,6 +1465,37 @@ async function viewRestaurant([, slug]) {
   if (!r.is_open) toast('المطعم مقفول دلوقتي');
 }
 
+// شاشة تفاصيل المنتج: صورة ووصف وسعر، والكمية بتتعدل بنفس setQty اللي في المنيو
+function psaQty(id) {
+  return R?.cart?.items?.find((i) => i.product_id === id)?.quantity || 0;
+}
+function openProductSheet(id) {
+  const p = R?.prodMap?.get(id);
+  if (!p) return;
+  const img = safeUrl([...(p.product_images || [])].sort((a, b) => a.display_order - b.display_order)[0]?.image_url);
+  const unit = unitPrice(p, R.discounts);
+  const hasDisc = unit < Number(p.price);
+  const badges = productBadgesOf(p).map(badgeHtml).join('');
+  openSheet(`
+    ${img ? `<img class="psa-img" src="${esc(img)}" alt="">` : `<div class="psa-img psa-fb" aria-hidden="true">${esc(p.emoji || '•')}</div>`}
+    <h2 class="psa-name">${esc(p.name)}</h2>
+    ${badges ? `<div class="psa-badges">${badges}</div>` : ''}
+    ${p.description ? `<p class="meta">${esc(p.description)}</p>` : ''}
+    <div class="pricerow"><span class="price">${money(unit)}</span>${hasDisc ? `<s class="meta">${money(p.price)}</s>` : ''}</div>
+    <div class="psa-actions" data-pid="${esc(p.id)}">
+      <span class="qty"><button type="button" data-psa="dec" aria-label="قلل الكمية">−</button><span id="psa-qty" aria-live="polite">${psaQty(p.id)}</span><button type="button" data-psa="inc" aria-label="زوّد الكمية">+</button></span>
+    </div>`,
+  (el) => {
+    el.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-psa]');
+      if (!b) return;
+      await setQty(p.id, b.dataset.psa === 'inc' ? 1 : -1);
+      const q = document.getElementById('psa-qty');
+      if (q) q.textContent = String(psaQty(p.id));
+    });
+  });
+}
+
 function productHtml(p) {
   const inCart = R.cart?.items.find((i) => i.product_id === p.id);
   const qty = inCart?.quantity || 0;
@@ -1421,10 +1508,10 @@ function productHtml(p) {
   const hasDisc = unit < Number(p.price);
   const badges = productBadgesOf(p).map(badgeHtml).join('');
   return `<article class="product">
-    ${img ? `<img class="thumb" src="${esc(img)}" alt="" loading="lazy">` : `<span class="thumb" aria-hidden="true">${esc(p.emoji || '•')}</span>`}
+    <button class="prod-open" type="button" data-act="prod" data-id="${esc(p.id)}" aria-label="تفاصيل ${esc(p.name)}">${img ? `<img class="thumb" src="${esc(safeUrl(img))}" alt="" loading="lazy">` : `<span class="thumb" aria-hidden="true">${esc(p.emoji || '•')}</span>`}</button>
     <div class="grow">
       ${badges ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">${badges}</div>` : ''}
-      <strong>${esc(p.name)}</strong>
+      <button class="prod-name" type="button" data-act="prod" data-id="${esc(p.id)}"><strong>${esc(p.name)}</strong></button>
       ${p.description ? `<p class="meta">${esc(p.description)}</p>` : ''}
       <div class="pricerow"><span class="price">${money(unit)}</span>${hasDisc ? `<s class="meta">${money(p.price)}</s>` : ''}${control}</div>
     </div>
@@ -1455,7 +1542,16 @@ function cartLines(cart) {
 }
 
 // السلة بقت في الهيدر (زرار السلة)، فالشريط اللي تحت اتشال
-function drawCartBar() {}
+// شريط السلة العائم: بيظهر في صفحة المطعم بس لو فيه عناصر، ويوصّل لشاشة السلة
+function drawCartBar() {
+  if (!cartbar) return;
+  const lines = R?.rest ? cartLines(R.cart) : [];
+  const count = lines.reduce((n, i) => n + Number(i.quantity || 0), 0);
+  if (!count) { cartbar.classList.add('hidden'); cartbar.innerHTML = ''; return; }
+  const total = lines.reduce((s, i) => s + (i.product ? unitPrice(i.product, R.discounts) * Number(i.quantity || 0) : 0), 0);
+  cartbar.innerHTML = `<span>${count} عنصر · ${money(total)}</span><a class="btn primary auto" href="#/cart/${esc(R.rest.slug)}">عرض السلة</a>`;
+  cartbar.classList.remove('hidden');
+}
 
 // كل عمليات السلة بتتنفذ واحدة ورا التانية: ده بيمنع تضارب الكميات وإنشاء سلتين لنفس المطعم
 let cartQueue = Promise.resolve();
@@ -1916,13 +2012,20 @@ function bindCheckoutForm(root, cart) {
       refreshCartSummary().then(updateCartBtns);
 
       if (method === 'paymob') {
-        const { data, error: fnErr } = await sb.functions.invoke('paymob-initiate', { body: { order_id: orderId } });
-        if (fnErr || !data?.iframe_url) {
+        // الطلب اتسجل خلاص؛ أي فشل هنا ما يرجعش المستخدم للفورم عشان ما يعملش طلب مكرر
+        let iframeUrl = null;
+        try {
+          const { data, error: fnErr } = await sb.functions.invoke('paymob-initiate', { body: { order_id: orderId } });
+          if (!fnErr && data?.iframe_url) iframeUrl = data.iframe_url;
+        } catch (payEx) {
+          console.error('[paymob-initiate]', payEx);
+        }
+        if (!iframeUrl) {
           toast('اتسجل طلبك، بس تعذّر فتح صفحة الدفع. ادفعه من صفحة طلباتي');
           location.hash = '#/orders';
           return;
         }
-        location.href = data.iframe_url;
+        location.href = iframeUrl;
         return;
       }
       toast('استلمنا طلبك ✓');
@@ -1967,12 +2070,16 @@ function orderHtml(o) {
 
 async function viewOrders() {
   const my = ++rid;
+  // نلغي أي مؤقت سابق قبل ما نجيب واحد جديد، عشان التحديث ما يتكررش ويتراكم
+  clearInterval(pollTimer);
+  pollTimer = null;
   app.innerHTML = topbar('طلباتي') + '<p class="meta">جاري التحميل…</p>';
-  const { data: orders, error } = await sb.from('orders')
+  const { data, error } = await sb.from('orders')
     .select('id, status, total_amount, created_at, restaurants(name), payments(id, provider, status), order_items(product_name_snapshot, quantity)')
     .order('created_at', { ascending: false }).limit(30);
   if (my !== rid) return;
   if (error) { app.innerHTML = topbar('طلباتي') + emptyHtml('تعذّر تحميل طلباتك'); return; }
+  const orders = data || [];
 
   app.innerHTML = topbar('طلباتي') + (orders.length
     ? orders.map(orderHtml).join('')
@@ -1988,7 +2095,13 @@ async function payOrder(orderId, btn) {
   btn.disabled = true;
   const old = btn.textContent;
   btn.textContent = 'جاري التحويل…';
-  const { data, error } = await sb.functions.invoke('paymob-initiate', { body: { order_id: orderId } });
+  let data = null, error = null;
+  try {
+    ({ data, error } = await sb.functions.invoke('paymob-initiate', { body: { order_id: orderId } }));
+  } catch (ex) {
+    console.error('[payOrder]', ex);
+    error = ex;
+  }
   if (error || !data?.iframe_url) {
     toast(await invokeError(error, 'تعذّر بدء الدفع'));
     btn.disabled = false;
@@ -2002,14 +2115,17 @@ async function payOrder(orderId, btn) {
 async function viewAccount() {
   const my = ++rid;
   await loadProfile();
-  const { data: pts } = await sb.from('customer_points_ledger').select('points');
-  const total = (pts || []).reduce((s, x) => s + Number(x.points || 0), 0);
+  const { data: pts, error: ptsErr } = await sb.from('customer_points_ledger').select('points');
   if (my !== rid) return;
+  // لو الاستعلام فشل ما نعرضش صفر (ده نقاط وهمية)، نعرض رسالة واضحة
+  const pointsHtml = ptsErr
+    ? '<div class="points err" role="alert">تعذّر تحميل نقاطك حالياً</div>'
+    : `<div class="points">نقاطك: <b>${(pts || []).reduce((s, x) => s + Number(x.points || 0), 0)}</b></div>`;
 
   app.innerHTML = topbar('حسابي') + `
     <div class="acct">
       <p class="meta">${esc(session.user.email)}</p>
-      <div class="points">نقاطك: <b>${total}</b></div>
+      ${pointsHtml}
       <form id="pf" novalidate>
         <label for="pn">الاسم</label>
         <input id="pn" required value="${esc(profile?.full_name || '')}" autocomplete="name">
@@ -2027,8 +2143,11 @@ async function viewAccount() {
     const phone = $('#pp').value.replace(/[\s-]/g, '');
     if (!name) { $('#pErr').textContent = 'اكتب اسمك'; return; }
     if (phone && !PHONE_RE.test(phone)) { $('#pErr').textContent = 'اكتب رقم موبايل مصري صحيح'; return; }
-    const { error } = await sb.from('profiles').update({ full_name: name, phone: phone || null }).eq('id', session.user.id);
+    const { data: saved, error } = await sb.from('profiles')
+      .update({ full_name: name, phone: phone || null }).eq('id', session.user.id).select('id');
     if (error) { $('#pErr').textContent = error.message; return; }
+    // لو مفيش صف اتحدّث يبقى البيانات ما اتحفظتش فعلاً، ما نقولش نجحت
+    if (!saved?.length) { $('#pErr').textContent = 'تعذّر حفظ البيانات، حاول تاني'; return; }
     await loadProfile();
     toast('اتحفظت بياناتك');
   });
@@ -2104,6 +2223,7 @@ app.addEventListener('click', (e) => {
   if (act === 'logout') return logout();
   if (act === 'cart') return openCartSheet();
   if (act === 'scroll') return document.getElementById(b.dataset.target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (act === 'prod') return openProductSheet(b.dataset.id);
 });
 
 /* ============ الإقلاع ============ */
@@ -2130,7 +2250,7 @@ function registerSW() {
     }, 0);
   });
 
-  if (!location.hash) location.hash = '#/home';
+  if (!location.hash) location.hash = hasSeenWelcome() ? '#/home' : '#/welcome';
   else route();
 })();
 </script>
