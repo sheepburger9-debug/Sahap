@@ -766,8 +766,7 @@ async function loadRestaurants() {
   if (error) { loadFail('restaurants', error); return []; }
   return data || [];
 }
-// الترتيب من Supabase هو المصدر الوحيد: الدالة بترجّع Map (restaurant_id -> رقم المركز) كما وصلت من RPC
-// null = فشل الاستدعاء (بيتسجل في loadFail)؛ الواجهة ما بتحسبش أي نقاط أو ترتيب بديل
+// الترتيب من Supabase هو المصدر الوحيد. loadRanking بيجيب الصفوف الخام من RPC بس؛ الفشل بيتسجل في loadFail
 async function loadRanking(categoryId = null) {
   try {
     const { data, error } = await sb.rpc('get_public_restaurant_ranking', {
@@ -778,24 +777,45 @@ async function loadRanking(categoryId = null) {
       loadFail('ranking', error || new Error('ranking response is not a list'));
       return null;
     }
-    const order = new Map();
-    data.forEach((row, i) => {
-      if (!row || !row.restaurant_id || order.has(row.restaurant_id)) return;
-      order.set(row.restaurant_id, Number.isFinite(row.rank_position) ? row.rank_position : i);
-    });
-    return order;
+    return data;
   } catch (e) {
     loadFail('ranking', e);
     return null;
   }
 }
-// يرتّب المطاعم وفق ترتيب RPC فقط. اللي مش راجع من الدالة (مثلاً مطعم من غير تقييم) بييجي في الآخر بترتيبه الأصلي
+// يتأكد إن ترتيب النطاق كامل قبل استخدامه: كل مطعم منشور مطلوب في النطاق لازم يكون له مركز صالح (عدد صحيح >= 1)،
+// ومفيش مطعم مكرر أو مركز مكرر. أي نقص أو خلل = النطاق غير مكتمل، ونرجّع null (من غير ترتيب بديل ولا آخر القائمة)
+function buildRankOrder(rows, requiredIds, label) {
+  const fail = (why) => {
+    loadFail('ranking', new Error(`ranking incomplete (${label}): ${why}`));
+    return null;
+  };
+  if (!Array.isArray(rows)) return fail('not a list');
+  const order = new Map();
+  const seenPos = new Set();
+  for (const row of rows) {
+    const id = row && typeof row.restaurant_id === 'string' ? row.restaurant_id.toLowerCase() : '';
+    const pos = row ? row.rank_position : undefined;
+    if (!UUID_RE.test(id)) return fail('invalid restaurant_id');
+    if (!Number.isInteger(pos) || pos < 1) return fail('invalid rank_position');
+    if (order.has(id)) return fail('duplicate restaurant_id');
+    if (seenPos.has(pos)) return fail('duplicate rank_position');
+    order.set(id, pos);
+    seenPos.add(pos);
+  }
+  for (const id of requiredIds) {
+    if (!order.has(String(id).toLowerCase())) return fail('restaurant missing from ranking');
+  }
+  return order;
+}
+// يرتّب المطاعم بمراكز RPC فقط. لو مطعم في القائمة ملوش مركز بيرجّع null بدل ما ينقله لآخر القائمة
 function orderByRank(list, order) {
-  const pos = (r) => (order.has(r.id) ? order.get(r.id) : Infinity);
-  return list
-    .map((r, i) => ({ r, i, p: pos(r) }))
-    .sort((a, b) => (a.p === b.p ? a.i - b.i : (a.p < b.p ? -1 : 1)))
-    .map((x) => x.r);
+  const keyed = list.map((r) => {
+    const k = String(r.id).toLowerCase();
+    return order.has(k) ? { r, p: order.get(k) } : null;
+  });
+  if (keyed.some((x) => x === null)) return null;
+  return keyed.sort((a, b) => a.p - b.p).map((x) => x.r);
 }
 async function loadCategories() {
   const { data, error } = await sb.from('restaurant_categories').select('id, name, slug').eq('is_active', true).order('display_order');
@@ -2070,8 +2090,10 @@ async function viewRestaurants(query) {
     loadRestaurants(), loadCategories(), loadBlocks('restaurants'), loadLayout('restaurants'), loadAds(), getRank(null),
   ]);
   if (my !== rid) return;
-  const [rests, cats, blocks, restLayout, ads, allRank] = settledRest.map((x, i) =>
+  const [rests, cats, blocks, restLayout, ads, allRows] = settledRest.map((x, i) =>
     fulfilledOr(x, [[], [], [], [], new Map(), null][i], 'restaurants'));
+  // المطلوب في القائمة العامة = كل المطاعم المنشورة؛ لو الترتيب ناقص يتعامل معاه كفشل
+  const allRank = allRows ? buildRankOrder(allRows, rests.map((r) => r.id), 'all') : null;
   restIndex = new Map(rests.map((r) => [r.id, r]));
   if (loadErrors.length && rests.length) toast(LOAD_FAIL_TXT);
 
@@ -2096,7 +2118,11 @@ async function viewRestaurants(query) {
   const ensureCatLayout = async () => {
     const cat = active ? catBySlug.get(active) : null;
     if (!cat) return;
-    if (!catRanks.has(cat.id)) catRanks.set(cat.id, await getRank(cat.id));
+    const catRows = await getRank(cat.id);
+    if (!catRanks.has(cat.id)) {
+      const required = rests.filter((r) => r.restaurant_categories?.slug === cat.slug).map((r) => r.id);
+      catRanks.set(cat.id, catRows ? buildRankOrder(catRows, required, cat.slug) : null);
+    }
     if (catLayouts.has(cat.id)) return;
     if (!catLayoutLoads.has(cat.id)) {
       catLayoutLoads.set(cat.id, Promise.all([
@@ -2132,8 +2158,9 @@ async function viewRestaurants(query) {
     const activeCat = active ? catBySlug.get(active) : null;
     // الترتيب من RPC للنطاق الحالي فقط؛ لو مش موجود نعرض حالة الفشل بدل مطاعم بترتيب مزيف
     const rankOrder = activeCat ? catRanks.get(activeCat.id) : allRank;
-    const rankFailed = !rankOrder;
-    const list = rankFailed ? [] : orderByRank(rests.filter((r) => matches(r, term)), rankOrder);
+    const ordered = rankOrder ? orderByRank(rests.filter((r) => matches(r, term)), rankOrder) : null;
+    const rankFailed = !ordered;
+    const list = ordered || [];
     const used = new Set(); // كل حملة تظهر مرة واحدة في الصفحة
     let items;
     // في التصنيف: إعلاناته هي بس (مطاعم التصنيف). في «الكل»: كل الإعلانات
