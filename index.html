@@ -888,9 +888,11 @@ async function loadBlocks(pageKey = 'home', categoryId = null) {
         const o = ovByRest.get(m.restaurant_id);
         return o && o.badge ? { ...m, badge: o.badge } : m;
       })
-      : (b.block_restaurant_overrides || [])
-        .filter((o) => o.is_eligible !== false)
-        .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0));
+      : (b.content_mode === 'manual'
+        ? (b.block_restaurant_overrides || [])
+          .filter((o) => o.is_eligible !== false)
+          .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0))
+        : []); // الديناميكي بيعتمد على الدالة بس؛ ما نرجعش لـ overrides لو الدالة ما رجعتش صف للبلوك
     const seenOffer = new Set();
     return {
       ...b,
@@ -1482,25 +1484,29 @@ function observeAds(root = document) {
    p_event_key text، وللظهور p_visible_percent بين 50 و100. الدالتان بترفضا أي مطعم مش موجود في block_restaurant_overrides.
    الفشل ما بيأثرش على التنقل ولا على عرض البلوك، ومحاولات الإعادة بس لأخطاء الشبكة. */
 const blockSeen = new Set();      // ظهور واحد لكل (بلوك، مطعم) في الجلسة، زي قيد قاعدة البيانات
-const blockRejected = new Set();  // أزواج رفضتها الدالة: ما نعيدش إرسالها
+const blockRejected = new Set();  // أحداث رفضتها الدالة (نوع الحدث + بلوك + مطعم): ما نعيدش إرسالها بس
 const blockClicked = new Set();
 const blockTimers = new Set();
 async function sendBlockEvent(fn, params) {
-  const pair = params.p_block_id + '|' + params.p_restaurant_id;
-  if (blockRejected.has(pair)) return false;
+  // المفتاح يشمل نوع الحدث: رفض Impression ما يمنعش Click والعكس
+  const key = fn + '|' + params.p_block_id + '|' + params.p_restaurant_id;
+  if (blockRejected.has(key)) return false;
   for (let i = 0; i < 3; i++) {
     try {
-      const { error } = await sb.rpc(fn, params);
+      const { error, status } = await sb.rpc(fn, params);
       if (!error) return true;
-      if (error.code) { // رفض من قاعدة البيانات (مش انقطاع شبكة): ما نكررش
-        blockRejected.add(pair);
+      // رفض دائم من قاعدة البيانات (4xx غير 429 وله code): ما نكررش نفس الحدث
+      const transient = status === 429 || (status && status >= 500) || !error.code;
+      if (!transient) {
+        blockRejected.add(key);
         console.warn('[block-track]', fn, error.code, error.message);
         return false;
       }
+      // Rate limit أو خطأ مؤقت: نعيد المحاولة بنفس event_key
     } catch (_) { /* شبكة: نعيد المحاولة */ }
     await new Promise((r) => setTimeout(r, 500 * 2 ** i));
   }
-  return false;
+  return false; // فشل التتبع لا يأثر على عرض البلوك ولا على التنقل
 }
 async function fireBlockImpression(el) {
   if (!el.isConnected || el.dataset.blkDone) return;
