@@ -27,12 +27,7 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23F2A511'/%3E%3Ctext x='256' y='354' font-size='300' text-anchor='middle' fill='%231A1F1B' font-family='sans-serif'%3Eس%3C/text%3E%3C/svg%3E",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
     }
-  ]
+  ],
+  "id": "./"
 }
