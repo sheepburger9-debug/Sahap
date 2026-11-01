@@ -540,6 +540,31 @@ body::before{content:"";position:fixed;inset:0 0 auto 0;height:env(safe-area-ins
     padding-inline:max(calc(var(--blk-padding,0px) + 16px),calc((100vw - var(--sh-wrap)) / 2 + 16px));
   }
 }
+/* ===== طبقة الخلفية: عنصر مستقل بعرض الشاشة خلف المحتوى، والمحتوى فوقها ===== */
+.sh-blk{--sh-default-bg:#FBF1D6}
+@media (max-width:599px){
+  .sh-blk{--sh-default-bg:#FFF6DF}
+  .block.sh-custom-block{--sh-default-bg:#FFF6DF}
+}
+.block.sh-custom-block,
+.sh-blk{
+  position:relative;
+  isolation:isolate;
+  background:none;
+}
+.block.sh-custom-block::before,
+.sh-blk::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background-color:var(--blk-bg,var(--sh-default-bg,transparent));
+  background-image:var(--blk-bg-image,none);
+  background-size:var(--blk-bg-size,auto);
+  background-position:var(--blk-bg-pos,center);
+  border-radius:var(--blk-radius,0);
+}
 </style>
 </head>
 <body>
@@ -980,12 +1005,12 @@ function blockDesignStyle(bl) {
     const c1 = cssColor(bg.gradient_start, '#3E5B3A');
     const c2 = cssColor(bg.gradient_end, '#1A1F1B');
     const angle = cssNumber(bg.gradient_angle, 135, 0, 360);
-    styles.push(`background-image:linear-gradient(${angle}deg,${c1},${c2})`);
+    styles.push(`--blk-bg-image:linear-gradient(${angle}deg,${c1},${c2})`);
   } else if (imageUrl && (type === 'image' || bg.image_url || bl.cover_image_url || bl.brand?.cover_image_url)) {
     const safeImage = imageUrl.replace(/[\\'"()\s]/g, (c) => encodeURIComponent(c));
     const overlay = cssColor(bg.overlay, 'rgba(0,0,0,.28)');
-    styles.push(`background-image:linear-gradient(${overlay},${overlay}),url("${safeImage}")`);
-    styles.push('background-size:cover;background-position:center');
+    styles.push(`--blk-bg-image:linear-gradient(${overlay},${overlay}),url("${safeImage}")`);
+    styles.push('--blk-bg-size:cover;--blk-bg-pos:center');
   }
   return styles.join(';');
 }
