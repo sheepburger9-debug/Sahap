@@ -775,8 +775,25 @@ async function loadAds() {
   return map;
 }
 async function loadMethods(restaurantId) {
-  const { data } = await sb.rpc('get_payment_methods', { p_restaurant_id: restaurantId });
-  return data || { cash: false, paymob: false };
+  try {
+    const { data, error } = await sb.rpc('get_payment_methods', { p_restaurant_id: restaurantId });
+    if (error) {
+      console.error('[payment-methods]', error);
+      return { cash: false, paymob: false, loadError: true };
+    }
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      console.error('[payment-methods] invalid response');
+      return { cash: false, paymob: false, loadError: true };
+    }
+    return {
+      cash: data.cash === true,
+      paymob: data.paymob === true,
+      loadError: false,
+    };
+  } catch (error) {
+    console.error('[payment-methods]', error);
+    return { cash: false, paymob: false, loadError: true };
+  }
 }
 
 // نتيجة تحميل مستقل: لو فشل بنرجع الافتراضي ونسجل الخطأ في الـconsole بدل ما نوقف الصفحة
@@ -1600,7 +1617,7 @@ async function viewRestaurant([, slug]) {
     ${r.description ? `<p style="margin-top:10px">${esc(r.description)}</p>` : ''}
     ${r.address ? `<p class="meta" style="margin-top:6px">${esc(r.address)}</p>` : ''}
     ${R.offers.length ? R.offers.map((o) => `<div class="offerbox"><strong>${esc(o.title)}</strong>${o.description ? `<p class="meta">${esc(o.description)}</p>` : ''}</div>`).join('') : ''}
-    ${payNames ? `<p class="meta" style="margin-top:10px">طرق الدفع: ${esc(payNames)}</p>` : ''}
+    ${payNames ? `<p class="meta" style="margin-top:10px">طرق الدفع: ${esc(payNames)}</p>` : methods.loadError ? `<p class="err" role="status" style="margin-top:10px">تعذّر تحميل طرق الدفع. جرّب تحديث الصفحة.</p>` : ''}
     <nav class="chips menucats" aria-label="أقسام المنيو" style="margin-top:14px">
       ${R.menuCats.map((c) => `<button class="chip" data-act="scroll" data-target="sec-${esc(c.id)}">${esc(c.name)}</button>`).join('')}
     </nav>
@@ -2083,6 +2100,7 @@ function checkoutHtml(lines) {
   const fee = Number(R.rest.delivery_fee || 0);
   const m = R.methods || {};
   const hasAny = m.cash || m.paymob;
+  const methodsFailed = m.loadError === true;
   const firstMethod = m.cash ? 'cash' : 'paymob';
   return `
     <div class="co-page">
@@ -2105,13 +2123,13 @@ function checkoutHtml(lines) {
         <input id="cc" value="${esc(R.cart?.coupon_code || '')}" autocomplete="off">
         <fieldset>
           <legend>طريقة الدفع</legend>
-          ${hasAny ? `
+          ${methodsFailed ? '<p class="err" role="alert">تعذّر تحميل طرق الدفع بسبب مشكلة اتصال. حدّث الصفحة وحاول تاني.</p>' : hasAny ? `
             ${m.cash ? `<label class="opt"><input type="radio" name="pm" value="cash" ${firstMethod === 'cash' ? 'checked' : ''}><span>الدفع عند الاستلام<small>ادفع كاش للمندوب</small></span></label>` : ''}
             ${m.paymob ? `<label class="opt"><input type="radio" name="pm" value="paymob" ${firstMethod === 'paymob' ? 'checked' : ''}><span>فيزا أو محفظة<small>دفع آمن عبر Paymob</small></span></label>` : ''}
           ` : '<p class="err">المطعم مش بيستقبل طلبات دلوقتي</p>'}
         </fieldset>
         <p class="err" id="coErr" role="alert"></p>
-        <button class="btn primary" id="placeBtn" type="submit" ${hasAny ? '' : 'disabled'}>تنفيذ الطلب</button>
+        <button class="btn primary" id="placeBtn" type="submit" ${(hasAny && !methodsFailed) ? '' : 'disabled'}>تنفيذ الطلب</button>
       </form>
     </div>`;
 }
