@@ -326,6 +326,7 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .pcard-media{display:grid;place-items:center;aspect-ratio:4/3;background:var(--bg);font-size:clamp(24px,7vw,32px);line-height:1;font-weight:700;color:var(--ink-2)}
 .pcard-body{display:flex;flex-direction:column;gap:2px;padding:8px 10px 10px;min-width:0;overflow-wrap:anywhere}
 .pcard-rest{font-size:12px;line-height:1.3}
+.pcard-badges{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:2px;min-width:0;font-size:11px}
 .pcard-name{font-family:"Reem Kufi",sans-serif;font-size:14px;font-weight:700;line-height:1.3}
 .pcard-desc{font-size:12px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pcard-price{margin-top:4px;font-weight:700;font-size:14px;color:var(--olive)}
@@ -633,6 +634,31 @@ const STATUS = {
 };
 const PHONE_RE = /^(\+?20)?01[0125][0-9]{8}$/;
 
+/* ===== معالجة موحدة لأخطاء التحميل =====
+   كل فشل قراءة بيتسجل في الـconsole بتفاصيله، والمستخدم بيشوف رسالة واحدة عامة (من غير تفاصيل داخلية) */
+let loadErrors = [];
+function resetLoadErrors() { loadErrors = []; }
+function loadFail(label, err) {
+  const msg = err && (err.message || err.reason || String(err)) || 'unknown';
+  console.error('[load:' + label + ']', msg, err && err.code ? '(code ' + err.code + ')' : '');
+  loadErrors.push(label);
+}
+const LOAD_FAIL_TXT = 'تعذّر تحميل بعض المحتوى، تأكد من الاتصال وحاول تاني';
+function loadErrorHtml() {
+  return `<div class="empty" role="alert"><p>${esc(LOAD_FAIL_TXT)}</p><button class="btn primary auto" type="button" data-act="reload">إعادة المحاولة</button></div>`;
+}
+/* فرق التوقيت بين جهاز العميل وSupabase: لو الهيدر Date متاح للمتصفح بنصحح بيه، ولو لأ الفرق صفر */
+let serverClockOffset = 0;
+(async function syncServerClock() {
+  try {
+    const t0 = Date.now();
+    const res = await fetch(SB_URL + '/auth/v1/health', { headers: { apikey: SB_KEY } });
+    const d = res.headers.get('date');
+    if (d && Number.isFinite(Date.parse(d))) serverClockOffset = Date.parse(d) - (t0 + (Date.now() - t0) / 2);
+  } catch (_) { /* الفرق يفضل صفر */ }
+})();
+const nowMs = () => Date.now() + serverClockOffset;
+
 let session = null;
 let profile = null;
 let rid = 0;          // رقم العرض الحالي، عشان نتجاهل ردود قديمة
@@ -737,18 +763,25 @@ async function loadRestaurants() {
   const { data, error } = await sb.from('restaurants')
     .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position))')
     .order('rating', { ascending: false });
-  if (error) { toast('تعذّر تحميل المطاعم'); return []; }
+  if (error) { loadFail('restaurants', error); return []; }
   return data || [];
 }
 async function loadCategories() {
-  const { data } = await sb.from('restaurant_categories').select('id, name, slug').eq('is_active', true).order('display_order');
+  const { data, error } = await sb.from('restaurant_categories').select('id, name, slug').eq('is_active', true).order('display_order');
+  if (error) loadFail('categories', error);
   return data || [];
 }
 async function loadBanners() {
-  const { data } = await sb.from('homepage_offer_banner_items')
-    .select('id, display_order, restaurant_offers(id, title, description, image_url, restaurant_id)')
+  const { data, error } = await sb.from('homepage_offer_banner_items')
+    .select('id, display_order, starts_at, ends_at, restaurant_offers(id, title, description, image_url, restaurant_id, status, starts_at, ends_at)')
     .eq('is_active', true).order('display_order');
-  return (data || []).map((x) => x.restaurant_offers).filter(Boolean);
+  if (error) loadFail('banners', error);
+  const seen = new Set();
+  return (data || [])
+    .filter((x) => x.restaurant_offers && inWindow(x.starts_at, x.ends_at)
+      && x.restaurant_offers.status === 'approved' && inWindow(x.restaurant_offers.starts_at, x.restaurant_offers.ends_at))
+    .map((x) => x.restaurant_offers)
+    .filter((o) => (seen.has(o.id) ? false : (seen.add(o.id), true)));
 }
 // أقسام الرئيسية التسويقية: جدول مستقل عن البلوكات، مع احترام التواريخ والتفعيل على مستوى القسم والعضوية
 async function loadDiscoverySections() {
@@ -778,15 +811,20 @@ async function loadDiscoverySections() {
     `)
     .eq('is_active', true)
     .order('display_order');
-  if (error) { console.warn('[discovery]', error.message); return []; }
+  if (error) { loadFail('discovery', error); return []; }
+  const seenSec = new Set();
   return (data || [])
-    .filter((s) => inWindow(s.starts_at, s.ends_at))
-    .map((s) => ({
-      ...s,
-      members: (s.home_discovery_section_restaurants || [])
-        .filter((m) => m.is_active !== false && inWindow(m.starts_at, m.ends_at))
-        .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
-    }));
+    .filter((s) => inWindow(s.starts_at, s.ends_at) && !seenSec.has(s.id) && seenSec.add(s.id))
+    .map((s) => {
+      const seenRest = new Set();
+      return {
+        ...s,
+        members: (s.home_discovery_section_restaurants || [])
+          .filter((m) => m.is_active !== false && inWindow(m.starts_at, m.ends_at))
+          .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+          .filter((m) => !seenRest.has(m.restaurant_id) && seenRest.add(m.restaurant_id)),
+      };
+    });
 }
 // أنواع محتوى البلوك (restaurant_blocks.content_type). القيمة الفاضية/غير المعروفة بترجع لـ restaurants
 const BLOCK_CONTENT_TYPES = ['restaurants', 'products', 'restaurant_products', 'restaurants_products', 'offers'];
@@ -799,18 +837,23 @@ async function loadBlockProducts(blockIds) {
   const map = new Map();
   if (!blockIds.length) return map;
   const { data, error } = await sb.from('block_product_items')
-    .select('id, block_id, display_order, is_active, product:products(id, name, description, price, emoji, is_available, restaurant_id)')
+    .select('id, block_id, display_order, is_active, product:products(id, name, description, price, emoji, is_available, restaurant_id, product_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position)))')
     .in('block_id', blockIds)
     .order('display_order');
-  if (error) { console.error('[block-products]', error.message); return map; }
+  if (error) { loadFail('block-products', error); return map; }
+  const seenInBlock = new Set(); // المنتج مرة واحدة داخل نفس البلوك
   for (const row of [...(data || [])].sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0))) {
     const p = row.product;
     if (row.is_active === false || !p || p.is_available === false) continue;
     if (!p.id || !p.name || !p.restaurant_id || p.price == null || !Number.isFinite(Number(p.price))) continue;
+    const dk = row.block_id + '|' + p.id;
+    if (seenInBlock.has(dk)) continue;
+    seenInBlock.add(dk);
     if (!map.has(row.block_id)) map.set(row.block_id, []);
     map.get(row.block_id).push({
       id: p.id, name: p.name, description: p.description, price: p.price, emoji: p.emoji,
       restaurant_id: p.restaurant_id, display_order: row.display_order,
+      product_badge_assignments: p.product_badge_assignments || [],
     });
   }
   return map;
@@ -819,7 +862,7 @@ async function loadBlocks(pageKey = 'home', categoryId = null) {
   const { data, error } = await sb.from('restaurant_blocks')
     .select('id, title, subtitle, display_order, background_color, text_color, card_style, design_settings, content_mode, content_type, brand_id, restaurant_id, max_items, logo_url, cover_image_url, badge_image_url, starts_at, ends_at, brand:restaurant_brands(name, logo_url, cover_image_url), badge:badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position), block_restaurant_overrides(restaurant_id, display_order, is_eligible, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at, badge:badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position)), block_offer_items(id, display_order, is_active, starts_at, ends_at, restaurant_offers(id, title, description, image_url, status, starts_at, ends_at, restaurant_id))')
     .eq('is_visible', true).order('display_order');
-  if (error) { console.error('[Sahap Blocks Error]', error); return []; }
+  if (error) { loadFail('blocks', error); return []; }
 
   // اختيار المطاعم وترتيبها وحدها في Supabase؛ نفس الدالة تدعم الديناميكي واليدوي والبراند والمطعم الواحد.
   const rpc = await sb.rpc('get_public_restaurant_block_members', {
@@ -831,24 +874,36 @@ async function loadBlocks(pageKey = 'home', categoryId = null) {
   if (!rpc.error && Array.isArray(rpc.data)) {
     for (const row of rpc.data) memberMap.set(row.block_id, Array.isArray(row.members) ? row.members : []);
   } else {
-    console.warn('[block-members]', rpc.error?.message || 'تعذّر تحميل أعضاء البلوكات');
+    loadFail('block-members', rpc.error || new Error('تعذّر تحميل أعضاء البلوكات'));
   }
 
   const productMap = await loadBlockProducts((data || []).filter((b) => BLOCK_PRODUCT_TYPES.includes(b.content_type)).map((b) => b.id));
   console.info('[Sahap Blocks]', { pageKey, categoryId, blocksCount: (data || []).length, membersLoaded: memberMap.size, productBlocks: productMap.size });
 
-  return (data || []).map((b) => ({
-    ...b,
-    products: productMap.get(b.id) || [],
-    members: memberMap.has(b.id) ? memberMap.get(b.id) : (b.block_restaurant_overrides || [])
-      .filter((o) => o.is_eligible !== false)
-      .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0)),
-    offers: (b.block_offer_items || [])
-      .filter((x) => x.is_active !== false && inWindow(x.starts_at, x.ends_at) && x.restaurant_offers)
-      .filter((x) => x.restaurant_offers.status === 'approved' && inWindow(x.restaurant_offers.starts_at, x.restaurant_offers.ends_at))
-      .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0))
-      .map((x) => ({ ...x.restaurant_offers, display_order: x.display_order })),
-  }));
+  return (data || []).filter((b) => inWindow(b.starts_at, b.ends_at)).map((b) => {
+    // الدالة بترجّع بيانات شارة مختصرة؛ لو الصف نفسه ظاهر في block_restaurant_overrides ناخد منه الشارة الكاملة (شكل/أيقونة/شفافية)
+    const ovByRest = new Map((b.block_restaurant_overrides || []).map((o) => [o.restaurant_id, o]));
+    const members = memberMap.has(b.id)
+      ? memberMap.get(b.id).map((m) => {
+        const o = ovByRest.get(m.restaurant_id);
+        return o && o.badge ? { ...m, badge: o.badge } : m;
+      })
+      : (b.block_restaurant_overrides || [])
+        .filter((o) => o.is_eligible !== false)
+        .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0));
+    const seenOffer = new Set();
+    return {
+      ...b,
+      products: productMap.get(b.id) || [],
+      members,
+      offers: (b.block_offer_items || [])
+        .filter((x) => x.is_active !== false && inWindow(x.starts_at, x.ends_at) && x.restaurant_offers)
+        .filter((x) => x.restaurant_offers.status === 'approved' && inWindow(x.restaurant_offers.starts_at, x.restaurant_offers.ends_at))
+        .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0))
+        .filter((x) => !seenOffer.has(x.restaurant_offers.id) && seenOffer.add(x.restaurant_offers.id))
+        .map((x) => ({ ...x.restaurant_offers, display_order: x.display_order })),
+    };
+  });
 }
 async function loadLayout(pageKey, categoryId = null) {
   // ترتيب الصفحة من homepage_layout_items. التصنيف بيتحمّل بمعرفه الحقيقي (category_id) بس
@@ -857,7 +912,7 @@ async function loadLayout(pageKey, categoryId = null) {
     p_page_key: pageKey,
     p_category_id: pageKey === 'category' ? categoryId : null,
   });
-  if (error) { console.warn('[layout]', pageKey, error.message); return []; }
+  if (error) { loadFail('layout:' + pageKey, error); return []; }
   if (!Array.isArray(data)) return [];
   return data.map((x) => ({
     id: x.id,
@@ -915,12 +970,13 @@ async function loadMethods(restaurantId) {
 // نتيجة تحميل مستقل: لو فشل بنرجع الافتراضي ونسجل الخطأ في الـconsole بدل ما نوقف الصفحة
 function fulfilledOr(res, fallback, label) {
   if (res.status === 'fulfilled') return res.value;
-  console.error('[' + label + ']', res.reason);
+  loadFail(label, res.reason);
   return fallback;
 }
+// نفس منطق السياسات في Supabase: البداية <= الآن < النهاية، بتوقيت الخادم المصحح
 function inWindow(from, to) {
-  const now = Date.now();
-  return (!from || Date.parse(from) <= now) && (!to || Date.parse(to) >= now);
+  const now = nowMs();
+  return (!from || Date.parse(from) <= now) && (!to || Date.parse(to) > now);
 }
 // كل خصائص الشارة بتتنقل، والتخصيص بيغلب الأصل لو فيه قيمة فعلية (0 و false بيتقبلوا)
 const BADGE_FIELDS = ['icon', 'background_color', 'text_color', 'border_color', 'shape', 'opacity', 'font_size_px', 'style_config', 'show_background', 'background_opacity', 'icon_position'];
@@ -999,9 +1055,11 @@ function badgeHtml(b) {
 }
 // شارات المنتج: النشطة داخل نافذة صلاحيتها بس، ونفس شكل شارات المطعم
 function productBadgesOf(p) {
+  const seen = new Set();
   return (p.product_badge_assignments || [])
     .filter((a) => a.is_active && a.badges && inWindow(a.starts_at, a.ends_at))
-    .map((a) => pickBadge(a.badges, a.display_text_override, a.style_override));
+    .map((a) => pickBadge(a.badges, a.display_text_override, a.style_override))
+    .filter((b) => { const k = (b.name || '') + '|' + (b.display_text || ''); return seen.has(k) ? false : (seen.add(k), true); });
 }
 function deliveryText(r) {
   const fee = Number(r.delivery_fee || 0) ? money(r.delivery_fee) : 'توصيل مجاني';
@@ -1018,7 +1076,7 @@ function cover(r) {
     : esc((r.name || '?').trim()[0] || '؟');
 }
 
-function restRowHtml(r, customBadge) {
+function restRowHtml(r, customBadge, blockId) {
   const badge = customBadge || badgesOf(r)[0];
   // صورة الغلاف هي الأساس، واللوجو يتحط فوقها لو موجود؛ لو مفيش غلاف يبقى اللوجو هو الصورة
   const cover = safeUrl(r.cover_image_url);
@@ -1028,7 +1086,8 @@ function restRowHtml(r, customBadge) {
   const fallback = esc((r.name || '?').trim()[0] || '؟');
   // أيقونة المفضلة شكلية حالياً: مفيش جدول مفضلة في قاعدة البيانات لسه
   const heart = `<span class="rcard-fav" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.7 4.5 6.6 4.5c2.2 0 3.7 1.2 5.4 3 1.7-1.8 3.2-3 5.4-3 3.9 0 5.7 3.9 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg></span>`;
-  return `<a class="rcard" href="#/r/${esc(r.slug)}" aria-label="${esc(r.name)}">
+  const trk = blockId ? ` data-block-id="${esc(blockId)}" data-restaurant-id="${esc(r.id)}"` : '';
+  return `<a class="rcard" href="#/r/${esc(r.slug)}" aria-label="${esc(r.name)}"${trk}>
     <span class="rcard-img">${mainImg ? `<img src="${esc(mainImg)}" alt="" loading="lazy">` : `<span class="rcard-fb" aria-hidden="true">${fallback}</span>`}${logoOverlay}</span>
     <span class="rcard-body">
       <span class="rcard-top">${badge ? badgeHtml(badge) : ''}${heart}</span>
@@ -1054,7 +1113,8 @@ function offerCardHtml(o, r) {
 }
 function offersPartHtml(bl, byId) {
   // العرض بيتعرض بس لو مطعمه موجود في القائمة الحالية (منشور ومطابق للفلتر)
-  const offers = (bl.offers || []).filter((o) => byId.has(o.restaurant_id));
+  const seen = new Set();
+  const offers = (bl.offers || []).filter((o) => byId.has(o.restaurant_id) && !seen.has(o.id) && seen.add(o.id));
   if (!offers.length) return '';
   return `<div class="sh-offers"><div class="sh-offer-rail">${offers.map((o) => offerCardHtml(o, byId.get(o.restaurant_id))).join('')}</div></div>`;
 }
@@ -1064,6 +1124,7 @@ function blockPlacementConfig(bl, item) {
   const ls = item?.layout_settings || {};
   return {
     ...bl,
+    _placementId: item?.id || '',
     title: ls.title ?? bl.title,
     subtitle: ls.subtitle ?? bl.subtitle,
     background_color: ls.background_color ?? bl.background_color,
@@ -1140,20 +1201,33 @@ function restaurantsRailHtml(bl, items, grid) {
   const cols = [];
   for (let i = 0; i < items.length; i += PER_COL) cols.push(items.slice(i, i + PER_COL));
   const cls = grid ? 'rail sh-rail3' : 'rail';
-  return `<div class="${cls}">${cols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>`;
+  return `<div class="${cls}">${cols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m), bl.id)).join('')}</div>`).join('')}</div>`;
 }
 // المنتجات الصالحة: مطعمها ظاهر في الصفحة الحالية (زي العروض)، وعنده slug عشان الرابط
 function blockValidProducts(bl, byId) {
+  const seen = new Set();
   return (bl.products || []).filter((p) => {
     const r = byId.get(p.restaurant_id);
-    return !!(r && r.slug);
+    if (!(r && r.slug) || seen.has(p.id)) return false;
+    seen.add(p.id);
+    return true;
   });
+}
+// نطاق التصنيف: داخل صفحة تصنيف، البلوك غير اليدوي (ديناميكي/براند/مطعم) يعرض مطاعم ومنتجات وعروض التصنيف ده بس.
+// البلوك اليدوي (content_mode = manual) بيتبع اختيارات المدير ومش بيتفلتر بتصنيف المطعم الأصلي.
+function blockScope(bl, byId, scope) {
+  if (!scope || !scope.categoryId || bl.content_mode === 'manual') return byId;
+  const out = new Map();
+  for (const [id, r] of byId) if (r.category_id === scope.categoryId) out.set(id, r);
+  return out;
 }
 function blockProductCardHtml(p, r) {
   const fallback = esc((p.name || '?').trim()[0] || '؟');
-  return `<a class="pcard" href="#/r/${encodeURIComponent(r.slug)}" aria-label="${esc(p.name)} - ${esc(r.name)}">
+  const badges = productBadgesOf(p).map(badgeHtml).join('');
+  return `<a class="pcard" href="#/r/${encodeURIComponent(r.slug)}?p=${encodeURIComponent(p.id)}" aria-label="${esc(p.name)} - ${esc(r.name)}">
     <span class="pcard-media" aria-hidden="true">${p.emoji ? esc(p.emoji) : fallback}</span>
     <span class="pcard-body">
+      ${badges ? `<span class="pcard-badges">${badges}</span>` : ''}
       <span class="meta pcard-rest">${esc(r.name)}</span>
       <strong class="pcard-name">${esc(p.name)}</strong>
       ${p.description ? `<span class="meta pcard-desc">${esc(p.description)}</span>` : ''}
@@ -1178,7 +1252,7 @@ function blockRestaurantProductsHtml(bl, byId) {
   if (!target || !target.slug) return '';
   const products = blockValidProducts(bl, byId).filter((p) => p.restaurant_id === target.id);
   if (!products.length) return '';
-  return `<div class="sh-prod-group">${restRowHtml(target, blockBadge(bl, memberOf(bl, target.id)))}<div class="sh-products-track">${products.map((p) => blockProductCardHtml(p, target)).join('')}</div></div>`;
+  return `<div class="sh-prod-group">${restRowHtml(target, blockBadge(bl, memberOf(bl, target.id)), bl.id)}<div class="sh-products-track">${products.map((p) => blockProductCardHtml(p, target)).join('')}</div></div>`;
 }
 function blockRestaurantsProductsHtml(bl, byId) {
   // كل مطعم من أعضاء البلوك وتحته منتجاته بس. مطعم من غير منتجات صالحة ما بيتعرضش
@@ -1186,12 +1260,13 @@ function blockRestaurantsProductsHtml(bl, byId) {
   const groups = blockRestaurantItems(bl, byId).map(({ r, m }) => {
     const mine = products.filter((p) => p.restaurant_id === r.id);
     if (!mine.length) return '';
-    return `<div class="sh-prod-group">${restRowHtml(r, blockBadge(bl, m))}<div class="sh-products-track">${mine.map((p) => blockProductCardHtml(p, r)).join('')}</div></div>`;
+    return `<div class="sh-prod-group">${restRowHtml(r, blockBadge(bl, m), bl.id)}<div class="sh-products-track">${mine.map((p) => blockProductCardHtml(p, r)).join('')}</div></div>`;
   }).filter(Boolean);
   return groups.length ? `<div class="sh-prod-wrap">${groups.join('')}</div>` : '';
 }
 // blockHtml: يختار الـ renderer حسب bl.content_type. الرندر بيرجع '' لو البلوك مفيهوش بيانات صالحة
-function blockHtml(bl, byId, grid = false) {
+function blockHtml(bl, allById, grid = false, scope = null) {
+  const byId = blockScope(bl, allById, scope);
   const type = blockContentType(bl);
   let body = '';
   let offersHtml = '';
@@ -1209,7 +1284,7 @@ function blockHtml(bl, byId, grid = false) {
   }
   if (!body && !offersHtml) return '';
 
-  const restaurantAsset = bl.restaurant_id ? byId.get(bl.restaurant_id) : null;
+  const restaurantAsset = bl.restaurant_id ? allById.get(bl.restaurant_id) : null;
   const d = bl.design_settings || {};
   const logo = safeUrl(bl.logo_url || bl.brand?.logo_url || restaurantAsset?.logo_url);
   const badgeImage = safeUrl(bl.badge_image_url);
@@ -1223,9 +1298,10 @@ function blockHtml(bl, byId, grid = false) {
     </div>`;
   const style = blockDesignStyle(renderBlock);
   const sectionClass = `block sh-custom-block${grid ? ' sh-blk' : ''}`;
+  const domId = `blk-${esc(bl.id)}${bl._placementId ? '-' + esc(bl._placementId) : ''}`; // كل ظهور له id مستقل
   const inner = `${head}${body}${offersHtml}`;
-  if (grid) return `<section class="${sectionClass}" id="blk-${esc(bl.id)}"${style ? ` style="${esc(style)}"` : ''}>${inner}</section>`;
-  return `<section class="${sectionClass}" id="blk-${esc(bl.id)}"${style ? ` style="${esc(style)}"` : ''}${aosAttr()}>${inner}</section>`;
+  if (grid) return `<section class="${sectionClass}" id="${domId}"${style ? ` style="${esc(style)}"` : ''}>${inner}</section>`;
+  return `<section class="${sectionClass}" id="${domId}"${style ? ` style="${esc(style)}"` : ''}${aosAttr()}>${inner}</section>`;
 }
 
 // المطاعم المنشورة بمعرفها: بنستخدمها لشعار المطعم في الإعلان المميز (من نفس البيانات المحمّلة، بدون استعلام إضافي)
@@ -1401,6 +1477,87 @@ function observeAds(root = document) {
   });
 }
 
+/* ===== تتبع ظهور ونقر مطاعم البلوكات (track_block_impression / track_block_click) =====
+   عقد الدالتين (من تعريفهما في Supabase): p_block_id uuid، p_restaurant_id uuid، p_session_hash text (8 حروف على الأقل)،
+   p_event_key text، وللظهور p_visible_percent بين 50 و100. الدالتان بترفضا أي مطعم مش موجود في block_restaurant_overrides.
+   الفشل ما بيأثرش على التنقل ولا على عرض البلوك، ومحاولات الإعادة بس لأخطاء الشبكة. */
+const blockSeen = new Set();      // ظهور واحد لكل (بلوك، مطعم) في الجلسة، زي قيد قاعدة البيانات
+const blockRejected = new Set();  // أزواج رفضتها الدالة: ما نعيدش إرسالها
+const blockClicked = new Set();
+const blockTimers = new Set();
+async function sendBlockEvent(fn, params) {
+  const pair = params.p_block_id + '|' + params.p_restaurant_id;
+  if (blockRejected.has(pair)) return false;
+  for (let i = 0; i < 3; i++) {
+    try {
+      const { error } = await sb.rpc(fn, params);
+      if (!error) return true;
+      if (error.code) { // رفض من قاعدة البيانات (مش انقطاع شبكة): ما نكررش
+        blockRejected.add(pair);
+        console.warn('[block-track]', fn, error.code, error.message);
+        return false;
+      }
+    } catch (_) { /* شبكة: نعيد المحاولة */ }
+    await new Promise((r) => setTimeout(r, 500 * 2 ** i));
+  }
+  return false;
+}
+async function fireBlockImpression(el) {
+  if (!el.isConnected || el.dataset.blkDone) return;
+  const pct = Math.round((el.__ratio || 0) * 100);
+  if (pct < 50) return;
+  const blockId = el.dataset.blockId, restId = el.dataset.restaurantId;
+  if (!UUID_RE.test(blockId || '') || !UUID_RE.test(restId || '')) return;
+  el.dataset.blkDone = '1';
+  blockIO && blockIO.unobserve(el);
+  const pair = blockId + '|' + restId;
+  if (blockSeen.has(pair)) return;
+  blockSeen.add(pair);
+  sendBlockEvent('track_block_impression', {
+    p_block_id: blockId,
+    p_restaurant_id: restId,
+    p_session_hash: await sessionHash(),
+    p_visible_percent: Math.min(100, Math.max(50, pct)),
+    p_event_key: `blkimp:${SESSION_RAW}:${pair}`,
+  });
+}
+const blockIO = ('IntersectionObserver' in window) ? new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    const el = e.target;
+    el.__ratio = e.intersectionRatio;
+    if (el.dataset.blkDone) continue;
+    if (e.intersectionRatio >= 0.5) {
+      if (!el.__blkTimer) {
+        el.__blkTimer = setTimeout(() => { el.__blkTimer = null; blockTimers.delete(el); fireBlockImpression(el); }, 1000);
+        blockTimers.add(el);
+      }
+    } else if (el.__blkTimer) {
+      clearTimeout(el.__blkTimer); el.__blkTimer = null; blockTimers.delete(el);
+    }
+  }
+}, { threshold: [0, 0.25, 0.5, 0.75, 1] }) : null;
+function observeBlocks(root = document) {
+  if (!blockIO || !root) return;
+  root.querySelectorAll('a.rcard[data-block-id]').forEach((el) => { if (!el.dataset.blkDone) blockIO.observe(el); });
+}
+function stopBlockTracking() {
+  for (const el of blockTimers) { clearTimeout(el.__blkTimer); el.__blkTimer = null; }
+  blockTimers.clear();
+  if (blockIO) blockIO.disconnect();
+}
+document.addEventListener('click', (e) => {
+  const a = e.target && e.target.closest ? e.target.closest('a.rcard[data-block-id]') : null;
+  if (!a) return; // التنقل بيكمل عادي، التسجيل في الخلفية
+  const blockId = a.dataset.blockId, restId = a.dataset.restaurantId;
+  if (!UUID_RE.test(blockId || '') || !UUID_RE.test(restId || '')) return;
+  const key = `${viewSeq}|${blockId}|${restId}`;
+  if (blockClicked.has(key)) return;
+  blockClicked.add(key);
+  sessionHash().then((h) => sendBlockEvent('track_block_click', {
+    p_block_id: blockId, p_restaurant_id: restId, p_session_hash: h, p_event_key: `blkclk:${SESSION_RAW}:${key}`,
+  })).catch(() => {});
+});
+
 // النقر: يسجل ولا يمنع التنقل (الروابط الداخلية والخارجية زي ما هي)
 // النقرة تُحتسب مرة واحدة لكل حملة في كل عرض للصفحة، والضغط المتكرر ما بيخصمش تاني
 const clickedKeys = new Set();
@@ -1554,6 +1711,8 @@ function route() {
   destroyHomeSwiper();
   destroyAdSliders();
   if (impressionIO) impressionIO.disconnect(); // المراقبة القديمة ما تكملش بعد مغادرة الصفحة
+  stopBlockTracking();
+  resetLoadErrors();
   closeSheet();
   cartbar.classList.add('hidden');
   const raw = location.hash.replace(/^#\/?/, '');
@@ -1575,7 +1734,8 @@ function route() {
     if (needsAuth && !session) { goLogin(); return; }
     if (tab) document.querySelector(`.tabbar a[data-tab="${tab}"]`)?.setAttribute('aria-current', 'page');
     if (fn === viewRestaurants) fn(query);
-    else if (fn === viewRestaurant || fn === viewGroup || fn === viewCart || fn === viewCheckout) fn([m[0], decodeURIComponent(m[1])]);
+    else if (fn === viewRestaurant) fn([m[0], decodeURIComponent(m[1])], query);
+    else if (fn === viewGroup || fn === viewCart || fn === viewCheckout) fn([m[0], decodeURIComponent(m[1])]);
     else fn();
     return;
   }
@@ -1654,9 +1814,12 @@ async function viewHome() {
   `;
   // لو الصفحة فاضية تماماً (مفيش مطاعم ولا لافتات ولا بلوكات) نعرض رسالة بدل شاشة بيضا
   if (!rests.length && !bannerHtml && !blocks.length && !sections.length) {
-    app.insertAdjacentHTML('beforeend', emptyHtml('مفيش عروض متاحة دلوقتي، جرّب بعد شوية'));
+    app.insertAdjacentHTML('beforeend', loadErrors.length ? loadErrorHtml() : emptyHtml('مفيش عروض متاحة دلوقتي، جرّب بعد شوية'));
+  } else if (loadErrors.length) {
+    toast(LOAD_FAIL_TXT);
   }
   observeAds(app);
+  observeBlocks(app);
   mountHomeSwiper();
   mountAdSliders(app);
   aosRefresh();
@@ -1669,7 +1832,7 @@ async function viewHome() {
 // توزيع اللافتات داخل القائمة بالتساوي حسب ترتيب التخطيط (display_order)، ومن غير أرقام ثابتة
 // توزيع المطاعم بين البلوكات واللافتات حسب ترتيب التخطيط: عنصر ثم مجموعة مطاعم،
 // من غير ما يتجمع بلوكين أو لافتتين جنب بعض. القائمة بتعرض كل المطاعم المطابقة (زي تصنيف الكل).
-function sequenceHtml(items, list, blocksById, ads, used, allRests = list) {
+function sequenceHtml(items, list, blocksById, ads, used, allRests = list, scope = null) {
   // المطاعم بتتحل من القائمة الكاملة المنشورة (مش المفلترة)، عشان البلوك ما يختفيش لو مطعمه برّه الفلتر
   const byId = new Map(allRests.map((r) => [r.id, r]));
   const tokens = [];
@@ -1677,7 +1840,7 @@ function sequenceHtml(items, list, blocksById, ads, used, allRests = list) {
     if (it.item_type === 'restaurant_block') {
       const bl = blocksById.get(it.block_id);
       if (!bl) continue;
-      const html = blockHtml(blockPlacementConfig(bl, it), byId, true);
+      const html = blockHtml(blockPlacementConfig(bl, it), byId, true, scope);
       if (html) tokens.push({ html: `<div class="col-12">${html}</div>` });
     } else if (it.item_type === 'ad_banner') {
       const code = it.ad_placements?.code;
@@ -1722,7 +1885,7 @@ async function viewGroup([, id]) {
   const [rests, sections] = await Promise.all([loadRestaurants(), loadDiscoverySections()]);
   if (my !== rid) return;
   const sec = sections.find((x) => String(x.id) === id);
-  if (!sec) { app.innerHTML = topbar('') + emptyHtml('القسم ده مش متاح دلوقتي'); return; }
+  if (!sec) { app.innerHTML = topbar('') + (loadErrors.length ? loadErrorHtml() : emptyHtml('القسم ده مش متاح دلوقتي')); return; }
   const byId = new Map(rests.map((r) => [r.id, r]));
   const items = sec.members.map((m) => byId.get(m.restaurant_id)).filter(Boolean);
   app.innerHTML = topbar(sec.title || 'القسم') + `
@@ -1748,6 +1911,7 @@ async function viewRestaurants(query) {
   const [rests, cats, blocks, restLayout, ads] = settledRest.map((x, i) =>
     fulfilledOr(x, [[], [], [], [], new Map()][i], 'restaurants'));
   restIndex = new Map(rests.map((r) => [r.id, r]));
+  if (loadErrors.length && rests.length) toast(LOAD_FAIL_TXT);
 
   // التصنيف من الرابط لازم يكون نشط وموجود؛ غير كده نرجع لـ«الكل»
   const catBySlug = new Map(cats.map((c) => [c.slug, c]));
@@ -1780,7 +1944,7 @@ async function viewRestaurants(query) {
         catBlocks.set(cat.id, categoryBlockRows);
       }).finally(() => catLayoutLoads.delete(cat.id)));
     }
-    await catLayoutLoads.get(cat.id);
+    try { await catLayoutLoads.get(cat.id); } catch (e) { loadFail('category-layout', e); }
   };
   await ensureCatLayout();
   if (my !== rid) return;
@@ -1826,15 +1990,17 @@ async function viewRestaurants(query) {
     const emptyTxt = term ? 'مفيش مطعم يطابق بحثك'
       : active ? 'مفيش مطاعم في التصنيف ده دلوقتي'
       : 'مفيش مطاعم متاحة دلوقتي';
-    const listHtml = sequenceHtml(items, list, blocksById, adsView, used, rests);
+    const listHtml = sequenceHtml(items, list, blocksById, adsView, used, rests, activeCat ? { categoryId: activeCat.id } : null);
     // القائمة الفاضية ما بتمنعش البلوكات الصالحة من الظهور (إلا لو فيه بحث نشط)
     const hasBlock = !term && listHtml.includes('sh-custom-block');
-    $('#list').innerHTML = (list.length || hasBlock) ? listHtml : `<div class="col-12">${emptyHtml(emptyTxt)}</div>`;
+    $('#list').innerHTML = (list.length || hasBlock) ? listHtml : `<div class="col-12">${loadErrors.length && !rests.length ? loadErrorHtml() : emptyHtml(emptyTxt)}</div>`;
     // عنوان الصفحة بيوضح التصنيف المختار، عشان المستخدم يعرف هو فين
     const titleEl = app.querySelector('.topbar .ttl');
     if (titleEl) titleEl.textContent = active ? (catBySlug.get(active)?.name || 'المطاعم') : 'المطاعم';
     observeAds($('#top-ads'));
     observeAds($('#list'));
+    stopBlockTracking(); // إعادة الرسم: نبدأ مراقبة العناصر الجديدة بس، والظهور المسجل قبل كده ما بيتكررش
+    observeBlocks($('#list'));
     mountAdSliders($('#top-ads'));
     mountAdSliders($('#list'));
     aosRefresh();
@@ -1848,11 +2014,12 @@ async function viewRestaurants(query) {
     const b = e.target.closest('button[data-c]');
     if (!b) return;
     active = b.dataset.c;
+    const wanted = active;
     // نحدّث الرابط بدون إعادة تحميل، فالتصنيف يفضل محفوظ عند الريفرش أو عند فتح الرابط
     history.replaceState(null, '', active ? `#/restaurants?c=${encodeURIComponent(active)}` : '#/restaurants');
     drawChips();
     await ensureCatLayout();
-    if (my !== rid) return;
+    if (my !== rid || active !== wanted) return; // المستخدم غيّر التصنيف تاني أثناء التحميل
     render();
   });
 }
@@ -1907,20 +2074,21 @@ async function loadCartSafe(restaurantId) {
   }
 }
 
-async function viewRestaurant([, slug]) {
+async function viewRestaurant([, slug], query) {
   const my = ++rid;
   app.innerHTML = backbar('') + '<p class="meta">جاري التحميل…</p>';
 
-  const { data: r } = await sb.from('restaurants')
+  const { data: r, error: rErr } = await sb.from('restaurants')
     .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, restaurant_categories(name), restaurant_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position))')
     .eq('slug', slug).maybeSingle();
   if (my !== rid) return;
+  if (rErr) { loadFail('restaurant', rErr); app.innerHTML = backbar('') + loadErrorHtml(); return; }
   if (!r) { app.innerHTML = backbar('') + emptyHtml('المطعم ده مش متاح دلوقتي'); return; }
 
   const [menuCats, products, offers, reviews, methods, cartRes] = await Promise.all([
     sb.from('menu_categories').select('id, name, display_order').eq('restaurant_id', r.id).eq('is_active', true).order('display_order'),
     sb.from('products').select('id, name, description, price, emoji, category_id, display_order, product_images(image_url, display_order), product_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position))').eq('restaurant_id', r.id).eq('is_available', true).order('display_order'),
-    sb.from('restaurant_offers').select('id, title, description').eq('restaurant_id', r.id),
+    sb.from('restaurant_offers').select('id, title, description, status, starts_at, ends_at').eq('restaurant_id', r.id),
     sb.from('restaurant_reviews').select('rating, review_text, created_at').eq('restaurant_id', r.id).order('created_at', { ascending: false }).limit(5),
     loadMethods(r.id),
     loadCartSafe(r.id),
@@ -1932,7 +2100,7 @@ async function viewRestaurant([, slug]) {
     menuCats: menuCats.data || [],
     products: products.data || [],
     prodMap: new Map((products.data || []).map((p) => [p.id, p])),
-    offers: offers.data || [],
+    offers: (offers.data || []).filter((o) => o.status === 'approved' && inWindow(o.starts_at, o.ends_at)),
     reviews: reviews.data || [],
     methods,
     cart: cartRes.cart,
@@ -1969,6 +2137,9 @@ async function viewRestaurant([, slug]) {
   `;
   drawMenu();
   if (!r.is_open) toast('المطعم مقفول دلوقتي');
+  // رابط منتج من كارت بلوك: #/r/slug?p=id بيفتح تفاصيل المنتج
+  const wantedProduct = query && query.get ? query.get('p') : '';
+  if (wantedProduct && R.prodMap.has(wantedProduct)) openProductSheet(wantedProduct);
 }
 
 // شاشة تفاصيل المنتج: صورة ووصف وسعر، والكمية بتتعدل بنفس setQty اللي في المنيو
@@ -2726,6 +2897,7 @@ app.addEventListener('click', (e) => {
   if (act === 'inc') return setQty(b.dataset.id, 1);
   if (act === 'dec') return setQty(b.dataset.id, -1);
   if (act === 'pay') return payOrder(b.dataset.order, b);
+  if (act === 'reload') return route();
   if (act === 'logout') return logout();
   if (act === 'cart') return openCartSheet();
   if (act === 'scroll') return document.getElementById(b.dataset.target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
