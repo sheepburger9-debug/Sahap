@@ -372,6 +372,143 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 .psa-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
 .psa-actions{margin-top:14px;display:flex;justify-content:flex-end}
 body::before{content:"";position:fixed;inset:0 0 auto 0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:6;pointer-events:none}
+
+/* ============ تحجيم الهاتف (أقل من 600px) ============
+   الهدف: عناصر أصغر ومتناسبة مع الشاشة. البلوكات أصغر ما يكون،
+   والمطاعم الفردية والإعلانات أكبر بشوية منها. */
+@media (max-width:599px){
+  /* عناصر عامة: أيقونات وصور مصغرة */
+  .thumb{width:56px;height:56px;font-size:22px;border-radius:10px}
+  .cs-prod-img{height:56px;font-size:24px}
+  .cartbtn{width:36px;height:36px}
+  .cartbtn svg{width:18px;height:18px}
+  .tabbar i{font-size:16px;height:18px;line-height:18px}
+  .tabbar a{font-size:11px;padding:6px 2px}
+  .ttl{font-size:18px}
+  .brand{font-size:20px}
+  .rhead{font-size:21px;margin:10px 0 4px}
+  .rhead-row .rlogo{width:44px;height:44px;border-radius:12px}
+  .hero{height:130px;border-radius:14px}
+  .hero-fb{font-size:56px}
+  .rcard-fav{width:24px;height:24px}
+  .rcard-fav svg{width:13px;height:13px}
+  .rcard-img .rcard-logo{width:34px;height:34px;border-radius:9px}
+  .mkt-card{flex:0 0 min(34vw,120px)}
+  .mkt-card-n{font-size:12px}
+  .mkt-card-t{font-size:13px;padding:8px 9px}
+  .banner{min-height:112px;padding:14px;border-radius:16px}
+  .banner .bt{font-size:16px}
+
+  /* المطاعم الفردية (خارج البلوكات): أكبر شوية */
+  .rcard{min-height:80px;border-radius:14px;margin:0 0 10px}
+  .rcard-img{flex-basis:34%;min-height:80px}
+  .rcard-body{padding:10px 12px;gap:4px}
+  .rcard .rname{font-size:15px}
+  .rcard-line{font-size:12px}
+
+  /* الإعلانات: أكبر شوية من البلوكات، وصورها أقصر */
+  .ad{margin:10px 0}
+  .ad img{max-height:170px}
+  .ad-title{font-size:15px}
+  .ad-body{padding:10px 12px}
+  .ad--hero{min-height:112px}
+  .ad--hero .ad-title{font-size:17px}
+  .ad--horizontal{min-height:80px}
+  .ad--horizontal img{width:92px;flex-basis:92px}
+  .ad--featured .ad-title{font-size:15px}
+  .ad-feat-media{aspect-ratio:16/7}
+
+  /* البلوكات: أصغر حجم */
+  .sh-blk{padding:8px 0 6px;border-radius:14px}
+  .sh-blk > .sec{font-size:14px;margin:0 10px 6px}
+  .sh-blk .sh-rail3 .sh-col{flex:0 0 68%;width:68%;gap:6px}
+  .sh-blk .rcard{min-height:60px;border-radius:12px}
+  .sh-blk .rcard-img{flex-basis:28%;min-height:60px}
+  .sh-blk .rcard-body{padding:6px 8px;gap:3px}
+  .sh-blk .rname{font-size:12px}
+  .sh-blk .rcard-line{font-size:11px}
+  .sh-blk .rcard-img .rcard-logo{width:28px;height:28px;border-radius:8px}
+  .sh-blk .rcard-top{min-height:20px}
+  .sh-blk .rcard-top .badge{font-size:10px;padding:2px 7px}
+  .block .rail{gap:8px}
+  .sh-col{flex:0 0 78%}
+}
+
+/* ============ ضبط نهائي للهاتف: فرق واضح بين المطعم العادي والمطعم داخل البلوك ============ */
+@media (max-width:599px){
+  /* مسافة أصغر بين المطاعم العادية */
+  #list.row{--bs-gutter-y:0}
+  #list .rcard{min-height:66px;margin:0 0 6px;border-radius:12px}
+  #list .rcard-img{flex-basis:30%;min-height:66px}
+  #list .rcard-body{padding:7px 10px;gap:3px}
+  #list .rcard .rname{font-size:14px}
+  #list .rcard-line{font-size:11.5px}
+  #list .rcard-img .rcard-logo{width:30px;height:30px;border-radius:8px}
+
+  /* المطعم داخل البلوك: أصغر بوضوح */
+  .sh-blk .rcard{min-height:50px;border-radius:10px;margin:0}
+  .sh-blk .rcard-img{flex-basis:26%;min-height:50px}
+  .sh-blk .rcard-body{padding:5px 7px;gap:2px}
+  .sh-blk .rname{font-size:11.5px}
+  .sh-blk .rcard-line{font-size:10px}
+  .sh-blk .rcard-img .rcard-logo{width:24px;height:24px;border-radius:7px}
+  .sh-blk .rcard-fav{display:none}
+  .sh-blk .sh-rail3 .sh-col{flex:0 0 62%;width:62%;gap:4px}
+  .sh-blk{padding:6px 0 5px;background:#FFF6DF}
+
+  /* مسافة أكبر بين البلوك والمطاعم اللي بعده */
+  .block{margin:0 0 18px}
+  #list > div:has(.sh-blk){margin-bottom:18px}
+}
+
+/* ============ تعديل البلوك على الهاتف: كارت أقصر وأعرض، ومسافة أكبر حوله ============ */
+@media (max-width:599px){
+  .sh-blk .sh-rail3 .sh-col{flex:0 0 84%;width:84%}
+  .sh-blk .rcard{min-height:40px}
+  .sh-blk .rcard-img{flex-basis:22%;min-height:40px}
+  .sh-blk .rcard-body{padding:4px 8px;gap:1px;justify-content:center}
+  .sh-blk .rcard-img .rcard-logo{width:22px;height:22px}
+  .sh-blk .rname{font-size:11px}
+  .sh-blk .rcard-line{font-size:9.5px}
+  .sh-blk .rcard-top{min-height:0}
+  #list > div:has(.sh-blk){margin:20px 0 22px}
+  .block{margin:0 0 22px}
+}
+
+/* ============ البلوكات على الهاتف: خلفية أكبر، كارت بعرض الشاشة، شارات أصغر ============ */
+@media (max-width:599px){
+  /* خلفية البلوك ممتدة لعرض الشاشة ومساحتها حوالين الكروت أكبر */
+  .sh-blk{margin:0 -16px;border-radius:0;padding:16px 0 14px;background:#FFF6DF;border-left:0;border-right:0}
+  .sh-blk > .sec{margin:0 16px 10px}
+  .sh-blk > .sub{margin:-4px 16px 10px}
+  .sh-blk .sh-rail3{padding:0 16px}
+  .sh-blk .sh-rail3 .sh-col{flex:0 0 100%;width:100%}
+  /* كارت المطعم داخل البلوك: أقل ارتفاع */
+  .sh-blk .rcard{min-height:34px}
+  .sh-blk .rcard-img{flex-basis:20%;min-height:34px}
+  .sh-blk .rcard-body{padding:3px 8px}
+  .sh-blk .rcard-img .rcard-logo{width:20px;height:20px;border-radius:6px}
+  .sh-blk .rname{font-size:11px}
+  .sh-blk .rcard-line{font-size:9.5px}
+  /* الشارات أصغر للجميع */
+  .badge,.rcard-top .badge,.rcard-img .badge{font-size:9px;padding:1px 6px;line-height:1.3}
+  .rcard-img .badge{bottom:4px;left:4px}
+}
+
+/* ============ البلوكات في كل الشاشات (الرئيسية والمطاعم) على الهاتف ============ */
+@media (max-width:599px){
+  .block{margin:0 -16px 22px;border-radius:0;padding:16px 0 14px;background:#FFF6DF}
+  .block > .sec{margin:0 16px 10px}
+  .block > .sub{margin:-4px 16px 10px}
+  .block .rail{margin:0;padding:0 16px}
+  .block .rail .sh-col{flex:0 0 100%;width:100%}
+  .block .rcard{min-height:34px}
+  .block .rcard-img{flex-basis:20%;min-height:34px}
+  .block .rcard-body{padding:3px 8px}
+  .block .rcard-img .rcard-logo{width:20px;height:20px;border-radius:6px}
+  .block .rname{font-size:11px}
+  .block .rcard-line{font-size:9.5px}
+}
 </style>
 </head>
 <body>
