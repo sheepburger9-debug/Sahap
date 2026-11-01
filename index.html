@@ -518,6 +518,28 @@ body::before{content:"";position:fixed;inset:0 0 auto 0;height:env(safe-area-ins
   .block .rname{font-size:11px}
   .block .rcard-line{font-size:9.5px}
 }
+/* ===== خلفية البلوك Full Width: الخلفية بعرض الشاشة، والمحتوى يفضل في نفس عمود الصفحة ===== */
+:root{--sh-wrap:520px}
+@media (min-width:600px){:root{--sh-wrap:720px}}
+@media (min-width:768px){:root{--sh-wrap:900px}}
+@media (min-width:1024px){:root{--sh-wrap:1120px}}
+@media (min-width:1400px){:root{--sh-wrap:1240px}}
+.block.sh-custom-block,
+.sh-blk{
+  width:100vw;
+  max-width:none;
+  margin-left:calc(50% - 50vw);
+  margin-right:calc(50% - 50vw);
+  border-left:0;
+  border-right:0;
+  border-radius:0;
+}
+@media (min-width:600px){
+  .block.sh-custom-block,
+  .sh-blk{
+    padding-inline:max(calc(var(--blk-padding,0px) + 16px),calc((100vw - var(--sh-wrap)) / 2 + 16px));
+  }
+}
 </style>
 </head>
 <body>
@@ -1195,23 +1217,45 @@ document.addEventListener('click', (e) => {
 
 // ترتيب الصفحة من homepage_layout_items (الإعلانات بتتعرض في موضعها)
 // skipCodes: مواضع بتتعرض في مكان محدد بره الترتيب
-function layoutHtml(layout, blocks, byId, ads, skipCodes = new Set(), used = null) {
+// التخطيط هو المصدر الوحيد: البلوك اللي مش في التخطيط ما يتعرضش أبداً
+function layoutTokens(layout, blocks, byId, ads, skipCodes = new Set(), used = null) {
   const blockById = new Map(blocks.map((b) => [b.id, b]));
-  // التخطيط هو المصدر الوحيد: البلوك اللي مش في التخطيط ما يتعرضش أبداً
-  const items = layout;
   const shown = new Set(); // مطعم واحد في بلوك واحد بس على الصفحة
-  return items.map((it) => {
+  return layout.map((it) => {
     if (it.item_type === 'restaurant_block') {
       const bl = blockById.get(it.block_id);
-      return bl ? blockHtml(blockPlacementConfig(bl, it), byId, shown) : '';
+      return bl ? { html: blockHtml(blockPlacementConfig(bl, it), byId, shown) } : null;
     }
     if (it.item_type === 'ad_banner') {
       const code = it.ad_placements && it.ad_placements.code;
-      if (!code || skipCodes.has(code)) return '';
-      return adsHtml(used ? pickAds(ads, code, used) : ads.get(code));
+      if (!code || skipCodes.has(code)) return null;
+      return { ads: used ? pickAds(ads, code, used) : (ads.get(code) || []) };
     }
-    return '';
-  }).join('');
+    return null;
+  });
+}
+
+// تجميع الإعلانات المتتالية في Slider واحد.
+// البلوك الفاضي (أو الموضع اللي مفيهوش إعلانات) مش فاصل، فالإعلانات اللي حواليه بتتجمع.
+// البلوك اللي فيه مطاعم فعلية بيقطع المجموعة. ما بنحذفش ولا بنغيّر أي إعلان.
+function groupSequence(tokens, wrapAds = (h) => h) {
+  const parts = [];
+  let pending = null;
+  const flush = () => {
+    if (pending && pending.length) parts.push(wrapAds(adsHtml(pending)));
+    pending = null;
+  };
+  for (const t of tokens) {
+    if (!t) continue;
+    if (t.ads) {
+      if (!pending) pending = [];
+      pending.push(...t.ads);
+      continue;
+    }
+    if (t.html) { flush(); parts.push(t.html); }
+  }
+  flush();
+  return parts;
 }
 
 function emptyHtml(txt) { return `<p class="empty">${esc(txt)}</p>`; }
@@ -1398,9 +1442,11 @@ async function viewHome() {
       ? `<section class="swiper sh-banners" aria-label="عروض"><div class="swiper-wrapper">${bannerHtml}</div></section>`
       : `<section class="banners" aria-label="عروض">${bannerHtml}</section>`) : ''}
     ${mktStripHtml(sections, byId)}
-    ${inLayout.has('home_banner') ? '' : adsHtml(pickAds(ads, 'home_banner', used))}
-    ${layoutHtml(layout, blocks, byId, ads, new Set(), used)}
-    ${inLayout.has('home_middle') ? '' : adsHtml(pickAds(ads, 'home_middle', used))}
+    ${groupSequence([
+      ...(inLayout.has('home_banner') ? [] : [{ ads: pickAds(ads, 'home_banner', used) }]),
+      ...layoutTokens(layout, blocks, byId, ads, new Set(), used),
+      ...(inLayout.has('home_middle') ? [] : [{ ads: pickAds(ads, 'home_middle', used) }]),
+    ]).join('')}
   `;
   // لو الصفحة فاضية تماماً (مفيش مطاعم ولا لافتات ولا بلوكات) نعرض رسالة بدل شاشة بيضا
   if (!rests.length && !bannerHtml && !blocks.length && !sections.length) {
@@ -1421,21 +1467,20 @@ async function viewHome() {
 // من غير ما يتجمع بلوكين أو لافتتين جنب بعض. القائمة بتعرض كل المطاعم المطابقة (زي تصنيف الكل).
 function sequenceHtml(items, list, blocksById, ads, used) {
   const byId = new Map(list.map((r) => [r.id, r]));
-  const parts = [];
   const shown = new Set(); // المطاعم اللي ظهرت في بلوك، مش هتتكرر في القائمة العادية
+  const tokens = [];
   for (const it of items) {
     if (it.item_type === 'restaurant_block') {
       const bl = blocksById.get(it.block_id);
       if (!bl) continue;
       const html = blockHtml(blockPlacementConfig(bl, it), byId, shown, true);
-      if (!html) continue;
-      parts.push(`<div class="col-12">${html}</div>`);
+      if (html) tokens.push({ html: `<div class="col-12">${html}</div>` });
     } else if (it.item_type === 'ad_banner') {
       const code = it.ad_placements?.code;
-      const html = code ? adsHtml(pickAds(ads, code, used)) : '';
-      if (html) parts.push(`<div class="col-12">${html}</div>`);
+      if (code) tokens.push({ ads: pickAds(ads, code, used) });
     }
   }
+  const parts = groupSequence(tokens, (h) => `<div class="col-12">${h}</div>`);
   // القائمة بتعرض كل المطاعم المطابقة (حتى اللي ظاهرة في بلوك فوق)، والتصنيف ما بيأثرش على «الكل»
   const rest = list;
   const n = parts.length;
