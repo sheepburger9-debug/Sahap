@@ -263,20 +263,32 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
   .topbar{padding-inline:0}
   .tabbar,.cartbar,.sh-toast{inset-inline-start:max(12px,env(safe-area-inset-left));inset-inline-end:max(12px,env(safe-area-inset-right))}
 }
-/* تابلت: 600px فأكثر */
+/* تدرّج العرض: الهاتف يفضل بشكله الأصلي، والشاشات الأكبر بتوسّع المحتوى تدريجياً */
 @media (min-width:600px){
-  .wrap{max-width:760px}
+  .wrap{max-width:720px}
+  .tabbar,.cartbar,.cs-bottom,.sh-toast{max-width:696px}
   .mkt-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible;margin:0 0 var(--gap-lg);padding:0}
   .mkt-card{flex:none;width:100%}
   .sh-col{flex:0 0 min(84%,300px)}
   #list .rcard{margin:0}
   .banner{flex:0 0 min(60%,360px)}
 }
-/* ديسكتوب: 1024px فأكثر */
+/* تابلت عمودي: 768px فأكثر، شبكة المطاعم بعمودين */
+@media (min-width:768px){
+  .wrap{max-width:900px}
+  .tabbar,.cartbar,.cs-bottom,.sh-toast{max-width:876px}
+}
+/* ديسكتوب: 1024px فأكثر، شبكة المطاعم بثلاث أعمدة */
 @media (min-width:1024px){
   .wrap{max-width:1120px}
+  .tabbar,.cartbar,.cs-bottom,.sh-toast{max-width:1096px}
   .mkt-strip{grid-template-columns:repeat(5,minmax(0,1fr))}
   .sh-col{flex:0 0 min(84%,320px)}
+}
+/* شاشات واسعة جداً */
+@media (min-width:1400px){
+  .wrap{max-width:1240px}
+  .tabbar,.cartbar,.cs-bottom,.sh-toast{max-width:1216px}
 }
 /* منطقة تنبيهات SweetAlert2 ما تمنعش الضغط على الصفحة اللي تحتها */
 .swal2-container{pointer-events:none}
