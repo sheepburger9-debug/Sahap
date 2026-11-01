@@ -659,6 +659,12 @@ function logLoadError(source, err, status) {
   });
 }
 // الفشل اللي بيظهر للزائر: نفس الرسالة العامة الحالية، والتفاصيل في الـconsole
+// تشخيص منظم: سطر واحد لكل شاشة، بأعداد وأسماء المصادر الفاشلة بس (من غير بيانات خام)
+function diagLog(screen, info) {
+  try {
+    console.info('[SAHAP-DIAG][' + screen + ']', { page: currentPageName(), ...info, failedSources: [...loadErrors], time: new Date().toISOString() });
+  } catch (_) { /* التشخيص ما يوقفش الرسم */ }
+}
 function loadFail(source, err, status) {
   logLoadError(source, err, status);
   loadErrors.push(source);
@@ -936,11 +942,18 @@ async function loadBlocks(pageKey = 'home', categoryId = null) {
   if (error) { loadFail('blocks', error, status); return []; }
 
   // اختيار المطاعم وترتيبها وحدها في Supabase؛ نفس الدالة تدعم الديناميكي واليدوي والبراند والمطعم الواحد.
-  const rpc = await sb.rpc('get_public_restaurant_block_members', {
-    p_page_key: pageKey,
-    p_category_id: pageKey === 'category' ? categoryId : null,
-    p_limit: 30,
-  }).catch((e) => ({ data: null, error: e, status: null })); // خطأ الشبكة بيتسجل باسم block-members
+  // try/await بدل .catch: الـ builder بتاع supabase-js مفيهوش .catch، وده كان بيرمي TypeError قبل ما الطلب يتبعت،
+  // فـloadBlocks كلها بترجع فاضية والبلوكات كلها بتختفي من الرئيسية وشاشة المطاعم والتصنيفات
+  let rpc;
+  try {
+    rpc = await sb.rpc('get_public_restaurant_block_members', {
+      p_page_key: pageKey,
+      p_category_id: pageKey === 'category' ? categoryId : null,
+      p_limit: 30,
+    });
+  } catch (e) {
+    rpc = { data: null, error: e, status: null }; // خطأ الشبكة بيتسجل باسم block-members
+  }
   const memberMap = new Map();
   if (!rpc.error && Array.isArray(rpc.data)) {
     for (const row of rpc.data) memberMap.set(row.block_id, Array.isArray(row.members) ? row.members : []);
@@ -2018,6 +2031,19 @@ async function viewHome() {
       ...(inLayout.has('home_middle') ? [] : [{ ads: pickAds(ads, 'home_middle', used) }]),
     ]).join('')}
   `;
+  const adsCount = [...ads.values()].reduce((n, l) => n + l.length, 0);
+  diagLog('HOME', {
+    restaurantsReceived: rests.length,
+    blocksReceived: blocks.length,
+    blocksWithMembers: blocks.filter((b) => (b.members || []).length).length,
+    layoutItems: layout.length,
+    adPlacements: ads.size,
+    campaignsReceived: adsCount,
+    campaignsRendered: app.querySelectorAll('.ad[data-campaign-id]').length,
+    blocksRendered: app.querySelectorAll('section.sh-custom-block').length,
+    bannersReceived: offers.length,
+    bannersRendered: app.querySelectorAll('.banner').length,
+  });
   // لو الصفحة فاضية تماماً (مفيش مطاعم ولا لافتات ولا بلوكات) نعرض رسالة بدل شاشة بيضا
   if (!rests.length && !bannerHtml && !blocks.length && !sections.length) {
     app.insertAdjacentHTML('beforeend', loadErrors.length ? loadErrorHtml() : emptyHtml('مفيش عروض متاحة دلوقتي، جرّب بعد شوية'));
@@ -2219,6 +2245,21 @@ async function viewRestaurants(query) {
       : active ? 'مفيش مطاعم في التصنيف ده دلوقتي'
       : 'مفيش مطاعم متاحة دلوقتي';
     const listHtml = sequenceHtml(items, list, blocksById, adsView, used, rests, activeCat ? { categoryId: activeCat.id } : null);
+    {
+      const adsList = [...adsView.values()];
+      diagLog(activeCat ? 'CATEGORY' : 'RESTAURANTS', {
+        categoryId: activeCat ? activeCat.id : null,
+        ...(activeCat ? {} : { categoriesReceived: cats.length }),
+        restaurantsReceived: rests.length,
+        restaurantsListed: list.length,
+        blocksReceived: visibleBlocks.length,
+        blocksWithMembers: visibleBlocks.filter((b) => (b.members || []).length).length,
+        layoutItems: items.length,
+        adPlacements: adsView.size,
+        campaignsReceived: adsList.reduce((n, l) => n + l.length, 0),
+        blocksRendered: (listHtml.match(/sh-custom-block/g) || []).length,
+      });
+    }
     // القائمة الفاضية ما بتمنعش البلوكات الصالحة من الظهور (إلا لو فيه بحث نشط)
     const hasBlock = !term && listHtml.includes('sh-custom-block');
     $('#list').innerHTML = (list.length || hasBlock) ? listHtml : `<div class="col-12">${loadErrors.length && (!rests.length || rankFailed) ? loadErrorHtml() : emptyHtml(emptyTxt)}</div>`;
