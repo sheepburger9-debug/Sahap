@@ -1423,7 +1423,32 @@ function trackAttrs() {
 const newEventKey = () => (crypto && crypto.randomUUID
   ? crypto.randomUUID()
   : 'ev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2));
-const SESSION_RAW = newEventKey(); // معرف جلسة عشوائي لكل تحميل صفحة، من غير أي بيانات شخصية
+// معرّف جلسة التبويب: عشوائي بالكامل ومن غير أي بيانات شخصية، ثابت طول التبويب (بيفضل بعد إعادة التحميل) وجديد لكل تبويب جديد
+const SESSION_KEY_NAME = 'sahap_sid';
+const newSessionToken = () => {
+  try {
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+  } catch (_) {
+    return newEventKey().replace(/-/g, '');
+  }
+};
+function loadSessionRaw() {
+  try {
+    const saved = sessionStorage.getItem(SESSION_KEY_NAME);
+    if (saved && /^[0-9a-f]{64}$/.test(saved)) return saved;
+    const fresh = newSessionToken();
+    sessionStorage.setItem(SESSION_KEY_NAME, fresh);
+    return fresh;
+  } catch (_) {
+    // sessionStorage متعطل: معرّف لتحميل الصفحة الحالي بس (مش هيفضل بعد إعادة التحميل)
+    return newSessionToken();
+  }
+}
+const SESSION_RAW = loadSessionRaw(); // القيمة الخام للجلسة: مش بتتبعت لـ Supabase، بنحوّلها لهاش الأول
+// معرّف تحميل الصفحة: منفصل عن الجلسة، بيدخل في مفاتيح الأحداث عشان إعادة التحميل ما تطلعش نفس المفاتيح
+const PAGE_LOAD_ID = newEventKey();
 let sessionHashP = null;
 function sessionHash() {
   if (!sessionHashP) sessionHashP = (async () => {
@@ -1433,12 +1458,13 @@ function sessionHash() {
         return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
       }
     } catch (_) {}
-    return SESSION_RAW;
+    return null; // ما نبعتش القيمة الخام أبداً؛ من غير SHA-256 الحدث بيتسجل بدون هاش
   })();
   return sessionHashP;
 }
 // نفس event_key في كل إعادة محاولة، والأخطاء ما بتعطلش الموقع
 async function sendAdEvent(fn, params, attempts = 3) {
+  if (!params.p_session_hash) return false; // من غير هاش ما نبعتش الحدث
   for (let i = 0; i < attempts; i++) {
     try {
       const { error } = await sb.rpc(fn, params);
@@ -1483,8 +1509,8 @@ async function fireImpression(el) {
     p_category_id: categoryId,
     p_session_hash: await sessionHash(),
     p_visible_percent: pct,
-    // event_key ثابت لنفس (جلسة + شاشة + تصنيف + عرض + حملة): الإعادة ما تكرّرش الحدث، وشاشة تانية تسجل حدث جديد
-    p_event_key: `adimp:${SESSION_RAW}:${dedupe}`,
+    // event_key ثابت لنفس (تحميل الصفحة + شاشة + تصنيف + عرض + حملة): الإعادة ما تكرّرش الحدث، وشاشة تانية تسجل حدث جديد
+    p_event_key: `adimp:${PAGE_LOAD_ID}:${dedupe}`,
   };
   sendAdEvent('track_ad_impression', params);
 }
@@ -1507,6 +1533,7 @@ const blockRejected = new Set();  // أحداث رفضتها الدالة (نو�
 const blockClicked = new Set();
 const blockTimers = new Set();
 async function sendBlockEvent(fn, params) {
+  if (!params.p_session_hash) return false; // من غير هاش ما نبعتش الحدث
   // المفتاح يشمل نوع الحدث: رفض Impression ما يمنعش Click والعكس
   const key = [fn, params.p_block_id, params.p_restaurant_id, params.p_page_key, params.p_category_id || ''].join('|');
   if (blockRejected.has(key)) return false;
@@ -1548,7 +1575,7 @@ async function fireBlockImpression(el) {
     p_category_id: categoryId,
     p_session_hash: await sessionHash(),
     p_visible_percent: Math.min(100, Math.max(50, pct)),
-    p_event_key: `blkimp:${SESSION_RAW}:${scope}`,
+    p_event_key: `blkimp:${PAGE_LOAD_ID}:${scope}`,
   });
 }
 const blockIO = ('IntersectionObserver' in window) ? new IntersectionObserver((entries) => {
@@ -1591,7 +1618,7 @@ document.addEventListener('click', (e) => {
     p_page_key: pageKey,
     p_category_id: categoryId,
     p_session_hash: h,
-    p_event_key: `blkclk:${SESSION_RAW}:${key}`,
+    p_event_key: `blkclk:${PAGE_LOAD_ID}:${key}`,
   })).catch(() => {});
 });
 
@@ -1608,7 +1635,7 @@ document.addEventListener('click', (e) => {
   const viewKey = [a.dataset.view || viewSeq, pageKey, categoryId || '', campaignId].join('|');
   if (clickedKeys.has(viewKey)) return;
   clickedKeys.add(viewKey);
-  const eventKey = `click:${SESSION_RAW}:${viewKey}`;
+  const eventKey = `click:${PAGE_LOAD_ID}:${viewKey}`;
   sessionHash().then((h) => sendAdEvent('track_ad_click', {
     p_campaign_id: campaignId,
     p_page_key: pageKey,
