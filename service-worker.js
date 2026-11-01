@@ -1,10 +1,13 @@
-const CACHE = 'sahap-shell-v3';
+const CACHE = 'sahap-shell-v4';
 const SHELL = ['./', './index.html', './manifest.json'];
 // رفع رقم الإصدار عند كل نشر جديد عشان الكاش القديم يتمسح ومايظهرش تحديث قديم
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting())
+    // كل ملف بيتحمّل لوحده: فشل ملف واحد ما يوقفش تثبيت الـ worker بالكامل
+    caches.open(CACHE)
+      .then((cache) => Promise.all(SHELL.map((u) => cache.add(u).catch((e) => console.warn('[sw] skip', u, e)))))
+      .then(() => self.skipWaiting())
   );
 });
 
