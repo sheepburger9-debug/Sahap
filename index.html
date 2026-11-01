@@ -146,6 +146,19 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 .rcard-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:26px}
 .rcard-top .badge{margin:0;min-width:0;max-width:calc(100% - 34px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;font-size:12px;padding:3px 10px;line-height:1.4}
 .rcard-top .rcard-fav{position:static;flex:none;width:26px;height:26px}
+/* نظام الشارات الموحد (مطاعم + منتجات): الخلفية والنص والأيقونة مستقلين */
+.sh-badge{display:inline-flex;align-items:center;gap:4px;max-width:100%;box-sizing:border-box;vertical-align:middle;line-height:1.4}
+.sh-badge-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sh-badge-icon{display:inline-flex;flex:none;width:1em;height:1em;font-size:1em;line-height:1}
+.sh-badge-icon svg{display:block;width:100%;height:100%;fill:currentColor}
+.sh-badge--pill{border-radius:999px}
+.sh-badge--rounded{border-radius:8px}
+.sh-badge--rectangle{border-radius:2px}
+.sh-badge--ribbon{border-radius:0;padding-inline:12px;clip-path:polygon(0 0,100% 0,calc(100% - 7px) 50%,100% 100%,0 100%,7px 50%)}
+.sh-badge--circle{border-radius:50%;aspect-ratio:1/1;min-width:2.4em;justify-content:center;text-align:center;padding:0 .4em}
+.sh-badge--circle .sh-badge-text{white-space:normal;overflow:visible;text-overflow:clip}
+.sh-badge--no-bg{background:transparent}
+.rcard-top .sh-badge{display:inline-flex}
 .rcard-line{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rcard-line .star{color:var(--saffron)}
 .ad{display:block;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:var(--gap-md) 0}
@@ -705,7 +718,7 @@ async function logout() {
 /* ============ تحميل البيانات ============ */
 async function loadRestaurants() {
   const { data, error } = await sb.from('restaurants')
-    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, background_color, text_color))')
+    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position))')
     .order('rating', { ascending: false });
   if (error) { toast('تعذّر تحميل المطاعم'); return []; }
   return data || [];
@@ -760,7 +773,7 @@ async function loadDiscoverySections() {
 }
 async function loadBlocks(pageKey = 'home', categoryId = null) {
   const { data, error } = await sb.from('restaurant_blocks')
-    .select('id, title, subtitle, display_order, background_color, text_color, card_style, design_settings, content_mode, brand_id, restaurant_id, max_items, logo_url, cover_image_url, badge_image_url, starts_at, ends_at, brand:restaurant_brands(name, logo_url, cover_image_url), badge:badges(name, display_text, background_color, text_color), block_restaurant_overrides(restaurant_id, display_order, is_eligible, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at, badge:badges(name, display_text, background_color, text_color)), block_offer_items(id, display_order, is_active, starts_at, ends_at, restaurant_offers(id, title, description, image_url, status, starts_at, ends_at, restaurant_id))')
+    .select('id, title, subtitle, display_order, background_color, text_color, card_style, design_settings, content_mode, brand_id, restaurant_id, max_items, logo_url, cover_image_url, badge_image_url, starts_at, ends_at, brand:restaurant_brands(name, logo_url, cover_image_url), badge:badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position), block_restaurant_overrides(restaurant_id, display_order, is_eligible, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at, badge:badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position)), block_offer_items(id, display_order, is_active, starts_at, ends_at, restaurant_offers(id, title, description, image_url, status, starts_at, ends_at, restaurant_id))')
     .eq('is_visible', true).order('display_order');
   if (error) { console.warn('[blocks]', error.message); return []; }
 
@@ -861,14 +874,15 @@ function inWindow(from, to) {
   const now = Date.now();
   return (!from || Date.parse(from) <= now) && (!to || Date.parse(to) >= now);
 }
+// كل خصائص الشارة بتتنقل، والتخصيص بيغلب الأصل لو فيه قيمة فعلية (0 و false بيتقبلوا)
+const BADGE_FIELDS = ['icon', 'background_color', 'text_color', 'border_color', 'shape', 'opacity', 'font_size_px', 'style_config', 'show_background', 'background_opacity', 'icon_position'];
 function pickBadge(b, textOverride, style) {
-  const s = style || {};
-  return {
-    name: b.name,
-    display_text: textOverride || b.display_text,
-    background_color: s.background_color || b.background_color,
-    text_color: s.text_color || b.text_color,
-  };
+  const s = style && typeof style === 'object' ? style : {};
+  const out = { name: b.name, display_text: textOverride || b.display_text };
+  BADGE_FIELDS.forEach((k) => {
+    out[k] = s[k] !== undefined && s[k] !== null && s[k] !== '' ? s[k] : b[k];
+  });
+  return out;
 }
 function badgesOf(r) {
   return (r.restaurant_badge_assignments || [])
@@ -886,8 +900,54 @@ function blockBadge(bl, m) {
 // قيم الألوان بتتفلتر: hex أو rgb/hsl أو اسم لون بسيط بس، أي قيمة تانية بترجع للافتراضي
 const CSS_COLOR_RE = /^(#[0-9a-f]{3,8}|(rgb|hsl)a?\([0-9\s.,%+-]+\)|[a-z]{3,20})$/i;
 const cssColor = (v, fb) => (CSS_COLOR_RE.test(String(v || '').trim()) ? String(v).trim() : fb);
+const BADGE_SHAPES = ['pill', 'rounded', 'rectangle', 'circle', 'ribbon'];
+// أيقونات معروفة بالاسم بس؛ أي قيمة تانية بتتعامل كرمز نصي قصير (زي الإيموجي) أو بتتجاهل
+const BADGE_ICON_SVG = {
+  tag: '<svg viewBox="0 0 24 24"><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9zm5-5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>',
+  star: '<svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>',
+  fire: '<svg viewBox="0 0 24 24"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-7 .5 2 1.5 3 3 3-1-3 0-6 0-8z"/></svg>',
+  bolt: '<svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
+};
+function badgeIconHtml(icon) {
+  const v = String(icon ?? '').trim();
+  if (!v) return '';
+  const svg = BADGE_ICON_SVG[v.toLowerCase()];
+  if (svg) return `<span class="sh-badge-icon" aria-hidden="true">${svg}</span>`;
+  if (v.length <= 4 && !/[A-Za-z0-9<>"'&=;\/]/.test(v)) return `<span class="sh-badge-icon" aria-hidden="true">${esc(v)}</span>`;
+  return '';
+}
+const badgeBool = (v, fb) => (v === undefined || v === null || v === '' ? fb : v === true || v === 'true' || v === 1 || v === '1');
+const badgeUnit = (v, fb) => {
+  if (v === undefined || v === null || v === '') return fb;
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : fb;
+};
 function badgeHtml(b) {
-  return `<span class="badge" style="background:${cssColor(b.background_color, '#fff')};color:${cssColor(b.text_color, '#1A1F1B')}">${esc(b.display_text || b.name)}</span>`;
+  if (!b) return '';
+  const showBg = badgeBool(b.show_background, true);
+  const alpha = badgeUnit(b.background_opacity, 1);
+  const bg = cssColor(b.background_color, '#fff');
+  const txt = cssColor(b.text_color, '#1A1F1B');
+  const border = b.border_color ? cssColor(b.border_color, null) : null;
+  const opacity = badgeUnit(b.opacity, 1);
+  const fs = Number(b.font_size_px);
+  const shape = BADGE_SHAPES.includes(b.shape) ? b.shape : 'pill';
+  const iconEnd = b.icon_position === 'end';
+  const icon = badgeIconHtml(b.icon);
+  // شفافية الخلفية بالألفا وحدها، فالنص والأيقونة بيفضلوا واضحين
+  let bgCss = 'background:transparent';
+  if (showBg) {
+    bgCss = alpha >= 1 ? `background:${bg}` : `background:${bg};background:color-mix(in srgb, ${bg} ${Math.round(alpha * 100)}%, transparent)`;
+  }
+  const styles = [bgCss, `color:${txt}`];
+  if (border) styles.push(`border:1px solid ${border}`);
+  if (Number.isFinite(fs) && fs >= 8 && fs <= 40) styles.push(`font-size:${fs}px`);
+  if (opacity < 1) styles.push(`opacity:${opacity}`);
+  const cls = ['badge', 'sh-badge', `sh-badge--${shape}`];
+  if (!showBg) cls.push('sh-badge--no-bg');
+  if (icon) cls.push('sh-badge--has-icon');
+  const text = `<span class="sh-badge-text">${esc(b.display_text || b.name || '')}</span>`;
+  return `<span class="${cls.join(' ')}" style="${styles.join(';')}">${iconEnd ? text + icon : icon + text}</span>`;
 }
 // شارات المنتج: النشطة داخل نافذة صلاحيتها بس، ونفس شكل شارات المطعم
 function productBadgesOf(p) {
@@ -1730,14 +1790,14 @@ async function viewRestaurant([, slug]) {
   app.innerHTML = backbar('') + '<p class="meta">جاري التحميل…</p>';
 
   const { data: r } = await sb.from('restaurants')
-    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, restaurant_categories(name), restaurant_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, background_color, text_color))')
+    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, restaurant_categories(name), restaurant_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position))')
     .eq('slug', slug).maybeSingle();
   if (my !== rid) return;
   if (!r) { app.innerHTML = backbar('') + emptyHtml('المطعم ده مش متاح دلوقتي'); return; }
 
   const [menuCats, products, offers, reviews, methods, cartRes] = await Promise.all([
     sb.from('menu_categories').select('id, name, display_order').eq('restaurant_id', r.id).eq('is_active', true).order('display_order'),
-    sb.from('products').select('id, name, description, price, emoji, category_id, display_order, product_images(image_url, display_order), product_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, background_color, text_color))').eq('restaurant_id', r.id).eq('is_available', true).order('display_order'),
+    sb.from('products').select('id, name, description, price, emoji, category_id, display_order, product_images(image_url, display_order), product_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position))').eq('restaurant_id', r.id).eq('is_available', true).order('display_order'),
     sb.from('restaurant_offers').select('id, title, description').eq('restaurant_id', r.id),
     sb.from('restaurant_reviews').select('rating, review_text, created_at').eq('restaurant_id', r.id).order('created_at', { ascending: false }).limit(5),
     loadMethods(r.id),
