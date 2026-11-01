@@ -318,6 +318,18 @@ legend{font-size:13px;color:var(--ink-2);padding:0;margin-bottom:4px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 /* بلوك العروض وسلايدر الإعلانات */
 .sh-offers{margin-top:10px}
+/* بلوكات المنتجات: كارت منتج صغير داخل شبكة مرنة، بدون تمدد أفقي */
+.sh-prod-wrap{display:flex;flex-direction:column;gap:14px;min-width:0;margin-top:10px}
+.sh-prod-group{display:flex;flex-direction:column;gap:10px;min-width:0}
+.sh-prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,130px),1fr));gap:10px;min-width:0;margin-top:10px}
+.pcard{display:flex;flex-direction:column;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;text-decoration:none;color:inherit}
+.pcard-media{display:grid;place-items:center;aspect-ratio:4/3;background:var(--bg);font-size:clamp(24px,7vw,32px);line-height:1;font-weight:700;color:var(--ink-2)}
+.pcard-body{display:flex;flex-direction:column;gap:2px;padding:8px 10px 10px;min-width:0;overflow-wrap:anywhere}
+.pcard-rest{font-size:12px;line-height:1.3}
+.pcard-name{font-family:"Reem Kufi",sans-serif;font-size:14px;font-weight:700;line-height:1.3}
+.pcard-desc{font-size:12px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pcard-price{margin-top:4px;font-weight:700;font-size:14px;color:var(--olive)}
+.pcard:focus-visible{outline:3px solid var(--saffron);outline-offset:3px}
 .sh-offer-rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 0 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .sh-offer-rail::-webkit-scrollbar{display:none}
 .offer-card{flex:0 0 min(70%,260px);scroll-snap-align:start;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;text-decoration:none;color:inherit;min-width:0}
@@ -771,9 +783,36 @@ async function loadDiscoverySections() {
         .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
     }));
 }
+// أنواع محتوى البلوك (restaurant_blocks.content_type). القيمة الفاضية/غير المعروفة بترجع لـ restaurants
+const BLOCK_CONTENT_TYPES = ['restaurants', 'products', 'restaurant_products', 'restaurants_products', 'offers'];
+const BLOCK_PRODUCT_TYPES = ['products', 'restaurant_products', 'restaurants_products'];
+function blockContentType(bl) {
+  return BLOCK_CONTENT_TYPES.includes(bl.content_type) ? bl.content_type : 'restaurants';
+}
+// منتجات البلوكات من block_product_items. استعلام منفصل عشان فشله ما يوقفش المطاعم ولا باقي البلوكات
+async function loadBlockProducts(blockIds) {
+  const map = new Map();
+  if (!blockIds.length) return map;
+  const { data, error } = await sb.from('block_product_items')
+    .select('id, block_id, display_order, is_active, product:products(id, name, description, price, emoji, is_available, restaurant_id)')
+    .in('block_id', blockIds)
+    .order('display_order');
+  if (error) { console.error('[block-products]', error.message); return map; }
+  for (const row of [...(data || [])].sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0))) {
+    const p = row.product;
+    if (row.is_active === false || !p || p.is_available === false) continue;
+    if (!p.id || !p.name || !p.restaurant_id || p.price == null || !Number.isFinite(Number(p.price))) continue;
+    if (!map.has(row.block_id)) map.set(row.block_id, []);
+    map.get(row.block_id).push({
+      id: p.id, name: p.name, description: p.description, price: p.price, emoji: p.emoji,
+      restaurant_id: p.restaurant_id, display_order: row.display_order,
+    });
+  }
+  return map;
+}
 async function loadBlocks(pageKey = 'home', categoryId = null) {
   const { data, error } = await sb.from('restaurant_blocks')
-    .select('id, title, subtitle, display_order, background_color, text_color, card_style, design_settings, content_mode, brand_id, restaurant_id, max_items, logo_url, cover_image_url, badge_image_url, starts_at, ends_at, brand:restaurant_brands(name, logo_url, cover_image_url), badge:badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position), block_restaurant_overrides(restaurant_id, display_order, is_eligible, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at, badge:badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position)), block_offer_items(id, display_order, is_active, starts_at, ends_at, restaurant_offers(id, title, description, image_url, status, starts_at, ends_at, restaurant_id))')
+    .select('id, title, subtitle, display_order, background_color, text_color, card_style, design_settings, content_mode, content_type, brand_id, restaurant_id, max_items, logo_url, cover_image_url, badge_image_url, starts_at, ends_at, brand:restaurant_brands(name, logo_url, cover_image_url), badge:badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position), block_restaurant_overrides(restaurant_id, display_order, is_eligible, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at, badge:badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position)), block_offer_items(id, display_order, is_active, starts_at, ends_at, restaurant_offers(id, title, description, image_url, status, starts_at, ends_at, restaurant_id))')
     .eq('is_visible', true).order('display_order');
   if (error) { console.warn('[blocks]', error.message); return []; }
 
@@ -790,8 +829,11 @@ async function loadBlocks(pageKey = 'home', categoryId = null) {
     console.warn('[block-members]', rpc.error?.message || 'تعذّر تحميل أعضاء البلوكات');
   }
 
+  const productMap = await loadBlockProducts((data || []).filter((b) => BLOCK_PRODUCT_TYPES.includes(b.content_type)).map((b) => b.id));
+
   return (data || []).map((b) => ({
     ...b,
+    products: productMap.get(b.id) || [],
     members: memberMap.has(b.id) ? memberMap.get(b.id) : (b.block_restaurant_overrides || [])
       .filter((o) => o.is_eligible !== false)
       .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0)),
@@ -991,7 +1033,6 @@ function restRowHtml(r, customBadge) {
 const safeUrl = (u) => (/^https?:\/\//i.test(u || '') ? u : '');
 
 const PER_COL = 3; // عدد المطاعم رأسياً في كل عمود (الاتفاق الحالي)
-// shown: Set بيسجل كل مطعم اتعرض قبل كده في الصفحة، عشان المطعم يظهر مرة واحدة بس
 // بلوك العروض: كروت عروض معتمدة مرتبطة بمطاعم منشورة (من block_offer_items)، منفصلة عن شريط المطاعم
 function offerCardHtml(o, r) {
   const img = safeUrl(o.image_url);
@@ -1074,13 +1115,93 @@ function blockDesignStyle(bl) {
   }
   return styles.join(';');
 }
-function blockHtml(bl, byId, shown = null, grid = false) {
-  const items = bl.members
+// مطاعم البلوك بالترتيب، كل مطعم مرة واحدة داخل نفس البلوك بس (من غير منع بين البلوكات)
+function blockRestaurantItems(bl, byId) {
+  const seen = new Set();
+  return (bl.members || [])
     .map((m) => ({ r: byId.get(m.restaurant_id), m }))
-    .filter((x) => x.r && !(shown && shown.has(x.r.id)));
-  const offersHtml = offersPartHtml(bl, byId);
-  if (!items.length && !offersHtml) return '';
-  if (shown) items.forEach((x) => shown.add(x.r.id));
+    .filter((x) => {
+      if (!x.r || seen.has(x.r.id)) return false;
+      seen.add(x.r.id);
+      return true;
+    });
+}
+function memberOf(bl, restaurantId) {
+  return (bl.members || []).find((m) => m.restaurant_id === restaurantId);
+}
+function restaurantsRailHtml(bl, items, grid) {
+  if (!items.length) return '';
+  const cols = [];
+  for (let i = 0; i < items.length; i += PER_COL) cols.push(items.slice(i, i + PER_COL));
+  const cls = grid ? 'rail sh-rail3' : 'rail';
+  return `<div class="${cls}">${cols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>`;
+}
+// المنتجات الصالحة: مطعمها ظاهر في الصفحة الحالية (زي العروض)، وعنده slug عشان الرابط
+function blockValidProducts(bl, byId) {
+  return (bl.products || []).filter((p) => {
+    const r = byId.get(p.restaurant_id);
+    return !!(r && r.slug);
+  });
+}
+function blockProductCardHtml(p, r) {
+  const fallback = esc((p.name || '?').trim()[0] || '؟');
+  return `<a class="pcard" href="#/r/${encodeURIComponent(r.slug)}" aria-label="${esc(p.name)} - ${esc(r.name)}">
+    <span class="pcard-media" aria-hidden="true">${p.emoji ? esc(p.emoji) : fallback}</span>
+    <span class="pcard-body">
+      <span class="meta pcard-rest">${esc(r.name)}</span>
+      <strong class="pcard-name">${esc(p.name)}</strong>
+      ${p.description ? `<span class="meta pcard-desc">${esc(p.description)}</span>` : ''}
+      <span class="pcard-price">${money(p.price)}</span>
+    </span>
+  </a>`;
+}
+function blockProductsHtml(bl, byId) {
+  const products = blockValidProducts(bl, byId);
+  if (!products.length) return '';
+  return `<div class="sh-prod-grid">${products.map((p) => blockProductCardHtml(p, byId.get(p.restaurant_id))).join('')}</div>`;
+}
+function blockRestaurantProductsHtml(bl, byId) {
+  // المطعم: المحدد للبلوك، أو المطعم الوحيد بين أعضاء البلوك لو مفيش مطعم محدد. ولو مش واضح يتعرض ''
+  let target = null;
+  if (bl.restaurant_id) {
+    target = byId.get(bl.restaurant_id) || null;
+  } else {
+    const items = blockRestaurantItems(bl, byId);
+    target = items.length === 1 ? items[0].r : null;
+  }
+  if (!target || !target.slug) return '';
+  const products = blockValidProducts(bl, byId).filter((p) => p.restaurant_id === target.id);
+  if (!products.length) return '';
+  return `<div class="sh-prod-group">${restRowHtml(target, blockBadge(bl, memberOf(bl, target.id)))}<div class="sh-prod-grid">${products.map((p) => blockProductCardHtml(p, target)).join('')}</div></div>`;
+}
+function blockRestaurantsProductsHtml(bl, byId) {
+  // كل مطعم من أعضاء البلوك وتحته منتجاته بس. مطعم من غير منتجات صالحة ما بيتعرضش
+  const products = blockValidProducts(bl, byId);
+  const groups = blockRestaurantItems(bl, byId).map(({ r, m }) => {
+    const mine = products.filter((p) => p.restaurant_id === r.id);
+    if (!mine.length) return '';
+    return `<div class="sh-prod-group">${restRowHtml(r, blockBadge(bl, m))}<div class="sh-prod-grid">${mine.map((p) => blockProductCardHtml(p, r)).join('')}</div></div>`;
+  }).filter(Boolean);
+  return groups.length ? `<div class="sh-prod-wrap">${groups.join('')}</div>` : '';
+}
+// blockHtml: يختار الـ renderer حسب bl.content_type. الرندر بيرجع '' لو البلوك مفيهوش بيانات صالحة
+function blockHtml(bl, byId, grid = false) {
+  const type = blockContentType(bl);
+  let body = '';
+  let offersHtml = '';
+  if (type === 'restaurants') {
+    body = restaurantsRailHtml(bl, blockRestaurantItems(bl, byId), grid);
+    offersHtml = offersPartHtml(bl, byId);
+  } else if (type === 'offers') {
+    offersHtml = offersPartHtml(bl, byId);
+  } else if (type === 'products') {
+    body = blockProductsHtml(bl, byId);
+  } else if (type === 'restaurant_products') {
+    body = blockRestaurantProductsHtml(bl, byId);
+  } else if (type === 'restaurants_products') {
+    body = blockRestaurantsProductsHtml(bl, byId);
+  }
+  if (!body && !offersHtml) return '';
 
   const restaurantAsset = bl.restaurant_id ? byId.get(bl.restaurant_id) : null;
   const d = bl.design_settings || {};
@@ -1096,16 +1217,9 @@ function blockHtml(bl, byId, shown = null, grid = false) {
     </div>`;
   const style = blockDesignStyle(renderBlock);
   const sectionClass = `block sh-custom-block${grid ? ' sh-blk' : ''}`;
-  if (grid) {
-    const gcols = [];
-    for (let i = 0; i < items.length; i += PER_COL) gcols.push(items.slice(i, i + PER_COL));
-    const rail = items.length ? `<div class="rail sh-rail3">${gcols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>` : '';
-    return `<section class="${sectionClass}" id="blk-${esc(bl.id)}"${style ? ` style="${esc(style)}"` : ''}>${head}${rail}${offersHtml}</section>`;
-  }
-  const cols = [];
-  for (let i = 0; i < items.length; i += PER_COL) cols.push(items.slice(i, i + PER_COL));
-  const rail = items.length ? `<div class="rail">${cols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>` : '';
-  return `<section class="${sectionClass}" id="blk-${esc(bl.id)}"${style ? ` style="${esc(style)}"` : ''}${aosAttr()}>${head}${rail}${offersHtml}</section>`;
+  const inner = `${head}${body}${offersHtml}`;
+  if (grid) return `<section class="${sectionClass}" id="blk-${esc(bl.id)}"${style ? ` style="${esc(style)}"` : ''}>${inner}</section>`;
+  return `<section class="${sectionClass}" id="blk-${esc(bl.id)}"${style ? ` style="${esc(style)}"` : ''}${aosAttr()}>${inner}</section>`;
 }
 
 // المطاعم المنشورة بمعرفها: بنستخدمها لشعار المطعم في الإعلان المميز (من نفس البيانات المحمّلة، بدون استعلام إضافي)
@@ -1305,11 +1419,10 @@ document.addEventListener('click', (e) => {
 // التخطيط هو المصدر الوحيد: البلوك اللي مش في التخطيط ما يتعرضش أبداً
 function layoutTokens(layout, blocks, byId, ads, skipCodes = new Set(), used = null) {
   const blockById = new Map(blocks.map((b) => [b.id, b]));
-  const shown = new Set(); // مطعم واحد في بلوك واحد بس على الصفحة
   return layout.map((it) => {
     if (it.item_type === 'restaurant_block') {
       const bl = blockById.get(it.block_id);
-      return bl ? { html: blockHtml(blockPlacementConfig(bl, it), byId, shown) } : null;
+      return bl ? { html: blockHtml(blockPlacementConfig(bl, it), byId) } : null;
     }
     if (it.item_type === 'ad_banner') {
       const code = it.ad_placements && it.ad_placements.code;
@@ -1552,13 +1665,12 @@ async function viewHome() {
 // من غير ما يتجمع بلوكين أو لافتتين جنب بعض. القائمة بتعرض كل المطاعم المطابقة (زي تصنيف الكل).
 function sequenceHtml(items, list, blocksById, ads, used) {
   const byId = new Map(list.map((r) => [r.id, r]));
-  const shown = new Set(); // المطاعم اللي ظهرت في بلوك، مش هتتكرر في القائمة العادية
   const tokens = [];
   for (const it of items) {
     if (it.item_type === 'restaurant_block') {
       const bl = blocksById.get(it.block_id);
       if (!bl) continue;
-      const html = blockHtml(blockPlacementConfig(bl, it), byId, shown, true);
+      const html = blockHtml(blockPlacementConfig(bl, it), byId, true);
       if (html) tokens.push({ html: `<div class="col-12">${html}</div>` });
     } else if (it.item_type === 'ad_banner') {
       const code = it.ad_placements?.code;
