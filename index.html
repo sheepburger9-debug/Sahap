@@ -638,10 +638,30 @@ const PHONE_RE = /^(\+?20)?01[0125][0-9]{8}$/;
    كل فشل قراءة بيتسجل في الـconsole بتفاصيله، والمستخدم بيشوف رسالة واحدة عامة (من غير تفاصيل داخلية) */
 let loadErrors = [];
 function resetLoadErrors() { loadErrors = []; }
-function loadFail(label, err) {
-  const msg = err && (err.message || err.reason || String(err)) || 'unknown';
-  console.error('[load:' + label + ']', msg, err && err.code ? '(code ' + err.code + ')' : '');
-  loadErrors.push(label);
+// اسم الصفحة بس (من غير معرّفات)، عشان الـconsole يوضح الخطأ جه من أنهي شاشة
+function currentPageName() {
+  return (location.hash || '').replace(/^#\/?/, '').split(/[?/]/)[0] || 'home';
+}
+// يسجّل الخطأ في الـconsole فقط: اسم المصدر، الصفحة، code، message، details، hint، status، والوقت.
+// بنطبع حقول الخطأ المحددة بس، مش الكائن كله، عشان مفيش مفاتيح أو بيانات جلسة أو عميل تتطبع
+function logLoadError(source, err, status) {
+  const e = err || {};
+  const message = (e.message || e.reason) || (err ? String(err) : 'unknown');
+  console.error('[load:' + source + ']', {
+    source,
+    page: currentPageName(),
+    code: e.code ?? null,
+    message,
+    details: e.details ?? null,
+    hint: e.hint ?? null,
+    status: status ?? e.status ?? null,
+    time: new Date().toISOString(),
+  });
+}
+// الفشل اللي بيظهر للزائر: نفس الرسالة العامة الحالية، والتفاصيل في الـconsole
+function loadFail(source, err, status) {
+  logLoadError(source, err, status);
+  loadErrors.push(source);
 }
 const LOAD_FAIL_TXT = 'تعذّر تحميل بعض المحتوى، تأكد من الاتصال وحاول تاني';
 function loadErrorHtml() {
@@ -760,21 +780,21 @@ async function logout() {
 
 /* ============ تحميل البيانات ============ */
 async function loadRestaurants() {
-  const { data, error } = await sb.from('restaurants')
+  const { data, error, status } = await sb.from('restaurants')
     .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position))')
     .order('rating', { ascending: false });
-  if (error) { loadFail('restaurants', error); return []; }
+  if (error) { loadFail('restaurants', error, status); return []; }
   return data || [];
 }
 // الترتيب من Supabase هو المصدر الوحيد. loadRanking بيجيب الصفوف الخام من RPC بس؛ الفشل بيتسجل في loadFail
 async function loadRanking(categoryId = null) {
   try {
-    const { data, error } = await sb.rpc('get_public_restaurant_ranking', {
+    const { data, error, status } = await sb.rpc('get_public_restaurant_ranking', {
       p_category_id: categoryId,
       p_limit: 500,
     });
     if (error || !Array.isArray(data)) {
-      loadFail('ranking', error || new Error('ranking response is not a list'));
+      loadFail('ranking', error || new Error('ranking response is not a list'), status);
       return null;
     }
     return data;
@@ -818,15 +838,15 @@ function orderByRank(list, order) {
   return keyed.sort((a, b) => a.p - b.p).map((x) => x.r);
 }
 async function loadCategories() {
-  const { data, error } = await sb.from('restaurant_categories').select('id, name, slug').eq('is_active', true).order('display_order');
-  if (error) loadFail('categories', error);
+  const { data, error, status } = await sb.from('restaurant_categories').select('id, name, slug').eq('is_active', true).order('display_order');
+  if (error) loadFail('categories', error, status);
   return data || [];
 }
 async function loadBanners() {
-  const { data, error } = await sb.from('homepage_offer_banner_items')
+  const { data, error, status } = await sb.from('homepage_offer_banner_items')
     .select('id, display_order, starts_at, ends_at, restaurant_offers(id, title, description, image_url, restaurant_id, status, starts_at, ends_at)')
     .eq('is_active', true).order('display_order');
-  if (error) loadFail('banners', error);
+  if (error) loadFail('banners', error, status);
   const seen = new Set();
   return (data || [])
     .filter((x) => x.restaurant_offers && inWindow(x.starts_at, x.ends_at)
@@ -836,7 +856,7 @@ async function loadBanners() {
 }
 // أقسام الرئيسية التسويقية: جدول مستقل عن البلوكات، مع احترام التواريخ والتفعيل على مستوى القسم والعضوية
 async function loadDiscoverySections() {
-  const { data, error } = await sb.from('home_discovery_sections')
+  const { data, error, status } = await sb.from('home_discovery_sections')
     .select(`
       id,
       slug,
@@ -862,7 +882,7 @@ async function loadDiscoverySections() {
     `)
     .eq('is_active', true)
     .order('display_order');
-  if (error) { loadFail('discovery', error); return []; }
+  if (error) { loadFail('discovery', error, status); return []; }
   const seenSec = new Set();
   return (data || [])
     .filter((s) => inWindow(s.starts_at, s.ends_at) && !seenSec.has(s.id) && seenSec.add(s.id))
@@ -887,11 +907,11 @@ function blockContentType(bl) {
 async function loadBlockProducts(blockIds) {
   const map = new Map();
   if (!blockIds.length) return map;
-  const { data, error } = await sb.from('block_product_items')
+  const { data, error, status } = await sb.from('block_product_items')
     .select('id, block_id, display_order, is_active, product:products(id, name, description, price, emoji, is_available, restaurant_id, product_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position)))')
     .in('block_id', blockIds)
     .order('display_order');
-  if (error) { loadFail('block-products', error); return map; }
+  if (error) { loadFail('block-products', error, status); return map; }
   const seenInBlock = new Set(); // المنتج مرة واحدة داخل نفس البلوك
   for (const row of [...(data || [])].sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0))) {
     const p = row.product;
@@ -910,25 +930,26 @@ async function loadBlockProducts(blockIds) {
   return map;
 }
 async function loadBlocks(pageKey = 'home', categoryId = null) {
-  const { data, error } = await sb.from('restaurant_blocks')
+  const { data, error, status } = await sb.from('restaurant_blocks')
     .select('id, title, subtitle, display_order, background_color, text_color, card_style, design_settings, content_mode, content_type, brand_id, restaurant_id, max_items, logo_url, cover_image_url, badge_image_url, starts_at, ends_at, brand:restaurant_brands(name, logo_url, cover_image_url), badge:badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position), block_restaurant_overrides(restaurant_id, display_order, is_eligible, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at, badge:badges(name, display_text, icon, background_color, text_color, border_color, shape, opacity, font_size_px, style_config, show_background, background_opacity, icon_position)), block_offer_items(id, display_order, is_active, starts_at, ends_at, restaurant_offers(id, title, description, image_url, status, starts_at, ends_at, restaurant_id))')
     .eq('is_visible', true).order('display_order');
-  if (error) { loadFail('blocks', error); return []; }
+  if (error) { loadFail('blocks', error, status); return []; }
 
   // اختيار المطاعم وترتيبها وحدها في Supabase؛ نفس الدالة تدعم الديناميكي واليدوي والبراند والمطعم الواحد.
   const rpc = await sb.rpc('get_public_restaurant_block_members', {
     p_page_key: pageKey,
     p_category_id: pageKey === 'category' ? categoryId : null,
     p_limit: 30,
-  });
+  }).catch((e) => ({ data: null, error: e, status: null })); // خطأ الشبكة بيتسجل باسم block-members
   const memberMap = new Map();
   if (!rpc.error && Array.isArray(rpc.data)) {
     for (const row of rpc.data) memberMap.set(row.block_id, Array.isArray(row.members) ? row.members : []);
   } else {
-    loadFail('block-members', rpc.error || new Error('تعذّر تحميل أعضاء البلوكات'));
+    loadFail('block-members', rpc.error || new Error('تعذّر تحميل أعضاء البلوكات'), rpc.status);
   }
 
-  const productMap = await loadBlockProducts((data || []).filter((b) => BLOCK_PRODUCT_TYPES.includes(b.content_type)).map((b) => b.id));
+  const productMap = await loadBlockProducts((data || []).filter((b) => BLOCK_PRODUCT_TYPES.includes(b.content_type)).map((b) => b.id))
+    .catch((e) => { loadFail('block-products', e); return new Map(); });
   console.info('[Sahap Blocks]', { pageKey, categoryId, blocksCount: (data || []).length, membersLoaded: memberMap.size, productBlocks: productMap.size });
 
   return (data || []).filter((b) => inWindow(b.starts_at, b.ends_at)).map((b) => {
@@ -961,12 +982,12 @@ async function loadBlocks(pageKey = 'home', categoryId = null) {
 async function loadLayout(pageKey, categoryId = null) {
   // ترتيب الصفحة من homepage_layout_items. التصنيف بيتحمّل بمعرفه الحقيقي (category_id) بس
   if (pageKey === 'category' && !categoryId) return [];
-  const { data, error } = await sb.rpc('get_public_homepage_layout', {
+  const { data, error, status } = await sb.rpc('get_public_homepage_layout', {
     p_page_key: pageKey,
     p_category_id: pageKey === 'category' ? categoryId : null,
   });
-  if (error) { loadFail('layout:' + pageKey, error); return []; }
-  if (!Array.isArray(data)) return [];
+  if (error) { loadFail('layout:' + pageKey, error, status); return []; }
+  if (!Array.isArray(data)) { loadFail('layout:' + pageKey, new Error('layout response is not a list'), status); return []; }
   return data.map((x) => ({
     id: x.id,
     page_key: x.page_key,
@@ -1003,13 +1024,23 @@ function adsFromInventory(rows) {
   return map;
 }
 async function loadAds() {
-  const inv = await sb.rpc('get_public_ad_inventory');
-  if (!inv.error && Array.isArray(inv.data)) return adsFromInventory(inv.data);
+  // الجرد العام هو الأساس. فشله بيتسجل في الـconsole باسمه، والرجوع للدالة القديمة بيتسجل باسمه هو
+  // الإعلانات مش بتظهر رسالة خطأ للزائر هنا (زي ما كانت)، بس التفاصيل بتتسجل في الـconsole
+  let inv = null;
+  try { inv = await sb.rpc('get_public_ad_inventory'); }
+  catch (e) { logLoadError('ads:inventory', e); }
+  if (inv && !inv.error && Array.isArray(inv.data)) return adsFromInventory(inv.data);
+  if (inv) logLoadError('ads:inventory', inv.error || new Error('inventory response is not a list'), inv.status);
   // الرجوع للدالة القديمة لو الجرد مش متاح
-  const { data, error } = await sb.rpc('get_eligible_ads');
-  if (error || !data) return new Map();
+  let fb = null;
+  try { fb = await sb.rpc('get_eligible_ads'); }
+  catch (e) { logLoadError('ads:fallback', e); return new Map(); }
+  if (fb.error || !Array.isArray(fb.data)) {
+    logLoadError('ads:fallback', fb.error || new Error('fallback response is not a list'), fb.status);
+    return new Map();
+  }
   const map = new Map();
-  for (const a of data) {
+  for (const a of fb.data) {
     if (!map.has(a.placement_code)) map.set(a.placement_code, []);
     map.get(a.placement_code).push(a);
   }
@@ -1954,7 +1985,7 @@ async function viewHome() {
   ]);
   if (my !== rid) return;
   const [rests, offers, blocks, layout, ads, sections] = settledHome.map((x, i) =>
-    fulfilledOr(x, [[], [], [], [], new Map(), []][i], 'home'));
+    fulfilledOr(x, [[], [], [], [], new Map(), []][i], ['restaurants', 'banners', 'blocks', 'layout:home', 'ads', 'discovery'][i]));
 
   const byId = new Map(rests.map((r) => [r.id, r]));
   restIndex = byId;
@@ -2091,7 +2122,7 @@ async function viewRestaurants(query) {
   ]);
   if (my !== rid) return;
   const [rests, cats, blocks, restLayout, ads, allRows] = settledRest.map((x, i) =>
-    fulfilledOr(x, [[], [], [], [], new Map(), null][i], 'restaurants'));
+    fulfilledOr(x, [[], [], [], [], new Map(), null][i], ['restaurants', 'categories', 'blocks', 'layout:restaurants', 'ads', 'ranking'][i]));
   // المطلوب في القائمة العامة = كل المطاعم المنشورة؛ لو الترتيب ناقص يتعامل معاه كفشل
   const allRank = allRows ? buildRankOrder(allRows, rests.map((r) => r.id), 'all') : null;
   restIndex = new Map(rests.map((r) => [r.id, r]));
