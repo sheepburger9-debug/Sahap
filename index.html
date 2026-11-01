@@ -766,6 +766,37 @@ async function loadRestaurants() {
   if (error) { loadFail('restaurants', error); return []; }
   return data || [];
 }
+// الترتيب من Supabase هو المصدر الوحيد: الدالة بترجّع Map (restaurant_id -> رقم المركز) كما وصلت من RPC
+// null = فشل الاستدعاء (بيتسجل في loadFail)؛ الواجهة ما بتحسبش أي نقاط أو ترتيب بديل
+async function loadRanking(categoryId = null) {
+  try {
+    const { data, error } = await sb.rpc('get_public_restaurant_ranking', {
+      p_category_id: categoryId,
+      p_limit: 500,
+    });
+    if (error || !Array.isArray(data)) {
+      loadFail('ranking', error || new Error('ranking response is not a list'));
+      return null;
+    }
+    const order = new Map();
+    data.forEach((row, i) => {
+      if (!row || !row.restaurant_id || order.has(row.restaurant_id)) return;
+      order.set(row.restaurant_id, Number.isFinite(row.rank_position) ? row.rank_position : i);
+    });
+    return order;
+  } catch (e) {
+    loadFail('ranking', e);
+    return null;
+  }
+}
+// يرتّب المطاعم وفق ترتيب RPC فقط. اللي مش راجع من الدالة (مثلاً مطعم من غير تقييم) بييجي في الآخر بترتيبه الأصلي
+function orderByRank(list, order) {
+  const pos = (r) => (order.has(r.id) ? order.get(r.id) : Infinity);
+  return list
+    .map((r, i) => ({ r, i, p: pos(r) }))
+    .sort((a, b) => (a.p === b.p ? a.i - b.i : (a.p < b.p ? -1 : 1)))
+    .map((x) => x.r);
+}
 async function loadCategories() {
   const { data, error } = await sb.from('restaurant_categories').select('id, name, slug').eq('is_active', true).order('display_order');
   if (error) loadFail('categories', error);
@@ -1078,7 +1109,7 @@ function cover(r) {
     : esc((r.name || '?').trim()[0] || '؟');
 }
 
-function restRowHtml(r, customBadge, blockId) {
+function restRowHtml(r, customBadge, blockId, track = false) {
   const badge = customBadge || badgesOf(r)[0];
   // صورة الغلاف هي الأساس، واللوجو يتحط فوقها لو موجود؛ لو مفيش غلاف يبقى اللوجو هو الصورة
   const cover = safeUrl(r.cover_image_url);
@@ -1088,7 +1119,8 @@ function restRowHtml(r, customBadge, blockId) {
   const fallback = esc((r.name || '?').trim()[0] || '؟');
   // أيقونة المفضلة شكلية حالياً: مفيش جدول مفضلة في قاعدة البيانات لسه
   const heart = `<span class="rcard-fav" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.7 4.5 6.6 4.5c2.2 0 3.7 1.2 5.4 3 1.7-1.8 3.2-3 5.4-3 3.9 0 5.7 3.9 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg></span>`;
-  const trk = blockId ? ` data-block-id="${esc(blockId)}" data-restaurant-id="${esc(r.id)}" ${trackAttrs()}` : '';
+  const trk = blockId ? ` data-block-id="${esc(blockId)}" data-restaurant-id="${esc(r.id)}" ${trackAttrs()}`
+    : (track ? ` data-rest-track="1" data-restaurant-id="${esc(r.id)}" ${trackAttrs()}` : '');
   return `<a class="rcard" href="#/r/${esc(r.slug)}" aria-label="${esc(r.name)}"${trk}>
     <span class="rcard-img">${mainImg ? `<img src="${esc(mainImg)}" alt="" loading="lazy">` : `<span class="rcard-fb" aria-hidden="true">${fallback}</span>`}${logoOverlay}</span>
     <span class="rcard-body">
@@ -1524,6 +1556,57 @@ function observeAds(root = document) {
   });
 }
 
+/* ===== تسجيل ظهور المطاعم العادية (track_restaurant_impression) =====
+   بيتسجل بس لبطاقات القائمة العامة وقوائم التصنيفات (data-rest-track)، ومش لبطاقات البلوكات.
+   الظهور بيتسجل لما 50% من البطاقة يبقى ظاهر، مرة واحدة لكل (مطعم، تصنيف) في الجلسة. */
+const restSeen = new Set();
+const restTimers = new Set();
+const restIO = ('IntersectionObserver' in window) ? new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    const el = e.target;
+    el.__restRatio = e.intersectionRatio;
+    if (el.dataset.restDone) continue;
+    if (e.intersectionRatio >= 0.5) {
+      if (!el.__restTimer) {
+        el.__restTimer = setTimeout(() => { el.__restTimer = null; restTimers.delete(el); fireRestaurantImpression(el); }, 1000);
+        restTimers.add(el);
+      }
+    } else if (el.__restTimer) {
+      clearTimeout(el.__restTimer); el.__restTimer = null; restTimers.delete(el);
+    }
+  }
+}, { threshold: [0, 0.25, 0.5, 0.75, 1] }) : null;
+async function fireRestaurantImpression(el) {
+  if (!el.isConnected || el.dataset.restDone) return;
+  const pct = Math.round((el.__restRatio || 0) * 100);
+  if (pct < 50) return;
+  const restId = el.dataset.restaurantId;
+  if (!UUID_RE.test(restId || '')) return;
+  el.dataset.restDone = '1';
+  restIO && restIO.unobserve(el);
+  const categoryId = validCat(el.dataset.categoryId); // null للقائمة العامة، UUID التصنيف الحقيقي داخل التصنيف
+  const scope = [restId, categoryId || ''].join('|');
+  if (restSeen.has(scope)) return;
+  restSeen.add(scope);
+  // المعاملات الخمسة بس؛ مفيش بيانات شخصية. الإرسال بيعيد المحاولة وأخطاؤه ما بتوقفش الصفحة
+  sendAdEvent('track_restaurant_impression', {
+    p_restaurant_id: restId,
+    p_session_hash: await sessionHash(),
+    p_event_key: `rimp:${PAGE_LOAD_ID}:${scope}`,
+    p_visible_percent: Math.min(100, Math.max(50, pct)),
+    p_category_id: categoryId,
+  });
+}
+function observeRestaurants(root = document) {
+  if (!restIO || !root) return;
+  root.querySelectorAll('a.rcard[data-rest-track]').forEach((el) => { if (!el.dataset.restDone) restIO.observe(el); });
+}
+function stopRestTracking() {
+  for (const el of restTimers) { clearTimeout(el.__restTimer); el.__restTimer = null; }
+  restTimers.clear();
+  if (restIO) restIO.disconnect();
+}
+
 /* ===== تتبع ظهور ونقر مطاعم البلوكات (track_block_impression / track_block_click) =====
    عقد الدالتين (من تعريفهما في Supabase): p_block_id uuid، p_restaurant_id uuid، p_session_hash text (8 حروف على الأقل)،
    p_event_key text، وللظهور p_visible_percent بين 50 و100. الدالتان بترفضا أي مطعم مش موجود في block_restaurant_overrides.
@@ -1780,6 +1863,7 @@ function route() {
   destroyAdSliders();
   if (impressionIO) impressionIO.disconnect(); // المراقبة القديمة ما تكملش بعد مغادرة الصفحة
   stopBlockTracking();
+  stopRestTracking();
   resetLoadErrors();
   closeSheet();
   cartbar.classList.add('hidden');
@@ -1923,7 +2007,7 @@ function sequenceHtml(items, list, blocksById, ads, used, allRests = list, scope
   const rest = list;
   const n = parts.length;
   const cut = (i) => Math.floor((i * rest.length) / (n + 1));
-  const rows = (from, to) => rest.slice(from, to).map((r) => `<div class="col-12 col-md-6 col-lg-4">${restRowHtml(r)}</div>`).join('');
+  const rows = (from, to) => rest.slice(from, to).map((r) => `<div class="col-12 col-md-6 col-lg-4">${restRowHtml(r, undefined, null, true)}</div>`).join('');
   if (!n) return rows(0, rest.length);
   let out = '';
   for (let i = 0; i < n; i++) out += parts[i] + rows(cut(i), cut(i + 1));
@@ -1975,12 +2059,19 @@ async function viewRestaurants(query) {
     </div>
     <div id="list" class="row g-3"><div class="col-12"><p class="meta">جاري التحميل…</p></div></div>`;
 
+  // ترتيب كل نطاق (الكل أو تصنيف) بيتحمل مرة واحدة في العرض ده من RPC واحد لكل نطاق
+  const rankCache = new Map();
+  const getRank = (catId = null) => {
+    const key = catId || 'all';
+    if (!rankCache.has(key)) rankCache.set(key, loadRanking(catId));
+    return rankCache.get(key);
+  };
   const settledRest = await Promise.allSettled([
-    loadRestaurants(), loadCategories(), loadBlocks('restaurants'), loadLayout('restaurants'), loadAds(),
+    loadRestaurants(), loadCategories(), loadBlocks('restaurants'), loadLayout('restaurants'), loadAds(), getRank(null),
   ]);
   if (my !== rid) return;
-  const [rests, cats, blocks, restLayout, ads] = settledRest.map((x, i) =>
-    fulfilledOr(x, [[], [], [], [], new Map()][i], 'restaurants'));
+  const [rests, cats, blocks, restLayout, ads, allRank] = settledRest.map((x, i) =>
+    fulfilledOr(x, [[], [], [], [], new Map(), null][i], 'restaurants'));
   restIndex = new Map(rests.map((r) => [r.id, r]));
   if (loadErrors.length && rests.length) toast(LOAD_FAIL_TXT);
 
@@ -2001,9 +2092,12 @@ async function viewRestaurants(query) {
   const catLayouts = new Map();     // category id -> عناصر التخطيط
   const catBlocks = new Map();      // category id -> أعضاء البلوكات الخاصة بالتصنيف
   const catLayoutLoads = new Map(); // category id -> طلب جاري
+  const catRanks = new Map(); // category id -> ترتيب التصنيف من RPC (null لو فشل)
   const ensureCatLayout = async () => {
     const cat = active ? catBySlug.get(active) : null;
-    if (!cat || catLayouts.has(cat.id)) return;
+    if (!cat) return;
+    if (!catRanks.has(cat.id)) catRanks.set(cat.id, await getRank(cat.id));
+    if (catLayouts.has(cat.id)) return;
     if (!catLayoutLoads.has(cat.id)) {
       catLayoutLoads.set(cat.id, Promise.all([
         loadLayout('category', cat.id),
@@ -2035,7 +2129,11 @@ async function viewRestaurants(query) {
     setTrackingContext(active ? 'category' : 'restaurants', active ? catBySlug.get(active)?.id : null);
     destroyAdSliders(); // السلايدرات القديمة بتتعمل قبل إعادة الرسم
     const term = $('#s').value.trim().toLowerCase();
-    const list = rests.filter((r) => matches(r, term));
+    const activeCat = active ? catBySlug.get(active) : null;
+    // الترتيب من RPC للنطاق الحالي فقط؛ لو مش موجود نعرض حالة الفشل بدل مطاعم بترتيب مزيف
+    const rankOrder = activeCat ? catRanks.get(activeCat.id) : allRank;
+    const rankFailed = !rankOrder;
+    const list = rankFailed ? [] : orderByRank(rests.filter((r) => matches(r, term)), rankOrder);
     const used = new Set(); // كل حملة تظهر مرة واحدة في الصفحة
     let items;
     // في التصنيف: إعلاناته هي بس (مطاعم التصنيف). في «الكل»: كل الإعلانات
@@ -2057,7 +2155,6 @@ async function viewRestaurants(query) {
       items = restPage.filter((it) => it.ad_placements?.code !== 'restaurants_top');
     }
 
-    const activeCat = active ? catBySlug.get(active) : null;
     const visibleBlocks = activeCat ? (catBlocks.get(activeCat.id) || []) : blocks;
     const blocksById = new Map(visibleBlocks.map((b) => [b.id, b]));
     const emptyTxt = term ? 'مفيش مطعم يطابق بحثك'
@@ -2066,7 +2163,7 @@ async function viewRestaurants(query) {
     const listHtml = sequenceHtml(items, list, blocksById, adsView, used, rests, activeCat ? { categoryId: activeCat.id } : null);
     // القائمة الفاضية ما بتمنعش البلوكات الصالحة من الظهور (إلا لو فيه بحث نشط)
     const hasBlock = !term && listHtml.includes('sh-custom-block');
-    $('#list').innerHTML = (list.length || hasBlock) ? listHtml : `<div class="col-12">${loadErrors.length && !rests.length ? loadErrorHtml() : emptyHtml(emptyTxt)}</div>`;
+    $('#list').innerHTML = (list.length || hasBlock) ? listHtml : `<div class="col-12">${loadErrors.length && (!rests.length || rankFailed) ? loadErrorHtml() : emptyHtml(emptyTxt)}</div>`;
     // عنوان الصفحة بيوضح التصنيف المختار، عشان المستخدم يعرف هو فين
     const titleEl = app.querySelector('.topbar .ttl');
     if (titleEl) titleEl.textContent = active ? (catBySlug.get(active)?.name || 'المطاعم') : 'المطاعم';
@@ -2074,6 +2171,8 @@ async function viewRestaurants(query) {
     observeAds($('#list'));
     stopBlockTracking(); // إعادة الرسم: نبدأ مراقبة العناصر الجديدة بس، والظهور المسجل قبل كده ما بيتكررش
     observeBlocks($('#list'));
+    stopRestTracking(); // نفس منطق البلوكات: الإعادة بتراقب البطاقات الجديدة بس
+    observeRestaurants($('#list'));
     mountAdSliders($('#top-ads'));
     mountAdSliders($('#list'));
     aosRefresh();
