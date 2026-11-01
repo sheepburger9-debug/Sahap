@@ -1,5 +1,6 @@
-const CACHE = 'sahap-shell-v1';
+const CACHE = 'sahap-shell-v3';
 const SHELL = ['./', './index.html', './manifest.json'];
+// رفع رقم الإصدار عند كل نشر جديد عشان الكاش القديم يتمسح ومايظهرش تحديث قديم
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
