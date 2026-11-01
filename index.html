@@ -114,6 +114,15 @@ body[data-page="home"] .wrap,body[data-page="restaurant"] .wrap{padding-bottom:1
 .mkt-card-o{display:block;font-size:12px;font-weight:500;opacity:.9;margin-top:2px;line-height:1.35}
 .mkt-card-t{position:relative;z-index:1;padding:10px 12px;font-family:"Reem Kufi",sans-serif;font-size:15px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
 .block{margin:0 0 var(--gap-lg);scroll-margin-top:72px}
+/* تخصيص تصميم البلوك من إعدادات Supabase؛ القيم الافتراضية لا تغيّر المقاسات الحالية */
+.block.sh-custom-block{padding:var(--blk-padding,0);border-radius:var(--blk-radius,0);background:var(--blk-bg,transparent);color:var(--blk-text,inherit);min-height:var(--blk-min-height,0);max-width:var(--blk-max-width,100%);margin-inline:auto}
+.sh-block-head{display:flex;align-items:center;gap:10px;min-width:0;margin-bottom:0}
+.sh-block-heading{flex:1;min-width:0}
+.block.sh-custom-block .sec{font-family:var(--blk-font,"Reem Kufi",sans-serif);font-size:var(--blk-title-size,17px);font-weight:var(--blk-title-weight,700);color:var(--blk-title-color,inherit);margin:var(--gap-lg) 0 var(--gap-sm)}
+.block.sh-custom-block .sub{font-family:var(--blk-font,"IBM Plex Sans Arabic",sans-serif);font-size:var(--blk-subtitle-size,13px);color:var(--blk-subtitle-color,var(--ink-2));margin:-6px 0 10px}
+.sh-block-logo{width:42px;height:42px;flex:none;object-fit:contain;border-radius:10px;background:#fff}
+.sh-block-badge-image{width:42px;height:42px;flex:none;object-fit:contain}
+.sh-block-badge{flex:none;max-width:35%;padding:4px 10px;border-radius:999px;background:var(--saffron);color:var(--saffron-ink);font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .block .rail{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
 .sh-col{flex:0 0 84%;min-width:0;scroll-snap-align:start;display:flex;flex-direction:column;gap:12px}
@@ -649,10 +658,8 @@ async function logout() {
 /* ============ تحميل البيانات ============ */
 async function loadRestaurants() {
   const { data, error } = await sb.from('restaurants')
-    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, is_published, category_id, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, background_color, text_color))')
-    .eq('is_published', true)
-    .order('created_at', { ascending: false })
-    .order('name', { ascending: true });
+    .select('id, name, slug, description, logo_url, cover_image_url, address, rating, delivery_fee, delivery_min_minutes, is_open, category_id, restaurant_categories(name, slug), restaurant_badge_assignments(is_active, starts_at, ends_at, display_text_override, style_override, badges(name, display_text, background_color, text_color))')
+    .order('rating', { ascending: false });
   if (error) { toast('تعذّر تحميل المطاعم'); return []; }
   return data || [];
 }
@@ -705,38 +712,35 @@ async function loadDiscoverySections() {
     }));
 }
 async function loadBlocks(pageKey = 'home', categoryId = null) {
-  // Supabase هو مصدر اختيار وترتيب المطاعم؛ الواجهة تعرض النتائج فقط.
-  const [blocksResult, membersResult] = await Promise.all([
-    sb.from('restaurant_blocks')
-      .select('id, title, subtitle, display_order, badge:badges(name, display_text, background_color, text_color), block_offer_items(id, display_order, is_active, starts_at, ends_at, restaurant_offers(id, title, description, image_url, status, starts_at, ends_at, restaurant_id))')
-      .eq('is_visible', true).order('display_order'),
-    sb.rpc('get_public_restaurant_block_members', {
-      p_page_key: pageKey,
-      p_category_id: pageKey === 'category' ? categoryId : null,
-      p_limit: pageKey === 'category' ? 6 : 12,
-    }),
-  ]);
-  if (blocksResult.error) {
-    console.warn('[blocks]', blocksResult.error.message);
-    return [];
+  const { data, error } = await sb.from('restaurant_blocks')
+    .select('id, title, subtitle, display_order, background_color, text_color, card_style, design_settings, content_mode, brand_id, restaurant_id, max_items, logo_url, cover_image_url, badge_image_url, starts_at, ends_at, brand:restaurant_brands(name, logo_url, cover_image_url), badge:badges(name, display_text, background_color, text_color), block_restaurant_overrides(restaurant_id, display_order, is_eligible, badge_text_override, badge_style_override, badge_starts_at, badge_ends_at, badge:badges(name, display_text, background_color, text_color)), block_offer_items(id, display_order, is_active, starts_at, ends_at, restaurant_offers(id, title, description, image_url, status, starts_at, ends_at, restaurant_id))')
+    .eq('is_visible', true).order('display_order');
+  if (error) { console.warn('[blocks]', error.message); return []; }
+
+  // اختيار المطاعم وترتيبها وحدها في Supabase؛ نفس الدالة تدعم الديناميكي واليدوي والبراند والمطعم الواحد.
+  const rpc = await sb.rpc('get_public_restaurant_block_members', {
+    p_page_key: pageKey,
+    p_category_id: pageKey === 'category' ? categoryId : null,
+    p_limit: 30,
+  });
+  const memberMap = new Map();
+  if (!rpc.error && Array.isArray(rpc.data)) {
+    for (const row of rpc.data) memberMap.set(row.block_id, Array.isArray(row.members) ? row.members : []);
+  } else {
+    console.warn('[block-members]', rpc.error?.message || 'تعذّر تحميل أعضاء البلوكات');
   }
-  if (membersResult.error) {
-    console.warn('[block-ranking]', membersResult.error.message);
-    return [];
-  }
-  const membersByBlock = new Map((membersResult.data || []).map((x) => [x.block_id, x.members || []]));
-  return (blocksResult.data || [])
-    .filter((b) => membersByBlock.has(b.id))
-    .map((b) => ({
-      ...b,
-      members: membersByBlock.get(b.id),
-      // عروض البلوك: RLS بيرجع المعتمدة فقط، والفلترة هنا دفاع إضافي
-      offers: (b.block_offer_items || [])
-        .filter((x) => x.is_active !== false && inWindow(x.starts_at, x.ends_at) && x.restaurant_offers)
-        .filter((x) => x.restaurant_offers.status === 'approved' && inWindow(x.restaurant_offers.starts_at, x.restaurant_offers.ends_at))
-        .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0))
-        .map((x) => ({ ...x.restaurant_offers, display_order: x.display_order })),
-    }));
+
+  return (data || []).map((b) => ({
+    ...b,
+    members: memberMap.has(b.id) ? memberMap.get(b.id) : (b.block_restaurant_overrides || [])
+      .filter((o) => o.is_eligible !== false)
+      .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0)),
+    offers: (b.block_offer_items || [])
+      .filter((x) => x.is_active !== false && inWindow(x.starts_at, x.ends_at) && x.restaurant_offers)
+      .filter((x) => x.restaurant_offers.status === 'approved' && inWindow(x.restaurant_offers.starts_at, x.restaurant_offers.ends_at))
+      .sort((x, y) => (x.display_order ?? 0) - (y.display_order ?? 0))
+      .map((x) => ({ ...x.restaurant_offers, display_order: x.display_order })),
+  }));
 }
 async function loadLayout(pageKey, categoryId = null) {
   // ترتيب الصفحة من homepage_layout_items. التصنيف بيتحمّل بمعرفه الحقيقي (category_id) بس
@@ -748,9 +752,13 @@ async function loadLayout(pageKey, categoryId = null) {
   if (error) { console.warn('[layout]', pageKey, error.message); return []; }
   if (!Array.isArray(data)) return [];
   return data.map((x) => ({
+    id: x.id,
+    page_key: x.page_key,
+    category_id: x.category_id,
     item_type: x.item_type,
     display_order: x.display_order,
     block_id: x.block_id,
+    layout_settings: x.layout_settings || {},
     ad_placements: { code: x.placement_code },
   }));
 }
@@ -898,6 +906,67 @@ function offersPartHtml(bl, byId) {
 }
 
 // blockHtml: بلوك المطاعم (شريط/شبكة) + بلوك العروض التابع له. البلوك الفاضي بيترسم ''
+function blockPlacementConfig(bl, item) {
+  const ls = item?.layout_settings || {};
+  return {
+    ...bl,
+    title: ls.title ?? bl.title,
+    subtitle: ls.subtitle ?? bl.subtitle,
+    background_color: ls.background_color ?? bl.background_color,
+    text_color: ls.text_color ?? bl.text_color,
+    logo_url: ls.logo_url ?? bl.logo_url,
+    cover_image_url: ls.cover_image_url ?? bl.cover_image_url,
+    badge_image_url: ls.badge_image_url ?? bl.badge_image_url,
+    design_settings: { ...(bl.design_settings || {}), ...(ls.design_settings || {}) },
+  };
+}
+function cssNumber(value, fallback, min, max) {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback;
+}
+function blockDesignStyle(bl) {
+  const d = bl.design_settings || {};
+  const bg = d.background || {};
+  const type = ['solid','image','gradient'].includes(bg.type) ? bg.type : 'solid';
+  const bgColor = cssColor(bg.color || bl.background_color, 'transparent');
+  const textColor = cssColor(d.text_color || bl.text_color, 'inherit');
+  const titleColor = cssColor(d.title_color || textColor, 'inherit');
+  const subtitleColor = cssColor(d.subtitle_color || textColor, 'inherit');
+  const font = ['IBM Plex Sans Arabic','Reem Kufi','system-ui'].includes(d.font_family) ? d.font_family : '';
+  const titleSize = cssNumber(d.title_size, 17, 13, 32);
+  const subtitleSize = cssNumber(d.subtitle_size, 13, 10, 22);
+  const titleWeight = [400,500,600,700,800,900].includes(Number(d.title_weight)) ? Number(d.title_weight) : 700;
+  const radius = cssNumber(d.radius, 0, 0, 36);
+  const padding = cssNumber(d.padding, 0, 0, 40);
+  const minHeight = cssNumber(d.min_height, 0, 0, 500);
+  const maxWidth = cssNumber(d.max_width, 100, 60, 100);
+  const styles = [];
+  if (bgColor !== 'transparent') styles.push(`--blk-bg:${bgColor}`);
+  if (textColor !== 'inherit') styles.push(`--blk-text:${textColor}`);
+  if (titleColor !== 'inherit') styles.push(`--blk-title-color:${titleColor}`);
+  if (subtitleColor !== 'inherit') styles.push(`--blk-subtitle-color:${subtitleColor}`);
+  if (font) styles.push(`--blk-font:"${font}",sans-serif`);
+  if (d.title_size != null) styles.push(`--blk-title-size:${titleSize}px`);
+  if (d.subtitle_size != null) styles.push(`--blk-subtitle-size:${subtitleSize}px`);
+  if (d.title_weight != null) styles.push(`--blk-title-weight:${titleWeight}`);
+  if (d.radius != null) styles.push(`--blk-radius:${radius}px`);
+  if (d.padding != null) styles.push(`--blk-padding:${padding}px`);
+  if (d.min_height != null) styles.push(`--blk-min-height:${minHeight}px`);
+  if (d.max_width != null) styles.push(`--blk-max-width:${maxWidth}%`);
+  const imageUrl = safeUrl(bg.image_url || bl.cover_image_url || bl.brand?.cover_image_url);
+  if (type === 'gradient') {
+    const c1 = cssColor(bg.gradient_start, '#3E5B3A');
+    const c2 = cssColor(bg.gradient_end, '#1A1F1B');
+    const angle = cssNumber(bg.gradient_angle, 135, 0, 360);
+    styles.push(`background-image:linear-gradient(${angle}deg,${c1},${c2})`);
+  } else if (imageUrl && (type === 'image' || bg.image_url || bl.cover_image_url || bl.brand?.cover_image_url)) {
+    const safeImage = imageUrl.replace(/[\\'"()\s]/g, (c) => encodeURIComponent(c));
+    const overlay = cssColor(bg.overlay, 'rgba(0,0,0,.28)');
+    styles.push(`background-image:linear-gradient(${overlay},${overlay}),url("${safeImage}")`);
+    styles.push('background-size:cover;background-position:center');
+  }
+  return styles.join(';');
+}
 function blockHtml(bl, byId, shown = null, grid = false) {
   const items = bl.members
     .map((m) => ({ r: byId.get(m.restaurant_id), m }))
@@ -905,19 +974,31 @@ function blockHtml(bl, byId, shown = null, grid = false) {
   const offersHtml = offersPartHtml(bl, byId);
   if (!items.length && !offersHtml) return '';
   if (shown) items.forEach((x) => shown.add(x.r.id));
-  const head = `<h2 class="sec">${esc(bl.title)}</h2>
-    ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}`;
+
+  const restaurantAsset = bl.restaurant_id ? byId.get(bl.restaurant_id) : null;
+  const d = bl.design_settings || {};
+  const logo = safeUrl(bl.logo_url || bl.brand?.logo_url || restaurantAsset?.logo_url);
+  const badgeImage = safeUrl(bl.badge_image_url);
+  const renderBlock = { ...bl, cover_image_url: bl.cover_image_url || restaurantAsset?.cover_image_url };
+  const badgeText = d.badge_text || '';
+  const head = `<div class="sh-block-head">
+      ${logo ? `<img class="sh-block-logo" src="${esc(logo)}" alt="" loading="lazy">` : ''}
+      <div class="sh-block-heading"><h2 class="sec">${esc(bl.title)}</h2>
+      ${bl.subtitle ? `<p class="meta sub">${esc(bl.subtitle)}</p>` : ''}</div>
+      ${badgeImage ? `<img class="sh-block-badge-image" src="${esc(badgeImage)}" alt="${esc(badgeText)}" loading="lazy">` : (badgeText ? `<span class="sh-block-badge">${esc(badgeText)}</span>` : '')}
+    </div>`;
+  const style = blockDesignStyle(renderBlock);
+  const sectionClass = `block sh-custom-block${grid ? ' sh-blk' : ''}`;
   if (grid) {
-    // شاشة المطاعم: كل PER_COL مطاعم تحت بعض في عمود، والأعمدة جنب بعض
     const gcols = [];
     for (let i = 0; i < items.length; i += PER_COL) gcols.push(items.slice(i, i + PER_COL));
     const rail = items.length ? `<div class="rail sh-rail3">${gcols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>` : '';
-    return `<section class="block sh-blk" id="blk-${esc(bl.id)}">${head}${rail}${offersHtml}</section>`;
+    return `<section class="${sectionClass}" id="blk-${esc(bl.id)}"${style ? ` style="${esc(style)}"` : ''}>${head}${rail}${offersHtml}</section>`;
   }
   const cols = [];
   for (let i = 0; i < items.length; i += PER_COL) cols.push(items.slice(i, i + PER_COL));
   const rail = items.length ? `<div class="rail">${cols.map((c) => `<div class="sh-col">${c.map(({ r, m }) => restRowHtml(r, blockBadge(bl, m))).join('')}</div>`).join('')}</div>` : '';
-  return `<section class="block" id="blk-${esc(bl.id)}"${aosAttr()}>${head}${rail}${offersHtml}</section>`;
+  return `<section class="${sectionClass}" id="blk-${esc(bl.id)}"${style ? ` style="${esc(style)}"` : ''}${aosAttr()}>${head}${rail}${offersHtml}</section>`;
 }
 
 // المطاعم المنشورة بمعرفها: بنستخدمها لشعار المطعم في الإعلان المميز (من نفس البيانات المحمّلة، بدون استعلام إضافي)
@@ -988,42 +1069,28 @@ function destroyAdSliders() {
   for (const s of adSliders) { try { s.destroy(true, true); } catch (_) {} }
   adSliders = [];
 }
-function adsHtml(list, extraClass = '') {
+function adsHtml(list) {
   const arr = list || [];
   if (!arr.length) return '';
   if (arr.length < 2) return adHtml(arr[0]);
-  const cls = extraClass ? ` ${extraClass}` : '';
-  return `<div class="swiper sh-ad-slider${cls}" aria-roledescription="carousel" aria-label="إعلانات">
+  return `<div class="swiper sh-ad-slider" aria-roledescription="carousel" aria-label="إعلانات">
     <div class="swiper-wrapper">${arr.map((a) => `<div class="swiper-slide">${adHtml(a)}</div>`).join('')}</div>
     <div class="swiper-pagination"></div>
   </div>`;
 }
-// الشريط العلوي: إعلان واحد فقط لكل مطعم، حتى لو عنده أكثر من حملة في نفس الموضع.
-function uniqueRestaurantAds(list) {
-  const seen = new Set();
-  return (list || []).filter((ad) => {
-    const id = ad.restaurant_id || ad.restaurant_slug || ad.campaign_id;
-    if (!id || seen.has(id)) return false;
-    seen.add(id);
-    return true;
-  });
-}
-// موضع أعلى التصنيف/قائمة المطاعم له سلايدر مستقل، لا يعرض حملتين لنفس المطعم.
-function rotHtml(list) { return adsHtml(uniqueRestaurantAds(list), 'sh-ad-slider--top'); }
+// الشريط العلوي للمطاعم: نفس السلايدر (كل الإعلانات المؤهلة للموضع)
+function rotHtml(list) { return adsHtml(list); }
 function mountAdSliders(root) {
   if (!root || !window.Swiper) return;
   root.querySelectorAll('.sh-ad-slider').forEach((el) => {
     if (el.__sliderMounted) return; // ما نعملش نسخة تانية من نفس السلايدر
     el.__sliderMounted = true;
     try {
-      const slideCount = el.querySelectorAll('.swiper-slide').length;
-      const topSlider = el.classList.contains('sh-ad-slider--top');
       adSliders.push(new window.Swiper(el, {
         slidesPerView: 1, spaceBetween: 8, grabCursor: true, watchOverflow: true,
-        loop: topSlider && slideCount > 1,
         speed: reduceMotion() ? 0 : 450,
         rtl: document.documentElement.dir === 'rtl',
-        autoplay: reduceMotion() || slideCount < 2 ? false : { delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true },
+        autoplay: reduceMotion() ? false : { delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true },
         pagination: { el: el.querySelector('.swiper-pagination'), clickable: true },
       }));
     } catch (e) { console.error('[ad-slider]', e); }
@@ -1130,38 +1197,21 @@ document.addEventListener('click', (e) => {
 // skipCodes: مواضع بتتعرض في مكان محدد بره الترتيب
 function layoutHtml(layout, blocks, byId, ads, skipCodes = new Set(), used = null) {
   const blockById = new Map(blocks.map((b) => [b.id, b]));
-  // التخطيط هو المصدر الوحيد: البلوك اللي مش في التخطيط ما يتعرضش أبداً.
-  // بنرجّع العناصر الفعلية فقط؛ البلوك الفاضي لا يُحسب فاصلًا بين إعلانين.
-  const shown = new Set();
-  const parts = [];
-  for (const it of layout) {
+  // التخطيط هو المصدر الوحيد: البلوك اللي مش في التخطيط ما يتعرضش أبداً
+  const items = layout;
+  const shown = new Set(); // مطعم واحد في بلوك واحد بس على الصفحة
+  return items.map((it) => {
     if (it.item_type === 'restaurant_block') {
       const bl = blockById.get(it.block_id);
-      const html = bl ? blockHtml(bl, byId, shown) : '';
-      if (html) parts.push({ html, isAd: false });
-      continue;
+      return bl ? blockHtml(blockPlacementConfig(bl, it), byId, shown) : '';
     }
     if (it.item_type === 'ad_banner') {
       const code = it.ad_placements && it.ad_placements.code;
-      if (!code || skipCodes.has(code)) continue;
-      const html = adsHtml(used ? pickAds(ads, code, used) : ads.get(code));
-      if (html) parts.push({ html, isAd: true });
+      if (!code || skipCodes.has(code)) return '';
+      return adsHtml(used ? pickAds(ads, code, used) : ads.get(code));
     }
-  }
-  return parts;
-}
-
-// يمنع ظهور موضعي إعلان متتاليين حتى لو كانت البلوكات الواقعة بينهما فارغة.
-function joinAdSeparatedParts(parts) {
-  let previousWasAd = false;
-  const html = [];
-  for (const part of parts) {
-    if (!part || !part.html) continue;
-    if (part.isAd && previousWasAd) continue;
-    html.push(part.html);
-    previousWasAd = !!part.isAd;
-  }
-  return html.join('');
+    return '';
+  }).join('');
 }
 
 function emptyHtml(txt) { return `<p class="empty">${esc(txt)}</p>`; }
@@ -1341,25 +1391,17 @@ async function viewHome() {
     </a>`;
   }).join('');
 
-  const homePrefix = `
+  app.innerHTML = `
     ${topbar()}
     ${homeStripHtml()}
     ${bannerHtml ? (window.Swiper
       ? `<section class="swiper sh-banners" aria-label="عروض"><div class="swiper-wrapper">${bannerHtml}</div></section>`
       : `<section class="banners" aria-label="عروض">${bannerHtml}</section>`) : ''}
     ${mktStripHtml(sections, byId)}
+    ${inLayout.has('home_banner') ? '' : adsHtml(pickAds(ads, 'home_banner', used))}
+    ${layoutHtml(layout, blocks, byId, ads, new Set(), used)}
+    ${inLayout.has('home_middle') ? '' : adsHtml(pickAds(ads, 'home_middle', used))}
   `;
-  const homeParts = [];
-  if (!inLayout.has('home_banner')) {
-    const topAd = adsHtml(pickAds(ads, 'home_banner', used));
-    if (topAd) homeParts.push({ html: topAd, isAd: true });
-  }
-  homeParts.push(...layoutHtml(layout, blocks, byId, ads, new Set(), used));
-  if (!inLayout.has('home_middle')) {
-    const middleAd = adsHtml(pickAds(ads, 'home_middle', used));
-    if (middleAd) homeParts.push({ html: middleAd, isAd: true });
-  }
-  app.innerHTML = homePrefix + joinAdSeparatedParts(homeParts);
   // لو الصفحة فاضية تماماً (مفيش مطاعم ولا لافتات ولا بلوكات) نعرض رسالة بدل شاشة بيضا
   if (!rests.length && !bannerHtml && !blocks.length && !sections.length) {
     app.insertAdjacentHTML('beforeend', emptyHtml('مفيش عروض متاحة دلوقتي، جرّب بعد شوية'));
@@ -1377,7 +1419,7 @@ async function viewHome() {
 // توزيع اللافتات داخل القائمة بالتساوي حسب ترتيب التخطيط (display_order)، ومن غير أرقام ثابتة
 // توزيع المطاعم بين البلوكات واللافتات حسب ترتيب التخطيط: عنصر ثم مجموعة مطاعم،
 // من غير ما يتجمع بلوكين أو لافتتين جنب بعض. القائمة بتعرض كل المطاعم المطابقة (زي تصنيف الكل).
-function sequenceHtml(items, list, blocksById, ads, used, leadingAd = false) {
+function sequenceHtml(items, list, blocksById, ads, used) {
   const byId = new Map(list.map((r) => [r.id, r]));
   const parts = [];
   const shown = new Set(); // المطاعم اللي ظهرت في بلوك، مش هتتكرر في القائمة العادية
@@ -1385,7 +1427,7 @@ function sequenceHtml(items, list, blocksById, ads, used, leadingAd = false) {
     if (it.item_type === 'restaurant_block') {
       const bl = blocksById.get(it.block_id);
       if (!bl) continue;
-      const html = blockHtml(bl, byId, shown, true);
+      const html = blockHtml(blockPlacementConfig(bl, it), byId, shown, true);
       if (!html) continue;
       parts.push(`<div class="col-12">${html}</div>`);
     } else if (it.item_type === 'ad_banner') {
@@ -1394,38 +1436,15 @@ function sequenceHtml(items, list, blocksById, ads, used, leadingAd = false) {
       if (html) parts.push(`<div class="col-12">${html}</div>`);
     }
   }
-  // القائمة العادية تستبعد المطاعم التي ظهرت بالفعل في البلوكات؛ لا نكرر نفس المطعم في الصفحة.
-  const rest = list.filter((r) => !shown.has(r.id));
+  // القائمة بتعرض كل المطاعم المطابقة (حتى اللي ظاهرة في بلوك فوق)، والتصنيف ما بيأثرش على «الكل»
+  const rest = list;
   const n = parts.length;
+  const cut = (i) => Math.floor((i * rest.length) / (n + 1));
   const rows = (from, to) => rest.slice(from, to).map((r) => `<div class="col-12 col-md-6 col-lg-4">${restRowHtml(r)}</div>`).join('');
   if (!n) return rows(0, rest.length);
-
-  // نوزّع عناصر التخطيط على القائمة. كل لافتة داخلية لازم يفصل بينها وبين
-  // اللافتة الداخلية السابقة مطعم واحد على الأقل؛ لو القائمة لا تسمح، نتجاوز
-  // اللافتة الزائدة بدل عرض لافتتين متتاليتين.
-  const events = [];
-  let previousPosition = 0;
-  let previousWasAd = !!leadingAd;
-  for (let i = 0; i < n; i++) {
-    const isAd = parts[i].includes('data-placement=');
-    let position = Math.max(previousPosition, Math.floor((i * rest.length) / (n + 1)));
-    // لو الإعلان الحالي جاي مباشرة بعد إعلان فعلي، لازم نعرض مطعمًا واحدًا على الأقل بينهما.
-    // لو مفيش مساحة كافية، بنخفي موضع الإعلان الزائد بدل تجميع اللافتات.
-    if (isAd && previousWasAd) position = Math.max(position, previousPosition + 1);
-    if (isAd && position > rest.length) continue;
-    position = Math.min(position, rest.length);
-    events.push({ position, html: parts[i], isAd });
-    previousPosition = position;
-    previousWasAd = isAd;
-  }
-
   let out = '';
-  let cursor = 0;
-  for (const event of events) {
-    out += rows(cursor, event.position) + event.html;
-    cursor = event.position;
-  }
-  return out + rows(cursor, rest.length);
+  for (let i = 0; i < n; i++) out += parts[i] + rows(cut(i), cut(i + 1));
+  return out + rows(cut(n), rest.length);
 }
 
 // يرجّع الإعلانات المؤهلة للموضع، ويستبعد أي حملة ظهرت قبل كده في نفس الصفحة
@@ -1496,32 +1515,25 @@ async function viewRestaurants(query) {
   // تصنيف محدد: تخطيطه يُحمَّل بمعرف التصنيف الحقيقي، ولا يرث بلوكات الرئيسية أو المطاعم
   // كل تصنيف ليه تخطيطه المخزن بمعرفه؛ الطلب المتزامن لنفس التصنيف ما بيتكررش
   const catLayouts = new Map();     // category id -> عناصر التخطيط
+  const catBlocks = new Map();      // category id -> أعضاء البلوكات الخاصة بالتصنيف
   const catLayoutLoads = new Map(); // category id -> طلب جاري
-  const catBlocks = new Map();      // category id -> عضويات البلوكات المحسوبة داخل Supabase
-  const catBlockLoads = new Map();  // category id -> طلب جاري
   const ensureCatLayout = async () => {
     const cat = active ? catBySlug.get(active) : null;
     if (!cat || catLayouts.has(cat.id)) return;
     if (!catLayoutLoads.has(cat.id)) {
-      catLayoutLoads.set(cat.id, loadLayout('category', cat.id).then((lay) => {
+      catLayoutLoads.set(cat.id, Promise.all([
+        loadLayout('category', cat.id),
+        loadBlocks('category', cat.id),
+      ]).then(([lay, categoryBlockRows]) => {
         catLayouts.set(cat.id, lay.filter((it) =>
           it.item_type === 'restaurant_block' ||
           (it.item_type === 'ad_banner' && /^category_/.test(it.ad_placements?.code || ''))));
+        catBlocks.set(cat.id, categoryBlockRows);
       }).finally(() => catLayoutLoads.delete(cat.id)));
     }
     await catLayoutLoads.get(cat.id);
   };
-  const ensureCatBlocks = async () => {
-    const cat = active ? catBySlug.get(active) : null;
-    if (!cat || catBlocks.has(cat.id)) return;
-    if (!catBlockLoads.has(cat.id)) {
-      catBlockLoads.set(cat.id, loadBlocks('category', cat.id)
-        .then((items) => catBlocks.set(cat.id, items))
-        .finally(() => catBlockLoads.delete(cat.id)));
-    }
-    await catBlockLoads.get(cat.id);
-  };
-  await Promise.all([ensureCatLayout(), ensureCatBlocks()]);
+  await ensureCatLayout();
   if (my !== rid) return;
 
   const matches = (r, term) =>
@@ -1558,14 +1570,14 @@ async function viewRestaurants(query) {
       $('#top-ads').innerHTML = rotHtml(pickAds(ads, 'restaurants_top', used));
       items = restPage.filter((it) => it.ad_placements?.code !== 'restaurants_top');
     }
-    const hasLeadingAd = !!$('#top-ads').querySelector('[data-placement]');
 
-    const currentBlocks = active ? (catBlocks.get(catBySlug.get(active)?.id) || []) : blocks;
-    const blocksById = new Map(currentBlocks.map((b) => [b.id, b]));
+    const activeCat = active ? catBySlug.get(active) : null;
+    const visibleBlocks = activeCat ? (catBlocks.get(activeCat.id) || []) : blocks;
+    const blocksById = new Map(visibleBlocks.map((b) => [b.id, b]));
     const emptyTxt = term ? 'مفيش مطعم يطابق بحثك'
       : active ? 'مفيش مطاعم في التصنيف ده دلوقتي'
       : 'مفيش مطاعم متاحة دلوقتي';
-    $('#list').innerHTML = list.length ? sequenceHtml(items, list, blocksById, adsView, used, hasLeadingAd) : `<div class="col-12">${emptyHtml(emptyTxt)}</div>`;
+    $('#list').innerHTML = list.length ? sequenceHtml(items, list, blocksById, adsView, used) : `<div class="col-12">${emptyHtml(emptyTxt)}</div>`;
     // عنوان الصفحة بيوضح التصنيف المختار، عشان المستخدم يعرف هو فين
     const titleEl = app.querySelector('.topbar .ttl');
     if (titleEl) titleEl.textContent = active ? (catBySlug.get(active)?.name || 'المطاعم') : 'المطاعم';
@@ -1587,7 +1599,7 @@ async function viewRestaurants(query) {
     // نحدّث الرابط بدون إعادة تحميل، فالتصنيف يفضل محفوظ عند الريفرش أو عند فتح الرابط
     history.replaceState(null, '', active ? `#/restaurants?c=${encodeURIComponent(active)}` : '#/restaurants');
     drawChips();
-    await Promise.all([ensureCatLayout(), ensureCatBlocks()]);
+    await ensureCatLayout();
     if (my !== rid) return;
     render();
   });
