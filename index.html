@@ -775,25 +775,8 @@ async function loadAds() {
   return map;
 }
 async function loadMethods(restaurantId) {
-  try {
-    const { data, error } = await sb.rpc('get_payment_methods', { p_restaurant_id: restaurantId });
-    if (error) {
-      console.error('[payment-methods]', error);
-      return { cash: false, paymob: false, loadError: true };
-    }
-    if (!data || typeof data !== 'object' || Array.isArray(data)) {
-      console.error('[payment-methods] invalid response');
-      return { cash: false, paymob: false, loadError: true };
-    }
-    return {
-      cash: data.cash === true,
-      paymob: data.paymob === true,
-      loadError: false,
-    };
-  } catch (error) {
-    console.error('[payment-methods]', error);
-    return { cash: false, paymob: false, loadError: true };
-  }
+  const { data } = await sb.rpc('get_payment_methods', { p_restaurant_id: restaurantId });
+  return data || { cash: false, paymob: false };
 }
 
 // نتيجة تحميل مستقل: لو فشل بنرجع الافتراضي ونسجل الخطأ في الـconsole بدل ما نوقف الصفحة
@@ -988,28 +971,42 @@ function destroyAdSliders() {
   for (const s of adSliders) { try { s.destroy(true, true); } catch (_) {} }
   adSliders = [];
 }
-function adsHtml(list) {
+function adsHtml(list, extraClass = '') {
   const arr = list || [];
   if (!arr.length) return '';
   if (arr.length < 2) return adHtml(arr[0]);
-  return `<div class="swiper sh-ad-slider" aria-roledescription="carousel" aria-label="إعلانات">
+  const cls = extraClass ? ` ${extraClass}` : '';
+  return `<div class="swiper sh-ad-slider${cls}" aria-roledescription="carousel" aria-label="إعلانات">
     <div class="swiper-wrapper">${arr.map((a) => `<div class="swiper-slide">${adHtml(a)}</div>`).join('')}</div>
     <div class="swiper-pagination"></div>
   </div>`;
 }
-// الشريط العلوي للمطاعم: نفس السلايدر (كل الإعلانات المؤهلة للموضع)
-function rotHtml(list) { return adsHtml(list); }
+// الشريط العلوي: إعلان واحد فقط لكل مطعم، حتى لو عنده أكثر من حملة في نفس الموضع.
+function uniqueRestaurantAds(list) {
+  const seen = new Set();
+  return (list || []).filter((ad) => {
+    const id = ad.restaurant_id || ad.restaurant_slug || ad.campaign_id;
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+// موضع أعلى التصنيف/قائمة المطاعم له سلايدر مستقل، لا يعرض حملتين لنفس المطعم.
+function rotHtml(list) { return adsHtml(uniqueRestaurantAds(list), 'sh-ad-slider--top'); }
 function mountAdSliders(root) {
   if (!root || !window.Swiper) return;
   root.querySelectorAll('.sh-ad-slider').forEach((el) => {
     if (el.__sliderMounted) return; // ما نعملش نسخة تانية من نفس السلايدر
     el.__sliderMounted = true;
     try {
+      const slideCount = el.querySelectorAll('.swiper-slide').length;
+      const topSlider = el.classList.contains('sh-ad-slider--top');
       adSliders.push(new window.Swiper(el, {
         slidesPerView: 1, spaceBetween: 8, grabCursor: true, watchOverflow: true,
+        loop: topSlider && slideCount > 1,
         speed: reduceMotion() ? 0 : 450,
         rtl: document.documentElement.dir === 'rtl',
-        autoplay: reduceMotion() ? false : { delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true },
+        autoplay: reduceMotion() || slideCount < 2 ? false : { delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true },
         pagination: { el: el.querySelector('.swiper-pagination'), clickable: true },
       }));
     } catch (e) { console.error('[ad-slider]', e); }
@@ -1358,12 +1355,33 @@ function sequenceHtml(items, list, blocksById, ads, used) {
   // القائمة بتعرض كل المطاعم المطابقة (حتى اللي ظاهرة في بلوك فوق)، والتصنيف ما بيأثرش على «الكل»
   const rest = list;
   const n = parts.length;
-  const cut = (i) => Math.floor((i * rest.length) / (n + 1));
   const rows = (from, to) => rest.slice(from, to).map((r) => `<div class="col-12 col-md-6 col-lg-4">${restRowHtml(r)}</div>`).join('');
   if (!n) return rows(0, rest.length);
+
+  // نوزّع عناصر التخطيط على القائمة. كل لافتة داخلية لازم يفصل بينها وبين
+  // اللافتة الداخلية السابقة مطعم واحد على الأقل؛ لو القائمة لا تسمح، نتجاوز
+  // اللافتة الزائدة بدل عرض لافتتين متتاليتين.
+  const events = [];
+  let previousPosition = 0;
+  let previousAdPosition = -2;
+  for (let i = 0; i < n; i++) {
+    let position = Math.max(previousPosition, Math.floor((i * rest.length) / (n + 1)));
+    const isAd = parts[i].includes('data-placement=');
+    if (isAd && position <= previousAdPosition + 1) position = previousAdPosition + 2;
+    if (isAd && position > rest.length) continue;
+    position = Math.min(position, rest.length);
+    events.push({ position, html: parts[i], isAd });
+    previousPosition = position;
+    if (isAd) previousAdPosition = position;
+  }
+
   let out = '';
-  for (let i = 0; i < n; i++) out += parts[i] + rows(cut(i), cut(i + 1));
-  return out + rows(cut(n), rest.length);
+  let cursor = 0;
+  for (const event of events) {
+    out += rows(cursor, event.position) + event.html;
+    cursor = event.position;
+  }
+  return out + rows(cursor, rest.length);
 }
 
 // يرجّع الإعلانات المؤهلة للموضع، ويستبعد أي حملة ظهرت قبل كده في نفس الصفحة
@@ -1617,7 +1635,7 @@ async function viewRestaurant([, slug]) {
     ${r.description ? `<p style="margin-top:10px">${esc(r.description)}</p>` : ''}
     ${r.address ? `<p class="meta" style="margin-top:6px">${esc(r.address)}</p>` : ''}
     ${R.offers.length ? R.offers.map((o) => `<div class="offerbox"><strong>${esc(o.title)}</strong>${o.description ? `<p class="meta">${esc(o.description)}</p>` : ''}</div>`).join('') : ''}
-    ${payNames ? `<p class="meta" style="margin-top:10px">طرق الدفع: ${esc(payNames)}</p>` : methods.loadError ? `<p class="err" role="status" style="margin-top:10px">تعذّر تحميل طرق الدفع. جرّب تحديث الصفحة.</p>` : ''}
+    ${payNames ? `<p class="meta" style="margin-top:10px">طرق الدفع: ${esc(payNames)}</p>` : ''}
     <nav class="chips menucats" aria-label="أقسام المنيو" style="margin-top:14px">
       ${R.menuCats.map((c) => `<button class="chip" data-act="scroll" data-target="sec-${esc(c.id)}">${esc(c.name)}</button>`).join('')}
     </nav>
@@ -2100,7 +2118,6 @@ function checkoutHtml(lines) {
   const fee = Number(R.rest.delivery_fee || 0);
   const m = R.methods || {};
   const hasAny = m.cash || m.paymob;
-  const methodsFailed = m.loadError === true;
   const firstMethod = m.cash ? 'cash' : 'paymob';
   return `
     <div class="co-page">
@@ -2123,13 +2140,13 @@ function checkoutHtml(lines) {
         <input id="cc" value="${esc(R.cart?.coupon_code || '')}" autocomplete="off">
         <fieldset>
           <legend>طريقة الدفع</legend>
-          ${methodsFailed ? '<p class="err" role="alert">تعذّر تحميل طرق الدفع بسبب مشكلة اتصال. حدّث الصفحة وحاول تاني.</p>' : hasAny ? `
+          ${hasAny ? `
             ${m.cash ? `<label class="opt"><input type="radio" name="pm" value="cash" ${firstMethod === 'cash' ? 'checked' : ''}><span>الدفع عند الاستلام<small>ادفع كاش للمندوب</small></span></label>` : ''}
             ${m.paymob ? `<label class="opt"><input type="radio" name="pm" value="paymob" ${firstMethod === 'paymob' ? 'checked' : ''}><span>فيزا أو محفظة<small>دفع آمن عبر Paymob</small></span></label>` : ''}
           ` : '<p class="err">المطعم مش بيستقبل طلبات دلوقتي</p>'}
         </fieldset>
         <p class="err" id="coErr" role="alert"></p>
-        <button class="btn primary" id="placeBtn" type="submit" ${(hasAny && !methodsFailed) ? '' : 'disabled'}>تنفيذ الطلب</button>
+        <button class="btn primary" id="placeBtn" type="submit" ${hasAny ? '' : 'disabled'}>تنفيذ الطلب</button>
       </form>
     </div>`;
 }
